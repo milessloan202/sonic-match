@@ -50,6 +50,7 @@ export type Database = {
           related_vibes: Json | null
           same_energy: Json | null
           slug: string
+          spotify_track_id: string | null
           summary: string | null
           title: string
           updated_at: string
@@ -69,6 +70,7 @@ export type Database = {
           related_vibes?: Json | null
           same_energy?: Json | null
           slug: string
+          spotify_track_id?: string | null
           summary?: string | null
           title: string
           updated_at?: string
@@ -88,6 +90,7 @@ export type Database = {
           related_vibes?: Json | null
           same_energy?: Json | null
           slug?: string
+          spotify_track_id?: string | null
           summary?: string | null
           title?: string
           updated_at?: string
@@ -103,6 +106,7 @@ export type Database = {
           image_url: string | null
           name: string
           preview_url: string | null
+          spotify_track_id: string | null
           spotify_url: string | null
           youtube_thumbnail_url: string | null
         }
@@ -113,6 +117,7 @@ export type Database = {
           image_url?: string | null
           name: string
           preview_url?: string | null
+          spotify_track_id?: string | null
           spotify_url?: string | null
           youtube_thumbnail_url?: string | null
         }
@@ -123,6 +128,7 @@ export type Database = {
           image_url?: string | null
           name?: string
           preview_url?: string | null
+          spotify_track_id?: string | null
           spotify_url?: string | null
           youtube_thumbnail_url?: string | null
         }
