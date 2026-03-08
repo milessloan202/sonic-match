@@ -109,6 +109,7 @@ async function fetchYouTubeThumbnail(title: string, artist: string): Promise<str
 interface SongQuery {
   title: string;
   artist: string;
+  spotify_id?: string;
 }
 
 interface ArtistQuery {
