@@ -118,7 +118,8 @@ const Thumbnail = ({
 
 const PlayButton = ({ title, subtitle, meta }: { title: string; subtitle?: string; meta?: SongMeta }) => {
   const { currentTrack, isPlaying, progress, toggle } = useAudio();
-  const trackId = title;
+  const artist = subtitle ? subtitle.replace(/\s*\(\d{4}\)\s*$/, "").trim() : "";
+  const trackId = artist ? `${title}|||${artist}` : title;
   const isActive = currentTrack === trackId && isPlaying;
   const showProgress = currentTrack === trackId;
 
