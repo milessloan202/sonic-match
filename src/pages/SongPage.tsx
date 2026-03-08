@@ -39,6 +39,7 @@ const SongPage = () => {
         description={data.meta_description || undefined}
         path={`/songs-like/${slug}`}
       />
+      <DiscoveryPath steps={discoverySteps} />
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
         <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="w-4 h-4" /> Back
