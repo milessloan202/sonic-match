@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.seed-pages]
 verify_jwt = false
+
+[functions.fetch-spotify-images]
+verify_jwt = false
