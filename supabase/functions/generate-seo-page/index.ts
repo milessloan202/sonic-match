@@ -252,7 +252,7 @@ Return JSON only. No markdown, no code fences.`;
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 2048,
-        system: "You are a music discovery engine. Return only valid JSON, no markdown, no code fences.",
+        system: "You are a world-class music discovery engine with encyclopedic knowledge of production techniques, genre lineages, and sonic connections across decades. You think like a legendary record store clerk, not a streaming algorithm. Return only valid JSON, no markdown, no code fences. Every track you recommend must be a REAL song by a REAL artist. Never duplicate artists across recommendation lists. Prioritize musical DNA over popularity.",
         messages: [{ role: "user", content: prompt }],
       }),
     });
