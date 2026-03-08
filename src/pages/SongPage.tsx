@@ -45,7 +45,7 @@ const SongPage = () => {
         <ResultSection title="Closest Matches" items={data.closest_matches} />
       )}
       {data.same_energy.length > 0 && (
-        <ResultSection title="⚡ Same Energy" items={data.same_energy} />
+        <ResultSection title="Same Energy" items={data.same_energy} />
       )}
       {data.related_artists.length > 0 && (
         <ResultSection title="🎤 Related Artists" items={data.related_artists} />
