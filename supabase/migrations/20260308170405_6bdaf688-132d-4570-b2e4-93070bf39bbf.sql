@@ -1,0 +1,1 @@
+ALTER TABLE public.seo_pages ADD COLUMN is_indexable boolean NOT NULL DEFAULT true;
