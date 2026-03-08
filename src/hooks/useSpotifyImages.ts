@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface SongItem {
   title: string;
   subtitle?: string;
+  spotify_id?: string | null;
 }
 
 export interface SongMeta {
