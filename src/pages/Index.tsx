@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Search, Loader2, AlertCircle } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import SegmentedSelector, { type SearchMode } from "../components/SegmentedSelector";
 import SearchChip from "../components/SearchChip";
 import SEOHead from "../components/SEOHead";
@@ -23,12 +24,20 @@ const routePrefixes: Record<SearchMode, string> = {
   vibe: "/vibes",
 };
 
+const DEEP_CUT_KEY = "deep-cut-mode";
+
 const Index = () => {
   const navigate = useNavigate();
   const [mode, setMode] = useState<SearchMode>("song");
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deepCut, setDeepCut] = useState(() => localStorage.getItem(DEEP_CUT_KEY) === "true");
+
+  const toggleDeepCut = (checked: boolean) => {
+    setDeepCut(checked);
+    localStorage.setItem(DEEP_CUT_KEY, String(checked));
+  };
 
   const performSearch = async (q: string, searchMode: SearchMode) => {
     const trimmed = q.trim();
@@ -36,12 +45,11 @@ const Index = () => {
 
     clearDiscoveryPath();
 
-    const slug = slugify(trimmed);
+    const slug = deepCut ? `${slugify(trimmed)}-deep` : slugify(trimmed);
     setLoading(true);
     setError(null);
 
     try {
-      // Check if page already exists
       const { data: page } = await supabase
         .from("seo_pages")
         .select("id")
@@ -50,21 +58,18 @@ const Index = () => {
         .maybeSingle();
 
       if (page) {
-        // Page exists, redirect immediately
         navigate(`${routePrefixes[searchMode]}/${slug}`);
         return;
       }
 
-      // Generate via edge function (saves to DB)
       const { data: fnData, error: fnError } = await supabase.functions.invoke(
         "generate-seo-page",
-        { body: { slug, page_type: searchMode } }
+        { body: { slug, page_type: searchMode, deep_cut_mode: deepCut } }
       );
 
       if (fnError) throw fnError;
       if (fnData?.error) throw new Error(fnData.error);
 
-      // Redirect to the permanent page
       navigate(`${routePrefixes[searchMode]}/${slug}`);
     } catch (e: any) {
       console.error("Search error:", e);
@@ -138,6 +143,19 @@ const Index = () => {
           </button>
         </div>
 
+        {/* Deep Cut Mode toggle */}
+        <div className="flex items-center justify-center gap-3">
+          <Switch
+            id="deep-cut"
+            checked={deepCut}
+            onCheckedChange={toggleDeepCut}
+          />
+          <label htmlFor="deep-cut" className="cursor-pointer text-left">
+            <span className="text-sm font-medium text-foreground">Deep Cut Mode</span>
+            <span className="block text-xs text-muted-foreground">Find hidden gems and lesser-known tracks</span>
+          </label>
+        </div>
+
         {!loading && !error && (
           <div className="flex flex-wrap justify-center gap-2">
             {exampleChips[mode].map((chip) => (
@@ -154,7 +172,9 @@ const Index = () => {
           className="relative z-10 w-full max-w-xl mt-10 text-center space-y-3"
         >
           <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
-          <p className="text-muted-foreground">Generating recommendations...</p>
+          <p className="text-muted-foreground">
+            {deepCut ? "Digging for hidden gems..." : "Generating recommendations..."}
+          </p>
         </motion.div>
       )}
 

@@ -41,7 +41,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { slug, page_type } = await req.json();
+    const { slug, page_type, deep_cut_mode } = await req.json();
     if (!slug || !page_type) {
       return new Response(JSON.stringify({ error: "slug and page_type required" }), {
         status: 400,
@@ -159,7 +159,30 @@ summary: A 2-3 sentence evocation of this vibe as a musical atmosphere — what 
       vibe: vibePrompt,
     };
 
-    const basePrompt = promptByType[page_type] || songPrompt;
+    let basePrompt = promptByType[page_type] || songPrompt;
+
+    if (deep_cut_mode) {
+      basePrompt += `
+
+DEEP CUT MODE — CRITICAL INSTRUCTIONS:
+You are now in crate-digger mode. Act like an obsessive vinyl collector who lives in record shops.
+
+PRIORITIZE:
+- Deep album cuts, B-sides, and overlooked tracks
+- Underground, independent, or cult-favorite artists
+- Influential but underplayed tracks that shaped genres
+- Songs from lesser-known albums by well-known artists
+- Cross-genre discoveries that share genuine sonic DNA
+- Tracks with fewer than 50M streams that deserve more attention
+
+AVOID:
+- The artist's biggest mainstream hits (no "#1 singles" energy)
+- Tracks that appear on every "similar songs" playlist
+- The most obvious genre associations
+- Extremely well-known songs unless they are historically important deep influences
+
+Your recommendations should make a music nerd say "oh wow, great pull" — not "yeah, obviously."`;
+    }
 
     const prompt = `${basePrompt}
 
