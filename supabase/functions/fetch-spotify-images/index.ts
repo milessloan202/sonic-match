@@ -55,7 +55,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const songResults: Record<string, string | null> = {};
+    const songResults: Record<string, { image_url: string | null; preview_url: string | null; spotify_url: string | null }> = {};
     const artistResults: Record<string, string | null> = {};
 
     // --- Process songs ---
