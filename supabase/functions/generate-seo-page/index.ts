@@ -37,49 +37,24 @@ serve(async (req) => {
       });
     }
 
-    // Generate content with Lovable AI
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    // Generate content with Claude API
+    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is not configured");
 
-    const displayName = slug.replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
-
-    const typeLabels: Record<string, string> = {
-      song: "song",
-      artist: "artist",
-      vibe: "vibe/mood",
-    };
-
-    const prompt = `Generate music recommendation data for a programmatic SEO page about ${typeLabels[page_type]}: "${displayName}".
-
-Return a JSON object with these fields:
-- title: SEO page title (under 60 chars)
-- meta_description: SEO meta description (under 160 chars)
-- heading: The page H1 heading
-- summary: 1-2 sentence description of this ${typeLabels[page_type]}
-- closest_matches: array of 3 objects with {title, subtitle, tag} where tag is a percentage match
-- same_energy: array of 3 objects with {title, subtitle}
-- related_artists: array of 3 objects with {title, subtitle}
-- why_these_work: array of 2 objects with {title, subtitle}
-- related_songs: array of 4 objects with {name, slug} - related songs to link to
-- related_vibes: array of 3 objects with {name, slug} - related vibes to link to
-- related_artist_links: array of 3 objects with {name, slug} - related artists to link to
-
-Use REAL music data - real artist names, real song names, real genres and vibes. Make the recommendations genuinely useful and accurate. Slugs should be lowercase-hyphenated versions of the names.
-
-Return ONLY valid JSON, no markdown.`;
-
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 2048,
+        system: "You are a music expert. Return only valid JSON.",
         messages: [
-          { role: "system", content: "You are a music expert. Return only valid JSON." },
           { role: "user", content: prompt },
         ],
-        stream: false,
       }),
     });
 
@@ -91,17 +66,11 @@ Return ONLY valid JSON, no markdown.`;
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      throw new Error(`AI gateway error: ${status}`);
+      throw new Error(`Claude API error: ${status}`);
     }
 
     const aiData = await aiResponse.json();
-    const rawContent = aiData.choices?.[0]?.message?.content;
+    const rawContent = aiData.content?.[0]?.text;
     if (!rawContent) throw new Error("No AI response content");
 
     // Parse JSON (handle potential markdown wrapping)
