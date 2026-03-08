@@ -277,7 +277,7 @@ Return JSON only. No markdown, no code fences.`;
       ? [{ title: "Why These Work", subtitle: content.whyTheseWork }]
       : [];
 
-    const { error: insertError } = await supabase.from("seo_pages").insert({
+    const { error: insertError } = await supabase.from("seo_pages").upsert({
       slug,
       page_type,
       title: content.title,
