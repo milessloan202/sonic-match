@@ -55,6 +55,16 @@ serve(async (req) => {
       });
     }
 
+    // Rate limit only applies to new AI generations
+    if (isRateLimited()) {
+      return new Response(
+        JSON.stringify({ error: "Page generation is temporarily busy, please try again in a moment." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    recordGeneration();
+
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
     if (!ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is not configured");
 
