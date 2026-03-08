@@ -8,6 +8,7 @@ import { AudioProvider } from "@/contexts/AudioContext";
 import Index from "./pages/Index";
 import SongPage from "./pages/SongPage";
 import ArtistPage from "./pages/ArtistPage";
+import ProducerPage from "./pages/ProducerPage";
 import VibePage from "./pages/VibePage";
 import NotFound from "./pages/NotFound";
 
