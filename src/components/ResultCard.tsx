@@ -265,18 +265,6 @@ const ResultCard = ({
                   >
                     {artist}
                   </Link>
-                  {tag && (
-                    <>
-                      {" • "}
-                      <Link
-                        to={`/vibes/${toSlug(tag)}`}
-                        onClick={(e) => e.stopPropagation()}
-                        className="hover:text-foreground hover:underline underline-offset-2 transition-colors"
-                      >
-                        {tag}
-                      </Link>
-                    </>
-                  )}
                   {year && <span> • {year}</span>}
                 </p>
               ) : subtitle ? (
@@ -284,11 +272,6 @@ const ResultCard = ({
               ) : null}
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              {tag && imageType !== "song" && (
-                <span className="text-xs font-mono px-2 py-1 rounded-md bg-primary/10 text-primary">
-                  {tag}
-                </span>
-              )}
               {showPlay && <PlayButton title={title} subtitle={subtitle} meta={songMeta} />}
             </div>
           </div>
