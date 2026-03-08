@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect } from "react";
 
 export interface DiscoveryStep {
   label: string;
@@ -24,12 +24,14 @@ export function clearDiscoveryPath() {
   sessionStorage.removeItem(STORAGE_KEY);
 }
 
-export function useDiscoveryPath(label: string, currentPath: string): DiscoveryStep[] {
+export function useDiscoveryPath(label: string | undefined, currentPath: string): DiscoveryStep[] {
   useEffect(() => {
+    if (!label) return;
+
     const existing = getPath();
-    // If already in path, truncate to that point (user navigated back)
     const idx = existing.findIndex((s) => s.path === currentPath);
     if (idx >= 0) {
+      // User navigated back — truncate
       setPath(existing.slice(0, idx + 1));
     } else {
       existing.push({ label, path: currentPath });
