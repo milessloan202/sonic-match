@@ -10,7 +10,7 @@ interface ResultSectionProps {
   variant?: "default" | "explanation";
 }
 
-const ResultSection = ({ title, items, linkPrefix, imageType, images }: ResultSectionProps) => {
+const ResultSection = ({ title, items, linkPrefix, imageType, images, variant = "default" }: ResultSectionProps) => {
   return (
     <section className="space-y-4">
       <motion.h2
