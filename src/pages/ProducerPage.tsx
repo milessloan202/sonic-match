@@ -61,6 +61,7 @@ const ProducerPage = () => {
               ...(data.related_artists || []).map((a: any) => a.title),
               ...(data.related_artist_links || []).map((a: any) => a.title),
             ]}
+            vibeNames={(data.related_vibes || []).map((v: any) => v.title)}
           />
         )}
       </motion.div>
