@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 const SEEDS: { slug: string; page_type: string }[] = [
-  // Songs (35)
+  // ── Songs (80) ──
   { slug: "bohemian-rhapsody", page_type: "song" },
   { slug: "blinding-lights", page_type: "song" },
   { slug: "smells-like-teen-spirit", page_type: "song" },
@@ -44,8 +44,53 @@ const SEEDS: { slug: string; page_type: string }[] = [
   { slug: "a-case-of-you", page_type: "song" },
   { slug: "pink-white", page_type: "song" },
   { slug: "the-less-i-know-the-better", page_type: "song" },
+  { slug: "hey-ya", page_type: "song" },
+  { slug: "stan", page_type: "song" },
+  { slug: "jolene", page_type: "song" },
+  { slug: "hallelujah", page_type: "song" },
+  { slug: "heroes", page_type: "song" },
+  { slug: "purple-rain", page_type: "song" },
+  { slug: "africa", page_type: "song" },
+  { slug: "dont-stop-me-now", page_type: "song" },
+  { slug: "superstition", page_type: "song" },
+  { slug: "imagine", page_type: "song" },
+  { slug: "hotel-california", page_type: "song" },
+  { slug: "sweet-child-o-mine", page_type: "song" },
+  { slug: "like-a-rolling-stone", page_type: "song" },
+  { slug: "dancing-queen", page_type: "song" },
+  { slug: "karma-police", page_type: "song" },
+  { slug: "november-rain", page_type: "song" },
+  { slug: "fly-me-to-the-moon", page_type: "song" },
+  { slug: "a-day-in-the-life", page_type: "song" },
+  { slug: "roxanne", page_type: "song" },
+  { slug: "landslide", page_type: "song" },
+  { slug: "life-on-mars", page_type: "song" },
+  { slug: "fade-into-you", page_type: "song" },
+  { slug: "lovefool", page_type: "song" },
+  { slug: "torn", page_type: "song" },
+  { slug: "everywhere", page_type: "song" },
+  { slug: "losing-my-religion", page_type: "song" },
+  { slug: "champagne-supernova", page_type: "song" },
+  { slug: "nuthin-but-a-g-thang", page_type: "song" },
+  { slug: "motion-sickness", page_type: "song" },
+  { slug: "waves", page_type: "song" },
+  { slug: "heat-waves", page_type: "song" },
+  { slug: "young-folks", page_type: "song" },
+  { slug: "ribs", page_type: "song" },
+  { slug: "myth", page_type: "song" },
+  { slug: "never-gonna-give-you-up", page_type: "song" },
+  { slug: "summertime-sadness", page_type: "song" },
+  { slug: "alright", page_type: "song" },
+  { slug: "nights", page_type: "song" },
+  { slug: "black-dog", page_type: "song" },
+  { slug: "comfortably-numb", page_type: "song" },
+  { slug: "bitter-sweet-symphony", page_type: "song" },
+  { slug: "zombie", page_type: "song" },
+  { slug: "where-is-my-mind", page_type: "song" },
+  { slug: "lucky", page_type: "song" },
+  { slug: "agnes", page_type: "song" },
 
-  // Artists (35)
+  // ── Artists (70) ──
   { slug: "taylor-swift", page_type: "artist" },
   { slug: "tame-impala", page_type: "artist" },
   { slug: "frank-ocean", page_type: "artist" },
@@ -81,8 +126,43 @@ const SEEDS: { slug: string; page_type: string }[] = [
   { slug: "the-strokes", page_type: "artist" },
   { slug: "mac-miller", page_type: "artist" },
   { slug: "mitski", page_type: "artist" },
+  { slug: "adele", page_type: "artist" },
+  { slug: "led-zeppelin", page_type: "artist" },
+  { slug: "prince", page_type: "artist" },
+  { slug: "the-beatles", page_type: "artist" },
+  { slug: "stevie-wonder", page_type: "artist" },
+  { slug: "outkast", page_type: "artist" },
+  { slug: "the-cure", page_type: "artist" },
+  { slug: "depeche-mode", page_type: "artist" },
+  { slug: "the-smiths", page_type: "artist" },
+  { slug: "joy-division", page_type: "artist" },
+  { slug: "talking-heads", page_type: "artist" },
+  { slug: "r-e-m", page_type: "artist" },
+  { slug: "oasis", page_type: "artist" },
+  { slug: "blur", page_type: "artist" },
+  { slug: "the-national", page_type: "artist" },
+  { slug: "sufjan-stevens", page_type: "artist" },
+  { slug: "elliot-smith", page_type: "artist" },
+  { slug: "fiona-apple", page_type: "artist" },
+  { slug: "bjork", page_type: "artist" },
+  { slug: "portishead", page_type: "artist" },
+  { slug: "massive-attack", page_type: "artist" },
+  { slug: "cocteau-twins", page_type: "artist" },
+  { slug: "kate-bush", page_type: "artist" },
+  { slug: "lorde", page_type: "artist" },
+  { slug: "clairo", page_type: "artist" },
+  { slug: "weyes-blood", page_type: "artist" },
+  { slug: "khruangbin", page_type: "artist" },
+  { slug: "japanese-breakfast", page_type: "artist" },
+  { slug: "the-war-on-drugs", page_type: "artist" },
+  { slug: "alvvays", page_type: "artist" },
+  { slug: "men-i-trust", page_type: "artist" },
+  { slug: "cigarettes-after-sex", page_type: "artist" },
+  { slug: "j-cole", page_type: "artist" },
+  { slug: "travis-scott", page_type: "artist" },
+  { slug: "childish-gambino", page_type: "artist" },
 
-  // Vibes (30)
+  // ── Vibes (50) ──
   { slug: "music-for-night-driving", page_type: "vibe" },
   { slug: "golden-hour-chill", page_type: "vibe" },
   { slug: "rainy-lo-fi", page_type: "vibe" },
@@ -113,10 +193,39 @@ const SEEDS: { slug: string; page_type: string }[] = [
   { slug: "songs-for-a-movie-soundtrack", page_type: "vibe" },
   { slug: "slow-burn-romance", page_type: "vibe" },
   { slug: "desert-highway-rock", page_type: "vibe" },
+  { slug: "foggy-morning-walk", page_type: "vibe" },
+  { slug: "existential-crisis-playlist", page_type: "vibe" },
+  { slug: "sapphic-indie", page_type: "vibe" },
+  { slug: "cottagecore-folk", page_type: "vibe" },
+  { slug: "songs-that-make-you-feel-powerful", page_type: "vibe" },
+  { slug: "liminal-space-music", page_type: "vibe" },
+  { slug: "sunset-on-the-rooftop", page_type: "vibe" },
+  { slug: "old-soul-playlist", page_type: "vibe" },
+  { slug: "2000s-pop-throwback", page_type: "vibe" },
+  { slug: "songs-for-stargazing", page_type: "vibe" },
+  { slug: "rainy-day-acoustic", page_type: "vibe" },
+  { slug: "after-party-comedown", page_type: "vibe" },
+  { slug: "shower-singing-bangers", page_type: "vibe" },
+  { slug: "songs-that-feel-like-autumn", page_type: "vibe" },
+  { slug: "driving-through-the-city-at-night", page_type: "vibe" },
+  { slug: "hauntingly-beautiful", page_type: "vibe" },
+  { slug: "songs-that-feel-like-a-warm-hug", page_type: "vibe" },
+  { slug: "90s-alternative-deep-cuts", page_type: "vibe" },
+  { slug: "bittersweet-graduation", page_type: "vibe" },
+  { slug: "psychedelic-journey", page_type: "vibe" },
 ];
 
+// Deduplicate
+const seen = new Set<string>();
+const UNIQUE_SEEDS = SEEDS.filter((s) => {
+  const key = `${s.page_type}:${s.slug}`;
+  if (seen.has(key)) return false;
+  seen.add(key);
+  return true;
+});
+
 const BATCH_SIZE = 3;
-const DELAY_MS = 2000;
+const DELAY_MS = 2500;
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -135,18 +244,23 @@ serve(async (req) => {
     .select("slug, page_type");
 
   const existingSet = new Set(
-    (existing || []).map((p) => `${p.page_type}:${p.slug}`)
+    (existing || []).map((p: any) => `${p.page_type}:${p.slug}`)
   );
 
-  const toGenerate = SEEDS.filter(
-    (s) => !existingSet.has(`${s.page_type}:${s.slug}`)
-  );
+  const skipped = UNIQUE_SEEDS.filter((s) => existingSet.has(`${s.page_type}:${s.slug}`));
+  const toGenerate = UNIQUE_SEEDS.filter((s) => !existingSet.has(`${s.page_type}:${s.slug}`));
+
+  console.log(`Seed start: ${UNIQUE_SEEDS.length} total, ${skipped.length} already exist, ${toGenerate.length} to generate`);
 
   const results: { slug: string; page_type: string; status: string }[] = [];
-  let errorCount = 0;
+  let created = 0;
+  let failed = 0;
 
   for (let i = 0; i < toGenerate.length; i += BATCH_SIZE) {
     const batch = toGenerate.slice(i, i + BATCH_SIZE);
+    const batchNum = Math.floor(i / BATCH_SIZE) + 1;
+    const totalBatches = Math.ceil(toGenerate.length / BATCH_SIZE);
+    console.log(`Batch ${batchNum}/${totalBatches}: ${batch.map((b) => b.slug).join(", ")}`);
 
     const batchResults = await Promise.allSettled(
       batch.map(async (seed) => {
@@ -178,24 +292,30 @@ serve(async (req) => {
     for (const r of batchResults) {
       if (r.status === "fulfilled") {
         results.push(r.value);
-        if (r.value.status.startsWith("error")) errorCount++;
+        if (r.value.status === "created") created++;
+        else if (r.value.status.startsWith("error")) failed++;
       }
     }
 
-    // Delay between batches to avoid rate limits
+    console.log(`Progress: ${Math.min(i + BATCH_SIZE, toGenerate.length)}/${toGenerate.length} processed (${created} created, ${failed} failed)`);
+
     if (i + BATCH_SIZE < toGenerate.length) {
       await sleep(DELAY_MS);
     }
   }
 
-  return new Response(
-    JSON.stringify({
-      total_seeds: SEEDS.length,
-      already_existed: SEEDS.length - toGenerate.length,
-      processed: results.length,
-      errors: errorCount,
-      results,
-    }),
-    { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-  );
+  const summary = {
+    total_seeds: UNIQUE_SEEDS.length,
+    skipped: skipped.length,
+    attempted: toGenerate.length,
+    created,
+    failed,
+    results,
+  };
+
+  console.log(`Seed complete: ${JSON.stringify({ ...summary, results: undefined })}`);
+
+  return new Response(JSON.stringify(summary), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
 });
