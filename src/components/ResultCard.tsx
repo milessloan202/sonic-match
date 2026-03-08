@@ -245,7 +245,7 @@ const ResultCard = ({
               ) : null}
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              {tag && (
+              {tag && imageType !== "song" && (
                 <span className="text-xs font-mono px-2 py-1 rounded-md bg-primary/10 text-primary">
                   {tag}
                 </span>
