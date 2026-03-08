@@ -325,7 +325,7 @@ Rules:
 closestMatches = exactly 5 songs (real tracks, real years). MAX 1 TRACK PER ARTIST across closestMatches and sameEnergy combined.
 sameEnergy = exactly 5 songs (real tracks, real years). Must include tracks from at least 3 different decades.
 relatedArtists = exactly 3 artists (avoid the single most obvious choice — go one level deeper)
-relatedSongs = 4 related songs with slugs (lowercase-hyphenated)
+relatedSongs = 4 related songs with slugs. IMPORTANT: slugs MUST include both song title AND artist in the format "song-title-artist-name" (lowercase-hyphenated). Example: "pump-it-up-joe-budden", "ivy-frank-ocean". The "name" field should be "Song Title – Artist Name".
 relatedVibes = 3 related vibes with slugs (lowercase-hyphenated, descriptive phrases)
 relatedArtistLinks = 3 related artists with slugs
 title = SEO page title (under 60 chars)

@@ -304,7 +304,12 @@ const ResultCard = ({
   );
 
   if (linkPrefix) {
-    return <Link to={`${linkPrefix}/${toSlug(title)}`}>{wrappedContent}</Link>;
+    // For song links, include artist in slug to avoid title collisions
+    const linkSlug =
+      linkPrefix === "/songs-like" && artist
+        ? `${toSlug(title)}-${toSlug(artist)}`
+        : toSlug(title);
+    return <Link to={`${linkPrefix}/${linkSlug}`}>{wrappedContent}</Link>;
   }
 
   return wrappedContent;
