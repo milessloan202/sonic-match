@@ -52,6 +52,8 @@ function buildNodes(
       ? "/songs-like"
       : props.pageType === "artist"
       ? "/artists-like"
+      : props.pageType === "producer"
+      ? "/producers-like"
       : "/vibes";
 
   const add = (items: { title: string; subtitle?: string }[] | undefined, category: string, prefix: string) => {
