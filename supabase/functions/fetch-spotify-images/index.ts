@@ -35,25 +35,52 @@ async function getSpotifyToken(): Promise<string> {
 }
 
 async function fetchYouTubeThumbnail(title: string, artist: string): Promise<string | null> {
-  try {
-    const query = encodeURIComponent(`${title} ${artist}`);
-    const res = await fetch(`https://pipedapi.kavin.rocks/search?q=${query}&filter=videos`, {
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    const items = data?.items;
-    if (!items?.length) return null;
-    // Extract video ID from the url field (e.g. "/watch?v=VIDEO_ID")
-    const url = items[0]?.url;
-    if (!url) return null;
-    const match = url.match(/[?&]v=([^&]+)/);
-    const videoId = match?.[1];
-    if (!videoId) return null;
-    return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-  } catch {
-    return null;
+  const query = `${title} ${artist}`;
+  console.log(`[YouTube] Searching for: "${query}"`);
+
+  // Try multiple Piped instances for reliability
+  const pipedInstances = [
+    "https://pipedapi.kavin.rocks",
+    "https://pipedapi.adminforge.de",
+    "https://pipedapi.in.projectsegfau.lt",
+  ];
+
+  for (const instance of pipedInstances) {
+    try {
+      const url = `${instance}/search?q=${encodeURIComponent(query)}&filter=videos`;
+      console.log(`[YouTube] Trying instance: ${instance}`);
+      const res = await fetch(url, {
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!res.ok) {
+        console.log(`[YouTube] Instance ${instance} returned ${res.status}`);
+        continue;
+      }
+      const data = await res.json();
+      const items = data?.items;
+      if (!items?.length) {
+        console.log(`[YouTube] No results from ${instance}`);
+        continue;
+      }
+      const videoUrl = items[0]?.url;
+      if (!videoUrl) continue;
+      const match = videoUrl.match(/[?&]v=([^&]+)/);
+      const videoId = match?.[1];
+      if (!videoId) {
+        console.log(`[YouTube] Could not extract video ID from: ${videoUrl}`);
+        continue;
+      }
+      const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+      console.log(`[YouTube] Found thumbnail for "${query}": ${thumbnailUrl}`);
+      return thumbnailUrl;
+    } catch (e) {
+      console.log(`[YouTube] Instance ${instance} failed: ${e instanceof Error ? e.message : "unknown error"}`);
+      continue;
+    }
   }
+
+  console.log(`[YouTube] All instances failed for: "${query}"`);
+  return null;
 }
 
 interface SongQuery {
@@ -93,7 +120,6 @@ serve(async (req) => {
       }));
 
       const uncached: SongQuery[] = [];
-      // Songs that are cached but need YouTube thumbnail lookup
       const needsYoutube: { key: string; song: SongQuery }[] = [];
 
       for (const s of songs) {
@@ -101,6 +127,7 @@ serve(async (req) => {
         if (cachedMap.has(key)) {
           const c = cachedMap.get(key)!;
           songResults[key] = c;
+          console.log(`[Cache] Hit for "${s.title}" by ${s.artist} — Spotify: ${c.image_url ? "yes" : "no"}, YouTube: ${c.youtube_thumbnail_url ? "yes" : "no"}`);
           // If no Spotify image AND no YouTube thumbnail yet, queue for YouTube lookup
           if (!c.image_url && !c.youtube_thumbnail_url) {
             needsYoutube.push({ key, song: s });
@@ -111,6 +138,7 @@ serve(async (req) => {
       }
 
       if (uncached.length > 0) {
+        console.log(`[Spotify] Fetching ${uncached.length} uncached songs`);
         const token = await getSpotifyToken();
 
         const fetches = uncached.slice(0, 15).map(async (s) => {
@@ -125,6 +153,7 @@ serve(async (req) => {
             const imageUrl = track?.album?.images?.[1]?.url || track?.album?.images?.[0]?.url || null;
             const previewUrl = track?.preview_url || null;
             const spotifyUrl = track?.external_urls?.spotify || null;
+            console.log(`[Spotify] "${s.title}" by ${s.artist}: artwork=${imageUrl ? "found" : "missing"}`);
             return { song: s, imageUrl, previewUrl, spotifyUrl };
           } catch {
             return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null };
@@ -134,12 +163,13 @@ serve(async (req) => {
         const results = await Promise.all(fetches);
 
         // For songs without Spotify artwork, try YouTube
-        const youtubePromises = results
-          .filter((r) => !r.imageUrl)
-          .map(async (r) => {
-            const ytThumb = await fetchYouTubeThumbnail(r.song.title, r.song.artist);
-            return { key: `${r.song.title}|||${r.song.artist}`, ytThumb };
-          });
+        const songsNeedingYt = results.filter((r) => !r.imageUrl);
+        console.log(`[YouTube] ${songsNeedingYt.length} songs need YouTube thumbnail fallback`);
+
+        const youtubePromises = songsNeedingYt.map(async (r) => {
+          const ytThumb = await fetchYouTubeThumbnail(r.song.title, r.song.artist);
+          return { key: `${r.song.title}|||${r.song.artist}`, ytThumb };
+        });
 
         const ytResults = await Promise.all(youtubePromises);
         const ytMap = new Map(ytResults.map((r) => [r.key, r.ytThumb]));
@@ -173,6 +203,7 @@ serve(async (req) => {
 
       // Handle previously cached songs that need YouTube thumbnails
       if (needsYoutube.length > 0) {
+        console.log(`[YouTube] ${needsYoutube.length} cached songs need YouTube thumbnail retry`);
         const ytFetches = needsYoutube.slice(0, 10).map(async ({ key, song }) => {
           const ytThumb = await fetchYouTubeThumbnail(song.title, song.artist);
           return { key, ytThumb };
