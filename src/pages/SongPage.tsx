@@ -51,7 +51,7 @@ const SongPage = () => {
         <ResultSection title="Related Artists" items={data.related_artists} />
       )}
       {data.why_these_work.length > 0 && (
-        <ResultSection title="💡 Why These Work" items={data.why_these_work} />
+        <ResultSection title="Why These Work" items={data.why_these_work} />
       )}
 
       <RelatedPages

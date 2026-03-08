@@ -91,7 +91,7 @@ const Index = () => {
       >
         <SEOHead
           title="SOUNDDNA – Discover Music With the Same Sonic DNA"
-          description="Find songs, artists, and moods that sound alike. AI-powered music discovery engine."
+          description="Find songs, artists, and moods with the same sonic DNA. AI-powered music discovery engine."
           path="/"
         />
 
