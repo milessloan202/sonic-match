@@ -217,9 +217,32 @@ const ResultCard = ({
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h3 className="font-medium text-foreground truncate">{title}</h3>
-              {subtitle && (
+              {subtitle && imageType === "song" && artist ? (
+                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                  <Link
+                    to={`/artists-like/${toSlug(artist)}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="hover:text-foreground hover:underline underline-offset-2 transition-colors"
+                  >
+                    {artist}
+                  </Link>
+                  {tag && (
+                    <>
+                      {" • "}
+                      <Link
+                        to={`/vibes/${toSlug(tag)}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="hover:text-foreground hover:underline underline-offset-2 transition-colors"
+                      >
+                        {tag}
+                      </Link>
+                    </>
+                  )}
+                  {year && <span> • {year}</span>}
+                </p>
+              ) : subtitle ? (
                 <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{subtitle}</p>
-              )}
+              ) : null}
             </div>
             <div className="flex items-center gap-2 shrink-0">
               {tag && (
