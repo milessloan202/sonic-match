@@ -239,7 +239,17 @@ relatedArtistLinks = 3 related artists with slugs
 title = SEO page title (under 60 chars)
 description = SEO meta description (under 160 chars)
 heading = page heading that feels natural, not keyword-stuffed
-ALL music data must be REAL — real artist names, real song titles, real release years. Never fabricate tracks.
+
+ACCURACY IS NON-NEGOTIABLE:
+- Every song MUST be a real, commercially released track that exists on major streaming platforms like Spotify.
+- Every artist MUST be a real artist with a verifiable discography.
+- Every release year MUST be accurate. Do not guess years.
+- If you are not fully confident a song exists as a released recording, DO NOT include it. Pick a different track you are certain about.
+- Never invent, fabricate, or confuse song titles. Do not combine parts of different song titles.
+- Do not recommend unreleased demos, live-only tracks, or bootlegs unless widely available on streaming platforms.
+- Prefer well-documented catalog tracks over obscure titles you are uncertain about.
+- Double-check: could a user search this exact "title" by this exact "artist" on Spotify and find it? If not, replace it.
+
 Return JSON only. No markdown, no code fences.`;
 
     const aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
