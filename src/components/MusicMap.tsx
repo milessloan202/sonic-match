@@ -23,7 +23,7 @@ interface MusicMapProps {
   sameEnergy?: { title: string; subtitle?: string }[];
   relatedArtists?: { title: string; subtitle?: string }[];
   relatedVibes?: RelatedLink[];
-  pageType: "song" | "artist" | "vibe";
+  pageType: "song" | "artist" | "producer" | "vibe";
 }
 
 const toSlug = (text: string) =>
