@@ -196,15 +196,16 @@ Evaluate candidates through these lenses:
 5. **Scene & lineage**: shared musical movements, influence chains, collaborator networks
 
 CRITICAL RULES:
-- For closestMatches (tracks BY the queried artist): do NOT just list their 5 biggest hits. Choose tracks that reveal different dimensions of their artistry — deep cuts, pivotal album tracks, overlooked gems alongside signature moments.
-- For sameEnergy (tracks by OTHER artists): maximum 1 track per artist. At least 2 should be genuinely surprising discoveries that reveal non-obvious connections.
+- NEVER include songs performed by ${displayName} in closestMatches or sameEnergy. Every recommended track MUST be by a DIFFERENT artist. The user already knows ${displayName}'s music — they want to discover similar music by OTHER artists.
+- Maximum 1 track per artist across all lists.
+- At least 2 picks per list should be genuinely surprising discoveries that reveal non-obvious connections.
 - For relatedArtists: go one level deeper than the streaming algorithm's top suggestions. Find artists who share specific sonic qualities, not just genre labels.
 
-closestMatches: 5 tracks BY ${displayName} that best map their sonic range. Include at least 2 non-singles or deeper cuts that reveal facets casual fans might miss.
+closestMatches: 5 tracks by OTHER artists (NOT ${displayName}) that most closely match ${displayName}'s sonic signature — production style, vocal approach, lyrical territory, and musical DNA. These should scratch the same itch as ${displayName}'s best work.
 
-sameEnergy: 5 tracks by OTHER artists that ${displayName} fans would love. Prioritize picks that illuminate unexpected connections — the shared bass tone, the parallel harmonic approach, the same spatial production quality.
+sameEnergy: 5 tracks by OTHER artists (NOT ${displayName}) that share the emotional and atmospheric DNA but arrive from different sonic territories — different decades, different genres, but the same underlying musical truth.
 
-relatedArtists: 3 artists with genuine sonic kinship. Avoid the most obvious first-result connections.
+relatedArtists: 3 artists with genuine sonic kinship to ${displayName}. Avoid the most obvious first-result connections.
 
 whyTheseWork: 2-3 sentences explaining what SPECIFIC musical qualities connect ${displayName} to these recommendations. Name the production techniques, harmonic tendencies, rhythmic approaches, or vocal qualities. Never use "similar vibe" or "same energy."
 
