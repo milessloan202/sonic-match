@@ -90,7 +90,7 @@ const Index = () => {
         className="relative z-10 w-full max-w-xl text-center space-y-8"
       >
         <SEOHead
-          title="SoundAlike – Discover Music With the Same Sonic DNA"
+          title="SOUNDDNA – Discover Music With the Same Sonic DNA"
           description="Find songs, artists, and moods that sound alike. AI-powered music discovery engine."
           path="/"
         />
