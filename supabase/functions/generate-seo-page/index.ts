@@ -12,9 +12,8 @@ const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 6;
 const generationTimestamps: number[] = [];
 
-function isRateLimited(): boolean {
+function isPerMinuteLimited(): boolean {
   const now = Date.now();
-  // Remove timestamps outside the window
   while (generationTimestamps.length > 0 && generationTimestamps[0] <= now - RATE_LIMIT_WINDOW_MS) {
     generationTimestamps.shift();
   }
@@ -23,6 +22,19 @@ function isRateLimited(): boolean {
 
 function recordGeneration(): void {
   generationTimestamps.push(Date.now());
+}
+
+// Daily limit: 500 new pages per day (DB-backed, survives cold starts)
+const DAILY_LIMIT = 500;
+
+async function isDailyLimited(supabase: any): Promise<boolean> {
+  const todayStart = new Date();
+  todayStart.setUTCHours(0, 0, 0, 0);
+  const { count } = await supabase
+    .from("seo_pages")
+    .select("id", { count: "exact", head: true })
+    .gte("created_at", todayStart.toISOString());
+  return (count ?? 0) >= DAILY_LIMIT;
 }
 
 serve(async (req) => {
