@@ -11,13 +11,18 @@ interface MapNode {
   color: string;
 }
 
+interface RelatedLink {
+  name: string;
+  slug: string;
+}
+
 interface MusicMapProps {
   centerLabel: string;
   centerSubtitle?: string;
   closestMatches?: { title: string; subtitle?: string }[];
   sameEnergy?: { title: string; subtitle?: string }[];
   relatedArtists?: { title: string; subtitle?: string }[];
-  relatedVibes?: { title: string; subtitle?: string }[];
+  relatedVibes?: RelatedLink[];
   pageType: "song" | "artist" | "vibe";
 }
 
