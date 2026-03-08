@@ -214,7 +214,7 @@ const ResultCard = ({
                   {tag}
                 </span>
               )}
-              {showPlay && <PlayButton title={title} meta={songMeta} />}
+              {showPlay && <PlayButton title={title} subtitle={subtitle} meta={songMeta} />}
             </div>
           </div>
         </div>
