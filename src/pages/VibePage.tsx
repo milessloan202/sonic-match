@@ -48,7 +48,7 @@ const VibePage = () => {
         <ResultSection title="Same Energy" items={data.same_energy} />
       )}
       {data.related_artists.length > 0 && (
-        <ResultSection title="🎤 Related Artists" items={data.related_artists} />
+        <ResultSection title="Related Artists" items={data.related_artists} />
       )}
       {data.why_these_work.length > 0 && (
         <ResultSection title="💡 Why These Work" items={data.why_these_work} />
