@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Disc3, User, Play, Pause } from "lucide-react";
@@ -44,35 +45,73 @@ function parseSubtitle(subtitle?: string) {
   return { artist: subtitle, year: "" };
 }
 
+const PlaceholderIcon = ({ isArtist, size, shape }: { isArtist: boolean; size: string; shape: string }) => (
+  <div
+    className={`${size} ${shape} shrink-0 bg-muted flex items-center justify-center text-muted-foreground`}
+  >
+    {isArtist ? <User className="w-5 h-5" /> : <Disc3 className="w-5 h-5" />}
+  </div>
+);
+
 const Thumbnail = ({
   url,
   type,
   alt,
+  songMeta,
 }: {
   url?: string | null;
   type?: "song" | "artist";
   alt: string;
+  songMeta?: SongMeta;
 }) => {
   const isArtist = type === "artist";
   const size = "w-12 h-12";
   const shape = isArtist ? "rounded-full" : "rounded-md";
 
-  if (url) {
-    return (
-      <img
-        src={url}
-        alt={alt}
-        loading="lazy"
-        className={`${size} ${shape} object-cover shrink-0 bg-muted`}
-      />
-    );
+  // Build fallback chain: Spotify artwork → YouTube thumbnail → null
+  const fallbackUrls: string[] = [];
+  if (url) fallbackUrls.push(url);
+  if (songMeta?.youtube_thumbnail_url && songMeta.youtube_thumbnail_url !== url) {
+    fallbackUrls.push(songMeta.youtube_thumbnail_url);
+  }
+  if (songMeta?.image_url && songMeta.image_url !== url && !fallbackUrls.includes(songMeta.image_url)) {
+    fallbackUrls.unshift(songMeta.image_url);
+  }
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [loaded, setLoaded] = useState(false);
+
+  const currentUrl = fallbackUrls[currentIndex] || null;
+
+  const handleError = () => {
+    console.warn(`[Thumbnail] Image failed to load for "${alt}": ${currentUrl}`);
+    if (currentIndex < fallbackUrls.length - 1) {
+      setCurrentIndex((i) => i + 1);
+      setLoaded(false);
+    } else {
+      setCurrentIndex(fallbackUrls.length); // force placeholder
+    }
+  };
+
+  if (!currentUrl || currentIndex >= fallbackUrls.length) {
+    return <PlaceholderIcon isArtist={isArtist} size={size} shape={shape} />;
   }
 
   return (
-    <div
-      className={`${size} ${shape} shrink-0 bg-muted flex items-center justify-center text-muted-foreground`}
-    >
-      {isArtist ? <User className="w-5 h-5" /> : <Disc3 className="w-5 h-5" />}
+    <div className={`${size} ${shape} shrink-0 relative overflow-hidden bg-muted`}>
+      {!loaded && (
+        <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
+          {isArtist ? <User className="w-5 h-5" /> : <Disc3 className="w-5 h-5" />}
+        </div>
+      )}
+      <img
+        src={currentUrl}
+        alt={alt}
+        loading="lazy"
+        onLoad={() => setLoaded(true)}
+        onError={handleError}
+        className={`w-full h-full object-cover transition-opacity duration-200 ${loaded ? "opacity-100" : "opacity-0"}`}
+      />
     </div>
   );
 };
@@ -212,7 +251,7 @@ const ResultCard = ({
       }`}
     >
       <div className="flex items-center gap-3">
-        {showImage && <Thumbnail url={imageUrl} type={imageType} alt={title} />}
+        {showImage && <Thumbnail url={imageUrl} type={imageType} alt={title} songMeta={songMeta} />}
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">

@@ -197,17 +197,22 @@ serve(async (req) => {
         const ytResults = await Promise.all(youtubePromises);
         const ytMap = new Map(ytResults.map((r) => [r.key, r.ytThumb]));
 
-        const toInsert = results.map((r) => {
-          const key = `${r.song.title}|||${r.song.artist}`;
-          return {
-            name: r.song.title,
-            artist: r.song.artist,
-            image_url: r.imageUrl,
-            preview_url: r.previewUrl,
-            spotify_url: r.spotifyUrl,
-            youtube_thumbnail_url: ytMap.get(key) || null,
-          };
-        });
+        const toInsert = results
+          .filter((r) => {
+            // Only cache if we have at least one valid piece of metadata
+            return r.imageUrl || r.previewUrl || r.spotifyUrl || ytMap.get(`${r.song.title}|||${r.song.artist}`);
+          })
+          .map((r) => {
+            const key = `${r.song.title}|||${r.song.artist}`;
+            return {
+              name: r.song.title,
+              artist: r.song.artist,
+              image_url: r.imageUrl || null,
+              preview_url: r.previewUrl || null,
+              spotify_url: r.spotifyUrl || null,
+              youtube_thumbnail_url: ytMap.get(key) || null,
+            };
+          });
 
         if (toInsert.length > 0) {
           await supabase.from("song_image_cache").upsert(toInsert, { onConflict: "name,artist" });
