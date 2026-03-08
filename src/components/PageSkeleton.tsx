@@ -25,7 +25,7 @@ const RotatingMessage = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setIndex((prev) => (prev + 1) % LOADING_MESSAGES.length);
-    }, 2500);
+    }, 8000);
     return () => clearInterval(interval);
   }, []);
 
