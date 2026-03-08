@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Disc3, User, Play, Pause, ExternalLink } from "lucide-react";
+import { Disc3, User, Play, Pause } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
