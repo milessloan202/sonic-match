@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import ResultCard from "./ResultCard";
-import type { SongMetaMap } from "@/hooks/useSpotifyImages";
+import type { SongMeta, SongMetaMap } from "@/hooks/useSpotifyImages";
 
 interface ResultSectionProps {
   title: string;
@@ -9,14 +9,8 @@ interface ResultSectionProps {
   imageType?: "song" | "artist";
   images?: Record<string, string | null>;
   songMetaMap?: SongMetaMap;
-  variant?: "default" | "explanation" | "card";
+  variant?: "default" | "explanation";
 }
-
-const gridClass: Record<string, string> = {
-  default: "grid gap-3 sm:grid-cols-2",
-  card: "grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4",
-  explanation: "space-y-2",
-};
 
 const ResultSection = ({ title, items, linkPrefix, imageType, images, songMetaMap, variant = "default" }: ResultSectionProps) => {
   return (
@@ -28,14 +22,14 @@ const ResultSection = ({ title, items, linkPrefix, imageType, images, songMetaMa
       >
         {title}
       </motion.h2>
-      <div className={gridClass[variant] || gridClass.default}>
+      <div className={variant === "explanation" ? "space-y-2" : "grid gap-3 sm:grid-cols-2"}>
         {items.map((item, i) => (
           <ResultCard
             key={item.title + i}
             {...item}
             index={i}
             linkPrefix={linkPrefix}
-            variant={variant === "explanation" ? "explanation" : variant}
+            variant={variant}
             imageType={variant === "explanation" ? undefined : imageType}
             imageUrl={images?.[item.title] ?? undefined}
             songMeta={songMetaMap?.[item.title]}

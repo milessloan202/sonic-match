@@ -7,7 +7,7 @@ import RelatedPages from "../components/RelatedPages";
 import SEOHead from "../components/SEOHead";
 import PageSkeleton from "../components/PageSkeleton";
 import DiscoveryPath from "../components/DiscoveryPath";
-import ViewToggle, { type ViewMode } from "../components/ViewToggle";
+import ViewToggle from "../components/ViewToggle";
 import MusicMap from "../components/MusicMap";
 import { useSeoPage } from "../hooks/useSeoPage";
 import { useDiscoveryPath } from "../hooks/useDiscoveryPath";
@@ -20,7 +20,7 @@ const SongPage = () => {
   const { data, loading, generating, error } = useSeoPage(slug, "song");
   const displayName = data?.heading?.replace(/^Songs Like\s*/i, "") || slug || "";
   const discoverySteps = useDiscoveryPath(displayName, location.pathname);
-  const [view, setView] = useState<ViewMode>("list");
+  const [view, setView] = useState<"list" | "map">("list");
   const isMobile = useIsMobile();
 
   const allSongs = [...(data?.closest_matches || []), ...(data?.same_energy || [])];
@@ -68,13 +68,13 @@ const SongPage = () => {
       ) : (
         <>
           {data.closest_matches.length > 0 && (
-            <ResultSection title="Closest Matches" items={data.closest_matches} linkPrefix="/songs-like" imageType="song" images={songImages} songMetaMap={songMeta} variant={activeView === "cards" ? "card" : "default"} />
+            <ResultSection title="Closest Matches" items={data.closest_matches} linkPrefix="/songs-like" imageType="song" images={songImages} songMetaMap={songMeta} />
           )}
           {data.same_energy.length > 0 && (
-            <ResultSection title="Same Energy" items={data.same_energy} linkPrefix="/songs-like" imageType="song" images={songImages} songMetaMap={songMeta} variant={activeView === "cards" ? "card" : "default"} />
+            <ResultSection title="Same Energy" items={data.same_energy} linkPrefix="/songs-like" imageType="song" images={songImages} songMetaMap={songMeta} />
           )}
           {data.related_artists.length > 0 && (
-            <ResultSection title="Related Artists" items={data.related_artists} linkPrefix="/artists-like" imageType="artist" images={artistImages} variant={activeView === "cards" ? "card" : "default"} />
+            <ResultSection title="Related Artists" items={data.related_artists} linkPrefix="/artists-like" imageType="artist" images={artistImages} />
           )}
           {data.why_these_work.length > 0 && (
             <ResultSection title="Why These Work" items={data.why_these_work} variant="explanation" />
