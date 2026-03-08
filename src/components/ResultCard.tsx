@@ -95,9 +95,9 @@ const PlayButton = ({ title, subtitle, meta }: { title: string; subtitle?: strin
             e.stopPropagation();
             window.open(meta.spotify_url!, "_blank", "noopener,noreferrer");
           }}
-          className="shrink-0 flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary transition-colors"
+          className="shrink-0 flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-[#1DB954] transition-colors"
         >
-          <ExternalLink className="w-3 h-3" />
+          <SpotifyIcon className="w-3.5 h-3.5" />
           <span>Open in Spotify</span>
         </button>
       );
