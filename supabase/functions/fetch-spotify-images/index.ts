@@ -118,7 +118,7 @@ serve(async (req) => {
         }
 
         for (const r of results) {
-          songResults[`${r.song.title}|||${r.song.artist}`] = r.imageUrl;
+          songResults[`${r.song.title}|||${r.song.artist}`] = { image_url: r.imageUrl, preview_url: r.previewUrl, spotify_url: r.spotifyUrl };
         }
       }
     }
