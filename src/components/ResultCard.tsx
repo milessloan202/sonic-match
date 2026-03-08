@@ -65,14 +65,16 @@ const Thumbnail = ({
   );
 };
 
-const PlayButton = ({ title, meta }: { title: string; meta?: SongMeta }) => {
+const PlayButton = ({ title, subtitle, meta }: { title: string; subtitle?: string; meta?: SongMeta }) => {
   const { currentTrack, isPlaying, progress, toggle } = useAudio();
   const trackId = title;
   const isActive = currentTrack === trackId && isPlaying;
   const showProgress = currentTrack === trackId;
 
+  const artist = subtitle ? subtitle.replace(/\s*\(\d{4}\)\s*$/, "").trim() : "";
+  const youtubeUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(`${title} ${artist}`.trim())}`;
+
   if (!meta?.preview_url) {
-    // No preview — show spotify link or "No preview"
     if (meta?.spotify_url) {
       return (
         <a
@@ -83,14 +85,21 @@ const PlayButton = ({ title, meta }: { title: string; meta?: SongMeta }) => {
           className="shrink-0 flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary transition-colors"
         >
           <ExternalLink className="w-3 h-3" />
-          <span>Spotify</span>
+          <span>Open in Spotify</span>
         </a>
       );
     }
     return (
-      <span className="shrink-0 text-[10px] text-muted-foreground/50 italic">
-        No preview
-      </span>
+      <a
+        href={youtubeUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}
+        className="shrink-0 flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary transition-colors"
+      >
+        <ExternalLink className="w-3 h-3" />
+        <span>Watch on YouTube</span>
+      </a>
     );
   }
 
@@ -205,7 +214,7 @@ const ResultCard = ({
                   {tag}
                 </span>
               )}
-              {showPlay && <PlayButton title={title} meta={songMeta} />}
+              {showPlay && <PlayButton title={title} subtitle={subtitle} meta={songMeta} />}
             </div>
           </div>
         </div>
