@@ -335,7 +335,7 @@ relatedVibes = 3 related vibes with slugs (lowercase-hyphenated, descriptive phr
 relatedArtistLinks = 3 related artists with slugs
 title = SEO page title (under 60 chars)
 description = SEO meta description (under 160 chars)
-heading = page heading that feels natural, not keyword-stuffed
+heading = page heading that feels natural, not keyword-stuffed. For artist pages, use the format "Songs Similar to {Artist Name}" (e.g. "Songs Similar to Joe Budden").
 
 ACCURACY RULES (CRITICAL — follow strictly):
 - Only recommend songs and artists you are reasonably confident are real and commercially released. If you are uncertain whether a song exists, do NOT include it — choose a different recommendation that is more likely to exist in major music catalogs.
