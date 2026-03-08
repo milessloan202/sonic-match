@@ -66,8 +66,8 @@ serve(async (req) => {
         .from("song_image_cache")
         .select("name, artist, image_url, preview_url, spotify_url");
 
-      const cachedMap = new Map<string, string | null>();
-      (cached || []).forEach((r: any) => cachedMap.set(`${r.name}|||${r.artist}`, r.image_url));
+      const cachedMap = new Map<string, { image_url: string | null; preview_url: string | null; spotify_url: string | null }>();
+      (cached || []).forEach((r: any) => cachedMap.set(`${r.name}|||${r.artist}`, { image_url: r.image_url, preview_url: r.preview_url, spotify_url: r.spotify_url }));
 
       const uncached: SongQuery[] = [];
       for (const s of songs) {
