@@ -4,9 +4,10 @@ import ResultCard from "./ResultCard";
 interface ResultSectionProps {
   title: string;
   items: { title: string; subtitle?: string; tag?: string }[];
+  linkPrefix?: string;
 }
 
-const ResultSection = ({ title, items }: ResultSectionProps) => {
+const ResultSection = ({ title, items, linkPrefix }: ResultSectionProps) => {
   return (
     <section className="space-y-4">
       <motion.h2
@@ -18,7 +19,7 @@ const ResultSection = ({ title, items }: ResultSectionProps) => {
       </motion.h2>
       <div className="grid gap-3 sm:grid-cols-2">
         {items.map((item, i) => (
-          <ResultCard key={item.title} {...item} index={i} />
+          <ResultCard key={item.title} {...item} index={i} linkPrefix={linkPrefix} />
         ))}
       </div>
     </section>
