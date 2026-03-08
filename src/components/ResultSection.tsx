@@ -5,7 +5,7 @@ import { songKey } from "@/hooks/useSpotifyImages";
 
 interface ResultSectionProps {
   title: string;
-  items: { title: string; subtitle?: string; tag?: string }[];
+  items: { title: string; subtitle?: string; tag?: string; spotify_id?: string | null }[];
   linkPrefix?: string;
   imageType?: "song" | "artist";
   images?: Record<string, string | null>;
