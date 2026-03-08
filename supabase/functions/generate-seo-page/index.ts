@@ -42,18 +42,81 @@ serve(async (req) => {
 
     const displayName = slug.replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
 
-    const typeLabels: Record<string, string> = {
-      song: "song",
-      artist: "artist",
-      vibe: "vibe/mood",
+    const songPrompt = `You are an expert music curator with deep knowledge of production techniques, sonic textures, harmonic language, and emotional resonance.
+
+User is looking for songs similar to: "${displayName}"
+
+Your task: recommend songs that share GENUINE MUSICAL DNA with the query — not just the same genre or era. Consider:
+- **Production style**: recording techniques, mix aesthetics (lo-fi, polished, layered, sparse)
+- **Instrumentation & arrangement**: specific instrument choices, how they interact, textural palette
+- **Harmonic & melodic language**: chord progressions, key choices, melodic contour, vocal style
+- **Rhythmic feel & groove**: tempo, swing, syncopation, drum patterns
+- **Emotional arc**: tension/release, dynamics, mood progression through the song
+- **Sonic lineage**: what musical tradition or movement this song belongs to
+
+closestMatches: 5 songs that a fan would immediately recognize as sonically kindred — they scratch the same itch. Prioritize deep cuts and unexpected connections over obvious same-artist picks.
+
+sameEnergy: 5 songs that share the emotional frequency and atmosphere but may come from different genres or eras. These should feel like surprising-but-perfect pairings.
+
+relatedArtists: 3 artists whose overall catalog overlaps most with the sonic world of this song.
+
+whyTheseWork: 2-3 sentences explaining the specific sonic thread connecting these recommendations (reference production, instrumentation, or harmonic qualities — not just "similar vibes").
+
+summary: A 2-3 sentence description of the song's musical character — what makes it sonically distinctive and what kind of listener it appeals to.`;
+
+    const artistPrompt = `You are an expert music curator with deep knowledge of artist discographies, production evolution, and musical lineages.
+
+User is looking for artists similar to: "${displayName}"
+
+Your task: recommend artists who share genuine musical DNA — not just genre labels. Consider:
+- **Sonic palette**: characteristic production choices, timbral signatures
+- **Songwriting approach**: lyrical themes, structural tendencies, harmonic vocabulary
+- **Vocal/performance style**: delivery, range usage, emotive qualities
+- **Artistic trajectory**: how their sound has evolved, which era is most relevant
+- **Cultural/scene connections**: shared movements, influences, collaborators
+
+closestMatches: 5 representative tracks BY the queried artist that best showcase their range and appeal. Pick tracks that reveal different facets — not just the biggest hits.
+
+sameEnergy: 5 tracks by OTHER artists that fans of ${displayName} would love. Prioritize artists who share specific sonic qualities over generic genre matches. Include at least 2 picks that would be genuinely surprising discoveries.
+
+relatedArtists: 3 artists whose catalogs most overlap sonically. Avoid the most obvious/mainstream connections — go one level deeper.
+
+whyTheseWork: 2-3 sentences explaining what specific musical qualities connect ${displayName} to these recommendations (production approach, harmonic language, thematic territory).
+
+summary: A 2-3 sentence description of ${displayName}'s sonic identity — what makes them distinctive and where they sit in the musical landscape.`;
+
+    const vibePrompt = `You are an expert music curator who understands that "vibes" are specific sonic atmospheres, not genre labels.
+
+User is searching for music that matches: "${displayName}"
+
+Interpret this as a complete sensory/emotional atmosphere. Consider:
+- **Sonic environment**: What does this space sound like? (reverb-drenched, intimate/dry, cavernous, warm analog, digital shimmer)
+- **Temporal quality**: Time of day, season, pace of life this evokes
+- **Emotional texture**: Not just "happy/sad" — the specific shade (wistful nostalgia vs. aching loss, nervous excitement vs. euphoric abandon)
+- **Physical sensation**: Temperature, movement, light quality this music suggests
+- **Production aesthetic**: Lo-fi warmth, crisp modern production, vintage recording, bedroom intimacy
+
+closestMatches: 5 songs that ARE this vibe — the definitive soundtrack. These should feel inevitable, not generic. Avoid the most overplayed choices; find the songs that truly embody the atmosphere.
+
+sameEnergy: 5 songs that approach this same emotional space from unexpected angles — different genres or eras but the same atmospheric truth.
+
+relatedArtists: 3 artists whose catalogs consistently live in or near this sonic world.
+
+whyTheseWork: 2-3 sentences describing the specific sonic qualities that create this vibe (instrumentation, production techniques, tempo, harmonic mood — be concrete).
+
+summary: A 2-3 sentence evocation of this vibe as a musical atmosphere — what it sounds like, feels like, and when you'd reach for it.`;
+
+    const promptByType: Record<string, string> = {
+      song: songPrompt,
+      artist: artistPrompt,
+      vibe: vibePrompt,
     };
 
-    const prompt = `You are a music discovery engine.
+    const basePrompt = promptByType[page_type] || songPrompt;
 
-User query: ${displayName}
-Search type: ${typeLabels[page_type] || page_type}
+    const prompt = `${basePrompt}
 
-Return ONLY JSON:
+Return ONLY this JSON structure:
 {
   "title": "",
   "description": "",
@@ -73,15 +136,16 @@ Return ONLY JSON:
 }
 
 Rules:
-closestMatches = exactly 5 songs
-sameEnergy = exactly 5 songs
+closestMatches = exactly 5 songs (real tracks, real years)
+sameEnergy = exactly 5 songs (real tracks, real years)
 relatedArtists = exactly 3 artists
 relatedSongs = 4 related songs with slugs (lowercase-hyphenated)
-relatedVibes = 3 related vibes with slugs
+relatedVibes = 3 related vibes with slugs (lowercase-hyphenated, descriptive phrases)
 relatedArtistLinks = 3 related artists with slugs
 title = SEO page title (under 60 chars)
 description = SEO meta description (under 160 chars)
-Use REAL music data - real artist names, real song names, real genres.
+heading = page heading that feels natural, not keyword-stuffed
+ALL music data must be REAL — real artist names, real song titles, real release years. Never fabricate tracks.
 Return JSON only. No markdown, no code fences.`;
 
     const aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
