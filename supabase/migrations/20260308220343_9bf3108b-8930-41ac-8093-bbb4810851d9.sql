@@ -1,0 +1,2 @@
+ALTER TABLE public.seo_pages DROP CONSTRAINT seo_pages_page_type_check;
+ALTER TABLE public.seo_pages ADD CONSTRAINT seo_pages_page_type_check CHECK (page_type = ANY (ARRAY['song'::text, 'artist'::text, 'producer'::text, 'vibe'::text]));
