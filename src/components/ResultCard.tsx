@@ -109,9 +109,9 @@ const PlayButton = ({ title, subtitle, meta }: { title: string; subtitle?: strin
           e.stopPropagation();
           window.open(youtubeUrl, "_blank", "noopener,noreferrer");
         }}
-        className="shrink-0 flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary transition-colors"
+        className="shrink-0 flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-[#FF0000] transition-colors"
       >
-        <ExternalLink className="w-3 h-3" />
+        <YouTubeIcon className="w-3.5 h-3.5" />
         <span>Watch on YouTube</span>
       </button>
     );
