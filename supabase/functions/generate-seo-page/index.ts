@@ -67,10 +67,17 @@ serve(async (req) => {
       });
     }
 
-    // Rate limit only applies to new AI generations
-    if (isRateLimited()) {
+    // Rate limits only apply to new AI generations
+    if (isPerMinuteLimited()) {
       return new Response(
         JSON.stringify({ error: "Page generation is temporarily busy, please try again in a moment." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (await isDailyLimited(supabase)) {
+      return new Response(
+        JSON.stringify({ error: "Daily page generation limit reached (500/day). Please try again tomorrow." }),
         { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
