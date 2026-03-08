@@ -86,7 +86,7 @@ serve(async (req) => {
     await new Promise((r) => setTimeout(r, 1100));
 
     // Fetch recording relationships
-    const relUrl = `${MB_BASE}/recording/${mbid}?inc=artist-credits+recording-rels&fmt=json`;
+    const relUrl = `${MB_BASE}/recording/${mbid}?inc=artist-credits+recording-rels+work-rels&fmt=json`;
     const relData = await mbFetch(relUrl);
 
     // Look for "samples material" relationships
