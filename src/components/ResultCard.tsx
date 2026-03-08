@@ -93,7 +93,7 @@ const PlayButton = ({ title, subtitle, meta }: { title: string; subtitle?: strin
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            window.open(meta.spotify_url!, "_blank", "noopener,noreferrer");
+            window.open(meta.spotify_url!, "_blank");
           }}
           className="shrink-0 flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-[#1DB954] transition-colors"
         >
@@ -104,17 +104,17 @@ const PlayButton = ({ title, subtitle, meta }: { title: string; subtitle?: strin
     }
     return (
       <button
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          window.open(youtubeUrl, "_blank", "noopener,noreferrer");
-        }}
-        className="shrink-0 flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-[#FF0000] transition-colors"
-      >
-        <YouTubeIcon className="w-3.5 h-3.5" />
-        <span>Watch on YouTube</span>
-      </button>
-    );
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            window.open(youtubeUrl, "_blank");
+          }}
+          className="shrink-0 flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-[#FF0000] transition-colors"
+        >
+          <YouTubeIcon className="w-3.5 h-3.5" />
+          <span>Watch on YouTube</span>
+        </button>
+      );
   }
 
   return (
@@ -164,7 +164,7 @@ const PlayButton = ({ title, subtitle, meta }: { title: string; subtitle?: strin
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            window.open(meta.spotify_url!, "_blank", "noopener,noreferrer");
+            window.open(meta.spotify_url!, "_blank");
           }}
           className="flex items-center gap-1 text-[9px] text-muted-foreground/60 hover:text-[#1DB954] transition-colors"
         >
