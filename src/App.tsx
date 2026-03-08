@@ -8,6 +8,7 @@ import { AudioProvider } from "@/contexts/AudioContext";
 import Index from "./pages/Index";
 import SongPage from "./pages/SongPage";
 import ArtistPage from "./pages/ArtistPage";
+import ProducerPage from "./pages/ProducerPage";
 import VibePage from "./pages/VibePage";
 import NotFound from "./pages/NotFound";
 
@@ -25,6 +26,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/songs-like/:slug" element={<SongPage />} />
               <Route path="/artists-like/:slug" element={<ArtistPage />} />
+              <Route path="/producers-like/:slug" element={<ProducerPage />} />
               <Route path="/vibes/:slug" element={<VibePage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 
-type SearchMode = "song" | "artist" | "vibe";
+type SearchMode = "song" | "artist" | "producer" | "vibe";
 
 interface SegmentedSelectorProps {
   value: SearchMode;
@@ -11,6 +11,7 @@ interface SegmentedSelectorProps {
 const options: { value: SearchMode; label: string }[] = [
   { value: "song", label: "Song" },
   { value: "artist", label: "Artist" },
+  { value: "producer", label: "Producer" },
   { value: "vibe", label: "Vibe" },
 ];
 

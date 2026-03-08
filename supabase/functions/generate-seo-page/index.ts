@@ -177,9 +177,39 @@ whyTheseWork: 2-3 sentences describing the SPECIFIC sonic qualities that create 
 
 summary: A 2-3 sentence evocation of this vibe as a musical atmosphere — what it sounds like, what it feels like physically, and the precise moment you'd reach for it.`;
 
+    const producerPrompt = `You are a world-class music curator — part crate-digger, part studio engineer, part the best A&R executive alive. You think in terms of production DNA: how a producer's sonic fingerprint — their drum programming, synth choices, mixing approach, sampling philosophy, and arrangement instincts — connects tracks across genres and decades.
+
+User is looking for producers similar to: "${displayName}"
+
+Your mission: map the production universe surrounding this producer. Not "related producers" from a streaming algorithm — genuine sonic and technical kinship based on production approach.
+
+Evaluate candidates through these lenses:
+1. **Production signature**: characteristic drum sounds, synth textures, mixing approach, use of space and dynamics
+2. **Arrangement philosophy**: how they build a track, layering approach, use of silence, structural tendencies
+3. **Sonic palette**: preferred instruments, samples, timbral choices, frequency emphasis
+4. **Recording aesthetic**: analog vs. digital, lo-fi vs. polished, live vs. programmed, spatial characteristics
+5. **Genre fluency**: ability to work across styles, how their signature translates between genres
+
+CRITICAL RULES:
+- For closestMatches (tracks produced by the queried producer): choose tracks that showcase different dimensions of their production style. Include deep cuts alongside signature productions.
+- For sameEnergy (tracks by OTHER producers): maximum 1 track per producer. Find tracks where the production approach shares genuine DNA with the queried producer.
+- For relatedArtists (actually related PRODUCERS): recommend producers, not performing artists. Go one level deeper than the obvious choices.
+- Only recommend songs and artists you are reasonably confident are real and commercially released.
+
+closestMatches: 5 tracks produced by or heavily associated with ${displayName} that best showcase their production range. Include at least 2 lesser-known productions.
+
+sameEnergy: 5 tracks by OTHER producers that share production DNA with ${displayName}'s style — similar drum programming, mixing approach, sonic textures, or arrangement philosophy.
+
+relatedArtists: 3 producers (NOT performing artists) with genuine production kinship. Avoid the most obvious first-result connections.
+
+whyTheseWork: 2-3 sentences explaining the SPECIFIC production techniques, sonic choices, and studio approaches that connect ${displayName} to these recommendations. Name the drum sounds, synth textures, mixing techniques, or sampling approaches.
+
+summary: A 2-3 sentence description of ${displayName}'s production identity — their sonic fingerprint, signature techniques, and what makes their productions immediately recognizable.`;
+
     const promptByType: Record<string, string> = {
       song: songPrompt,
       artist: artistPrompt,
+      producer: producerPrompt,
       vibe: vibePrompt,
     };
 
