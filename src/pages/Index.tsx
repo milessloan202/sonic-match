@@ -191,6 +191,36 @@ const Index = () => {
           </div>
         </motion.div>
       )}
+
+      {!loading && !error && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="relative z-10 w-full max-w-2xl mt-16 space-y-6"
+        >
+          <h2 className="text-center text-lg font-semibold text-muted-foreground">Try Exploring</h2>
+
+          {([
+            { label: "Songs", prefix: "/songs-like", items: ["Midnight City", "Blinding Lights", "Electric Feel", "Dreams"] },
+            { label: "Artists", prefix: "/artists-like", items: ["Frank Ocean", "Sade", "Daft Punk", "Stevie Wonder"] },
+            { label: "Vibes", prefix: "/vibes", items: ["Late Night Driving", "Rainy Jazz", "Summer Nostalgia", "Neon City Pop"] },
+          ] as const).map((group) => (
+            <div key={group.label} className="space-y-2">
+              <p className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wider text-center">{group.label}</p>
+              <div className="flex flex-wrap justify-center gap-2">
+                {group.items.map((item) => (
+                  <SearchChip
+                    key={item}
+                    label={item}
+                    onClick={() => navigate(`${group.prefix}/${slugify(item)}`)}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </motion.div>
+      )}
     </div>
   );
 };
