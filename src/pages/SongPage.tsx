@@ -1,15 +1,20 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import ResultSection from "../components/ResultSection";
 import RelatedPages from "../components/RelatedPages";
 import SEOHead from "../components/SEOHead";
 import PageSkeleton from "../components/PageSkeleton";
+import DiscoveryPath from "../components/DiscoveryPath";
 import { useSeoPage } from "../hooks/useSeoPage";
+import { useDiscoveryPath } from "../hooks/useDiscoveryPath";
 
 const SongPage = () => {
   const { slug } = useParams<{ slug: string }>();
+  const location = useLocation();
   const { data, loading, generating, error } = useSeoPage(slug, "song");
+  const displayName = data?.heading?.replace(/^Songs Like\s*/i, "") || slug || "";
+  const discoverySteps = useDiscoveryPath(displayName, location.pathname);
 
   if (loading) return <PageSkeleton generating={generating} />;
 
@@ -33,6 +38,7 @@ const SongPage = () => {
         description={data.meta_description || undefined}
         path={`/songs-like/${slug}`}
       />
+      <DiscoveryPath steps={discoverySteps} />
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
         <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="w-4 h-4" /> Back

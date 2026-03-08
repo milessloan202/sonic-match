@@ -6,6 +6,7 @@ import SegmentedSelector, { type SearchMode } from "../components/SegmentedSelec
 import SearchChip from "../components/SearchChip";
 import SEOHead from "../components/SEOHead";
 import { supabase } from "@/integrations/supabase/client";
+import { clearDiscoveryPath } from "../hooks/useDiscoveryPath";
 
 const exampleChips: Record<SearchMode, string[]> = {
   song: ["Redbone – Childish Gambino", "Ivy – Frank Ocean", "Electric Feel – MGMT"],
@@ -32,6 +33,8 @@ const Index = () => {
   const performSearch = async (q: string, searchMode: SearchMode) => {
     const trimmed = q.trim();
     if (!trimmed) return;
+
+    clearDiscoveryPath();
 
     const slug = slugify(trimmed);
     setLoading(true);
