@@ -73,7 +73,8 @@ serve(async (req) => {
       for (const s of songs) {
         const key = `${s.title}|||${s.artist}`;
         if (cachedMap.has(key)) {
-          songResults[key] = cachedMap.get(key)!;
+          const c = cachedMap.get(key)!;
+          songResults[key] = { image_url: c.image_url, preview_url: c.preview_url, spotify_url: c.spotify_url };
         } else {
           uncached.push(s);
         }
