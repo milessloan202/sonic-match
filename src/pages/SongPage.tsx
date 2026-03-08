@@ -13,6 +13,8 @@ import { useSeoPage } from "../hooks/useSeoPage";
 import { useDiscoveryPath } from "../hooks/useDiscoveryPath";
 import { useSpotifyImages } from "../hooks/useSpotifyImages";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useSampleData } from "@/hooks/useSampleData";
+import SampleInfo from "@/components/SampleInfo";
 
 const SongPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -22,6 +24,13 @@ const SongPage = () => {
   const discoverySteps = useDiscoveryPath(displayName, location.pathname);
   const [view, setView] = useState<"list" | "map">("list");
   const isMobile = useIsMobile();
+
+  // Extract song title and artist for sample lookup
+  // The displayName may contain "Song — Artist" or just the title
+  const songParts = displayName.split(/\s[–—-]\s/);
+  const songTitleForSample = songParts[0] || undefined;
+  const artistForSample = songParts[1] || data?.closest_matches?.[0]?.subtitle?.replace(/^by\s+/i, "") || undefined;
+  const { sample } = useSampleData(songTitleForSample, artistForSample);
 
   const allSongs = [...(data?.closest_matches || []), ...(data?.same_energy || [])];
   const { songImages, songMeta, artistImages } = useSpotifyImages(allSongs, data?.related_artists || []);
@@ -55,6 +64,8 @@ const SongPage = () => {
         <h1 className="text-3xl sm:text-4xl font-bold text-foreground">{data.heading}</h1>
         {data.summary && <p className="text-muted-foreground">{data.summary}</p>}
       </motion.div>
+
+      {sample && <SampleInfo sample={sample} />}
 
       {activeView === "map" ? (
         <MusicMap
