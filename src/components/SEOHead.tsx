@@ -7,7 +7,7 @@ interface SEOHeadProps {
 }
 
 const SEOHead = ({ title, description, path }: SEOHeadProps) => {
-  const url = path ? `https://soundalike.app${path}` : undefined;
+  const url = path ? `https://sounddna.app${path}` : undefined;
 
   return (
     <Helmet>
