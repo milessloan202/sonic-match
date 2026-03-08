@@ -14,6 +14,7 @@ interface ResultCardProps {
   tag?: string;
   index?: number;
   linkPrefix?: string;
+  variant?: "default" | "explanation";
   imageUrl?: string | null;
   imageType?: "song" | "artist";
 }
@@ -68,11 +69,25 @@ const ResultCard = ({
   tag,
   index = 0,
   linkPrefix,
+  variant = "default",
   imageUrl,
   imageType,
 }: ResultCardProps) => {
   const { artist, year } = parseSubtitle(subtitle);
   const showImage = imageType === "song" || imageType === "artist";
+
+  // Explanation variant: just render the text as a paragraph, no card chrome
+  if (variant === "explanation") {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.05, duration: 0.3 }}
+      >
+        <p className="text-sm text-muted-foreground leading-relaxed">{subtitle}</p>
+      </motion.div>
+    );
+  }
 
   const cardContent = (
     <motion.div

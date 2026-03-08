@@ -7,9 +7,10 @@ interface ResultSectionProps {
   linkPrefix?: string;
   imageType?: "song" | "artist";
   images?: Record<string, string | null>;
+  variant?: "default" | "explanation";
 }
 
-const ResultSection = ({ title, items, linkPrefix, imageType, images }: ResultSectionProps) => {
+const ResultSection = ({ title, items, linkPrefix, imageType, images, variant = "default" }: ResultSectionProps) => {
   return (
     <section className="space-y-4">
       <motion.h2
@@ -19,14 +20,15 @@ const ResultSection = ({ title, items, linkPrefix, imageType, images }: ResultSe
       >
         {title}
       </motion.h2>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className={variant === "explanation" ? "space-y-2" : "grid gap-3 sm:grid-cols-2"}>
         {items.map((item, i) => (
           <ResultCard
-            key={item.title}
+            key={item.title + i}
             {...item}
             index={i}
             linkPrefix={linkPrefix}
-            imageType={imageType}
+            variant={variant}
+            imageType={variant === "explanation" ? undefined : imageType}
             imageUrl={images?.[item.title] ?? undefined}
           />
         ))}
