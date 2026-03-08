@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      artist_image_cache: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string | null
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name?: string
+        }
+        Relationships: []
+      }
       seo_pages: {
         Row: {
           closest_matches: Json | null
@@ -71,6 +92,30 @@ export type Database = {
           title?: string
           updated_at?: string
           why_these_work?: Json | null
+        }
+        Relationships: []
+      }
+      song_image_cache: {
+        Row: {
+          artist: string
+          created_at: string
+          id: string
+          image_url: string | null
+          name: string
+        }
+        Insert: {
+          artist: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name: string
+        }
+        Update: {
+          artist?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name?: string
         }
         Relationships: []
       }
