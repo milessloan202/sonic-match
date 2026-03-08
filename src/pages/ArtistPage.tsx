@@ -18,7 +18,7 @@ const ArtistPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
   const { data, loading, generating, error } = useSeoPage(slug, "artist");
-  const displayName = data?.heading?.replace(/^Artists Like\s*/i, "") || slug || "";
+  const displayName = data?.heading?.replace(/^(Songs Similar to|Artists Like)\s*/i, "") || slug || "";
   const discoverySteps = useDiscoveryPath(displayName, location.pathname);
   const [view, setView] = useState<"list" | "map">("list");
   const isMobile = useIsMobile();
