@@ -27,12 +27,18 @@ function extractArtist(subtitle?: string): string {
   return subtitle.replace(/\s*\(\d{4}\)\s*$/, "").trim();
 }
 
+/** Build a composite key: "title|||artist" for unique song identity */
+export function songKey(title: string, subtitle?: string): string {
+  const artist = extractArtist(subtitle);
+  return artist ? `${title}|||${artist}` : title;
+}
+
 export function useSpotifyImages(songs: SongItem[], artistItems: SongItem[]) {
   const [songMeta, setSongMeta] = useState<SongMetaMap>({});
   const [artistImages, setArtistImages] = useState<ImageMap>({});
   const fetchedRef = useRef(false);
 
-  // Derived image-only map: uses Spotify artwork, falls back to YouTube thumbnail
+  // Derived image-only map keyed by title|||artist
   const songImages: ImageMap = {};
   for (const [k, v] of Object.entries(songMeta)) {
     songImages[k] = v.image_url || v.youtube_thumbnail_url || null;
@@ -61,10 +67,10 @@ export function useSpotifyImages(songs: SongItem[], artistItems: SongItem[]) {
         if (error || !data) return;
 
         if (data.songs) {
+          // Backend returns keys as "title|||artist" — keep as-is
           const mapped: SongMetaMap = {};
           for (const [key, meta] of Object.entries(data.songs as Record<string, SongMeta>)) {
-            const [title] = key.split("|||");
-            mapped[title] = meta;
+            mapped[key] = meta;
           }
           setSongMeta(mapped);
         }

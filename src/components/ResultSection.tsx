@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import ResultCard from "./ResultCard";
 import type { SongMeta, SongMetaMap } from "@/hooks/useSpotifyImages";
+import { songKey } from "@/hooks/useSpotifyImages";
 
 interface ResultSectionProps {
   title: string;
@@ -23,18 +24,21 @@ const ResultSection = ({ title, items, linkPrefix, imageType, images, songMetaMa
         {title}
       </motion.h2>
       <div className={variant === "explanation" ? "space-y-2" : "grid gap-3 sm:grid-cols-2"}>
-        {items.map((item, i) => (
-          <ResultCard
-            key={item.title + i}
-            {...item}
-            index={i}
-            linkPrefix={linkPrefix}
-            variant={variant}
-            imageType={variant === "explanation" ? undefined : imageType}
-            imageUrl={images?.[item.title] ?? undefined}
-            songMeta={songMetaMap?.[item.title]}
-          />
-        ))}
+        {items.map((item, i) => {
+          const key = songKey(item.title, item.subtitle);
+          return (
+            <ResultCard
+              key={key + i}
+              {...item}
+              index={i}
+              linkPrefix={linkPrefix}
+              variant={variant}
+              imageType={variant === "explanation" ? undefined : imageType}
+              imageUrl={images?.[key] ?? undefined}
+              songMeta={songMetaMap?.[key]}
+            />
+          );
+        })}
       </div>
     </section>
   );
