@@ -239,6 +239,14 @@ relatedArtistLinks = 3 related artists with slugs
 title = SEO page title (under 60 chars)
 description = SEO meta description (under 160 chars)
 heading = page heading that feels natural, not keyword-stuffed
+
+ACCURACY RULES (CRITICAL — follow strictly):
+- Only recommend songs and artists you are reasonably confident are real and commercially released. If you are uncertain whether a song exists, do NOT include it — choose a different recommendation that is more likely to exist in major music catalogs.
+- Do NOT invent plausible-sounding song titles, alternate versions, or unreleased recordings. Do NOT guess.
+- Prefer a correct, recognizable track over an obscure one you are unsure about. Deep cuts are allowed ONLY when confidence is high.
+- For artist recommendations, prefer artists with a recognizable catalog presence. Avoid obscure names unless you are highly confident they are real.
+- If you cannot find enough high-confidence deep cuts, widen your pool — a real, musically relevant track is always better than an imaginary perfect fit.
+
 ALL music data must be REAL — real artist names, real song titles, real release years. Never fabricate tracks.
 Return JSON only. No markdown, no code fences.`;
 
