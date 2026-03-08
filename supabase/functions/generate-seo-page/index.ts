@@ -41,6 +41,50 @@ serve(async (req) => {
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
     if (!ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is not configured");
 
+    const displayName = slug.replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+
+    const typeLabels: Record<string, string> = {
+      song: "song",
+      artist: "artist",
+      vibe: "vibe/mood",
+    };
+
+    const prompt = `You are a music discovery engine.
+
+User query: ${displayName}
+Search type: ${typeLabels[page_type] || page_type}
+
+Return ONLY JSON:
+{
+  "title": "",
+  "description": "",
+  "heading": "",
+  "summary": "",
+  "closestMatches": [
+    {"title": "", "artist": "", "year": 2000}
+  ],
+  "sameEnergy": [
+    {"title": "", "artist": "", "year": 2000}
+  ],
+  "relatedArtists": ["", "", ""],
+  "whyTheseWork": "",
+  "relatedSongs": [{"name": "", "slug": ""}],
+  "relatedVibes": [{"name": "", "slug": ""}],
+  "relatedArtistLinks": [{"name": "", "slug": ""}]
+}
+
+Rules:
+closestMatches = 5 songs
+sameEnergy = 5 songs
+relatedArtists = 3 artists
+relatedSongs = 4 related songs with slugs (lowercase-hyphenated)
+relatedVibes = 3 related vibes with slugs
+relatedArtistLinks = 3 related artists with slugs
+title = SEO page title (under 60 chars)
+description = SEO meta description (under 160 chars)
+Use REAL music data - real artist names, real song names, real genres.
+Return JSON only.`;
+
     const aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -49,9 +93,9 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-sonnet-4-5-20250514",
         max_tokens: 2048,
-        system: "You are a music expert. Return only valid JSON.",
+        system: "You are a music discovery engine. Return only valid JSON, no markdown.",
         messages: [
           { role: "user", content: prompt },
         ],
@@ -66,7 +110,8 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      throw new Error(`Claude API error: ${status}`);
+      const body = await aiResponse.text();
+      throw new Error(`Claude API error [${status}]: ${body}`);
     }
 
     const aiData = await aiResponse.json();
@@ -82,21 +127,42 @@ serve(async (req) => {
       throw new Error("Failed to parse AI response as JSON");
     }
 
+    // Map new JSON structure to DB columns
+    const closestMatches = (content.closestMatches || []).map((m: any) => ({
+      title: m.title,
+      subtitle: `${m.artist} (${m.year})`,
+      tag: undefined,
+    }));
+
+    const sameEnergy = (content.sameEnergy || []).map((m: any) => ({
+      title: m.title,
+      subtitle: `${m.artist} (${m.year})`,
+    }));
+
+    const relatedArtists = (content.relatedArtists || []).map((a: string) => ({
+      title: a,
+      subtitle: "Artist",
+    }));
+
+    const whyTheseWork = content.whyTheseWork
+      ? [{ title: "Why these recommendations work", subtitle: content.whyTheseWork }]
+      : [];
+
     // Save to database
     const { error: insertError } = await supabase.from("seo_pages").insert({
       slug,
       page_type,
       title: content.title,
-      meta_description: content.meta_description,
+      meta_description: content.description,
       heading: content.heading,
       summary: content.summary,
-      closest_matches: content.closest_matches,
-      same_energy: content.same_energy,
-      related_artists: content.related_artists,
-      why_these_work: content.why_these_work,
-      related_songs: content.related_songs,
-      related_vibes: content.related_vibes,
-      related_artist_links: content.related_artist_links,
+      closest_matches: closestMatches,
+      same_energy: sameEnergy,
+      related_artists: relatedArtists,
+      why_these_work: whyTheseWork,
+      related_songs: content.relatedSongs || [],
+      related_vibes: content.relatedVibes || [],
+      related_artist_links: content.relatedArtistLinks || [],
     });
 
     if (insertError) throw insertError;
