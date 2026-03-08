@@ -18,7 +18,7 @@ const SongPage = () => {
   const discoverySteps = useDiscoveryPath(displayName, location.pathname);
 
   const allSongs = [...(data?.closest_matches || []), ...(data?.same_energy || [])];
-  const { songImages, artistImages } = useSpotifyImages(allSongs, data?.related_artists || []);
+  const { songImages, songMeta, artistImages } = useSpotifyImages(allSongs, data?.related_artists || []);
 
   if (loading) return <PageSkeleton generating={generating} />;
   if (error) {
