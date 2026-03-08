@@ -148,15 +148,16 @@ const PlayButton = ({ title, subtitle, meta }: { title: string; subtitle?: strin
         )}
       </button>
       {meta.spotify_url && (
-        <a
-          href={meta.spotify_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            window.open(meta.spotify_url!, "_blank", "noopener,noreferrer");
+          }}
           className="text-[9px] text-muted-foreground/60 hover:text-primary transition-colors"
         >
           Spotify
-        </a>
+        </button>
       )}
     </div>
   );
