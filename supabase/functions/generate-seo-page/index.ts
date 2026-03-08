@@ -239,7 +239,17 @@ relatedArtistLinks = 3 related artists with slugs
 title = SEO page title (under 60 chars)
 description = SEO meta description (under 160 chars)
 heading = page heading that feels natural, not keyword-stuffed
-ALL music data must be REAL — real artist names, real song titles, real release years. Never fabricate tracks.
+
+ACCURACY IS NON-NEGOTIABLE:
+- Every song MUST be a real, commercially released track that exists on major streaming platforms like Spotify.
+- Every artist MUST be a real artist with a verifiable discography.
+- Every release year MUST be accurate. Do not guess years.
+- If you are not fully confident a song exists as a released recording, DO NOT include it. Pick a different track you are certain about.
+- Never invent, fabricate, or confuse song titles. Do not combine parts of different song titles.
+- Do not recommend unreleased demos, live-only tracks, or bootlegs unless widely available on streaming platforms.
+- Prefer well-documented catalog tracks over obscure titles you are uncertain about.
+- Double-check: could a user search this exact "title" by this exact "artist" on Spotify and find it? If not, replace it.
+
 Return JSON only. No markdown, no code fences.`;
 
     const aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
@@ -252,7 +262,7 @@ Return JSON only. No markdown, no code fences.`;
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 2048,
-        system: "You are a world-class music discovery engine with encyclopedic knowledge of production techniques, genre lineages, and sonic connections across decades. You think like a legendary record store clerk, not a streaming algorithm. Return only valid JSON, no markdown, no code fences. Every track you recommend must be a REAL song by a REAL artist. Never duplicate artists across recommendation lists. Prioritize musical DNA over popularity.",
+        system: "You are a world-class music discovery engine with encyclopedic knowledge of production techniques, genre lineages, and sonic connections across decades. You think like a legendary record store clerk, not a streaming algorithm. Return only valid JSON, no markdown, no code fences.\n\nCRITICAL ACCURACY RULE: Every single track you recommend MUST be a real, commercially released song that exists on Spotify or other major streaming platforms. Every artist must be real. Every year must be correct. If you have ANY doubt whether a song title is real or whether you might be confusing it with another track, choose a different song you are 100% certain about. Never fabricate or hallucinate song titles. Accuracy is more important than obscurity — a well-known real track is always better than an uncertain deep cut. Never duplicate artists across recommendation lists. Prioritize musical DNA over popularity, but never at the expense of accuracy.",
         messages: [{ role: "user", content: prompt }],
       }),
     });
