@@ -13,6 +13,8 @@ import { useSeoPage } from "../hooks/useSeoPage";
 import { useDiscoveryPath } from "../hooks/useDiscoveryPath";
 import { useSpotifyImages } from "../hooks/useSpotifyImages";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useSampleData } from "@/hooks/useSampleData";
+import SampleInfo from "@/components/SampleInfo";
 
 const SongPage = () => {
   const { slug } = useParams<{ slug: string }>();

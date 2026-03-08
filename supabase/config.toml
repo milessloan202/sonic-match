@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.fetch-spotify-images]
 verify_jwt = false
+
+[functions.fetch-samples]
+verify_jwt = false
