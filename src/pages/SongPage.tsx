@@ -78,6 +78,7 @@ const SongPage = () => {
                 return m ? [m[1]] : [];
               }),
             ]}
+            vibeNames={(data.related_vibes || []).map((v: any) => v.title)}
           />
         )}
       </motion.div>
