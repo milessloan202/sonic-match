@@ -65,6 +65,8 @@ const SongPage = () => {
         {data.summary && <p className="text-muted-foreground">{data.summary}</p>}
       </motion.div>
 
+      {sample && <SampleInfo sample={sample} />}
+
       {activeView === "map" ? (
         <MusicMap
           centerLabel={displayName}
