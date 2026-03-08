@@ -46,10 +46,10 @@ const ArtistPage = () => {
       </motion.div>
 
       {data.closest_matches.length > 0 && (
-        <ResultSection title="Closest Matches" items={data.closest_matches} linkPrefix="/artists-like" imageType="song" images={songImages} />
+        <ResultSection title="Closest Matches" items={data.closest_matches} linkPrefix="/artists-like" imageType="song" images={songImages} songMetaMap={songMeta} />
       )}
       {data.same_energy.length > 0 && (
-        <ResultSection title="Same Energy" items={data.same_energy} linkPrefix="/artists-like" imageType="song" images={songImages} />
+        <ResultSection title="Same Energy" items={data.same_energy} linkPrefix="/artists-like" imageType="song" images={songImages} songMetaMap={songMeta} />
       )}
       {data.related_artists.length > 0 && (
         <ResultSection title="Related Artists" items={data.related_artists} linkPrefix="/artists-like" imageType="artist" images={artistImages} />
