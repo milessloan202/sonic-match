@@ -6,30 +6,39 @@ interface SongItem {
   subtitle?: string;
 }
 
-interface ImageMap {
+export interface SongMeta {
+  image_url: string | null;
+  preview_url: string | null;
+  spotify_url: string | null;
+}
+
+export interface ImageMap {
   [key: string]: string | null;
 }
 
-/**
- * Extracts artist name from subtitle like "Artist Name (2020)"
- */
+export interface SongMetaMap {
+  [key: string]: SongMeta;
+}
+
 function extractArtist(subtitle?: string): string {
   if (!subtitle) return "";
   return subtitle.replace(/\s*\(\d{4}\)\s*$/, "").trim();
 }
 
-export function useSpotifyImages(
-  songs: SongItem[],
-  artistItems: SongItem[]
-) {
-  const [songImages, setSongImages] = useState<ImageMap>({});
+export function useSpotifyImages(songs: SongItem[], artistItems: SongItem[]) {
+  const [songMeta, setSongMeta] = useState<SongMetaMap>({});
   const [artistImages, setArtistImages] = useState<ImageMap>({});
   const fetchedRef = useRef(false);
+
+  // Derived image-only map for backward compat
+  const songImages: ImageMap = {};
+  for (const [k, v] of Object.entries(songMeta)) {
+    songImages[k] = v.image_url;
+  }
 
   useEffect(() => {
     if (fetchedRef.current) return;
     if (songs.length === 0 && artistItems.length === 0) return;
-
     fetchedRef.current = true;
 
     const songQueries = songs
@@ -50,12 +59,12 @@ export function useSpotifyImages(
         if (error || !data) return;
 
         if (data.songs) {
-          const mapped: ImageMap = {};
-          for (const [key, url] of Object.entries(data.songs as Record<string, string | null>)) {
+          const mapped: SongMetaMap = {};
+          for (const [key, meta] of Object.entries(data.songs as Record<string, SongMeta>)) {
             const [title] = key.split("|||");
-            mapped[title] = url;
+            mapped[title] = meta;
           }
-          setSongImages(mapped);
+          setSongMeta(mapped);
         }
 
         if (data.artists) {
@@ -64,5 +73,5 @@ export function useSpotifyImages(
       });
   }, [songs, artistItems]);
 
-  return { songImages, artistImages };
+  return { songImages, songMeta, artistImages };
 }
