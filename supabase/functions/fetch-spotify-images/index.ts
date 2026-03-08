@@ -107,6 +107,8 @@ serve(async (req) => {
           name: r.song.title,
           artist: r.song.artist,
           image_url: r.imageUrl,
+          preview_url: r.previewUrl,
+          spotify_url: r.spotifyUrl,
         }));
 
         if (toInsert.length > 0) {
