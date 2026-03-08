@@ -84,10 +84,67 @@ serve(async (req) => {
 
     recordGeneration();
 
+    // --- Spotify seed track lookup for producer pages ---
+    let seedTracks: { title: string; artist: string; year: string }[] = [];
+    if (page_type === "producer") {
+      try {
+        const clientId = Deno.env.get("SPOTIFY_CLIENT_ID")!;
+        const clientSecret = Deno.env.get("SPOTIFY_CLIENT_SECRET")!;
+        const basic = btoa(`${clientId}:${clientSecret}`);
+        const tokenRes = await fetch("https://accounts.spotify.com/api/token", {
+          method: "POST",
+          headers: { Authorization: `Basic ${basic}`, "Content-Type": "application/x-www-form-urlencoded" },
+          body: "grant_type=client_credentials",
+        });
+        if (tokenRes.ok) {
+          const tokenData = await tokenRes.json();
+          const token = tokenData.access_token;
+          const producerName = slug.replace(/-deep$/, "").replace(/-/g, " ");
+
+          // Search Spotify for tracks mentioning this producer
+          const queries = [
+            `producer:"${producerName}"`,
+            `"${producerName}"`,
+          ];
+
+          const seen = new Set<string>();
+          for (const q of queries) {
+            if (seedTracks.length >= 8) break;
+            try {
+              const searchRes = await fetch(
+                `https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=10`,
+                { headers: { Authorization: `Bearer ${token}` } }
+              );
+              if (searchRes.ok) {
+                const searchData = await searchRes.json();
+                const tracks = searchData?.tracks?.items || [];
+                for (const t of tracks) {
+                  if (seedTracks.length >= 8) break;
+                  const key = `${t.name}|||${t.artists?.[0]?.name}`;
+                  if (seen.has(key)) continue;
+                  seen.add(key);
+                  seedTracks.push({
+                    title: t.name,
+                    artist: t.artists?.[0]?.name || "Unknown",
+                    year: t.album?.release_date?.slice(0, 4) || "Unknown",
+                  });
+                }
+              }
+            } catch (e) {
+              console.log(`[Seed] Spotify search failed for query "${q}":`, e);
+            }
+          }
+          console.log(`[Seed] Found ${seedTracks.length} seed tracks for producer "${producerName}"`);
+        }
+      } catch (e) {
+        console.log("[Seed] Spotify token fetch failed, proceeding without seed tracks:", e);
+      }
+    }
+
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
     if (!ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is not configured");
 
-    const displayName = slug.replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+    const displayName = slug.replace(/-deep$/, "").replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
 
     const songPrompt = `You are a world-class music curator — part crate-digger, part musicologist, part the best record store clerk alive. You think in terms of sonic DNA: production fingerprints, harmonic choices, rhythmic feel, and emotional architecture.
 
