@@ -14,7 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      seo_pages: {
+        Row: {
+          closest_matches: Json | null
+          created_at: string
+          heading: string
+          id: string
+          meta_description: string | null
+          page_type: string
+          related_artist_links: Json | null
+          related_artists: Json | null
+          related_songs: Json | null
+          related_vibes: Json | null
+          same_energy: Json | null
+          slug: string
+          summary: string | null
+          title: string
+          updated_at: string
+          why_these_work: Json | null
+        }
+        Insert: {
+          closest_matches?: Json | null
+          created_at?: string
+          heading: string
+          id?: string
+          meta_description?: string | null
+          page_type: string
+          related_artist_links?: Json | null
+          related_artists?: Json | null
+          related_songs?: Json | null
+          related_vibes?: Json | null
+          same_energy?: Json | null
+          slug: string
+          summary?: string | null
+          title: string
+          updated_at?: string
+          why_these_work?: Json | null
+        }
+        Update: {
+          closest_matches?: Json | null
+          created_at?: string
+          heading?: string
+          id?: string
+          meta_description?: string | null
+          page_type?: string
+          related_artist_links?: Json | null
+          related_artists?: Json | null
+          related_songs?: Json | null
+          related_vibes?: Json | null
+          same_energy?: Json | null
+          slug?: string
+          summary?: string | null
+          title?: string
+          updated_at?: string
+          why_these_work?: Json | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
