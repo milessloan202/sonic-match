@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface SongItem {
   title: string;
   subtitle?: string;
+  spotify_id?: string | null;
 }
 
 export interface SongMeta {
@@ -43,7 +44,7 @@ export function useSpotifyImages(songs: SongItem[], artistItems: SongItem[]) {
     fetchedRef.current = true;
 
     const songQueries = songs
-      .map((s) => ({ title: s.title, artist: extractArtist(s.subtitle) }))
+      .map((s) => ({ title: s.title, artist: extractArtist(s.subtitle), spotify_id: s.spotify_id || undefined }))
       .filter((s) => s.title && s.artist);
 
     const artistQueries = artistItems

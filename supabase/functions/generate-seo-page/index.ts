@@ -381,16 +381,93 @@ Return JSON only. No markdown, no code fences.`;
       throw new Error("Failed to parse AI response as JSON");
     }
 
-    // Map camelCase AI response to snake_case DB columns
-    const closestMatches = (content.closestMatches || []).map((m: any) => ({
-      title: m.title,
-      subtitle: `${m.artist} (${m.year})`,
-    }));
+    // --- Resolve Spotify track IDs for song pages ---
+    let seedSpotifyTrackId: string | null = null;
 
-    const sameEnergy = (content.sameEnergy || []).map((m: any) => ({
-      title: m.title,
-      subtitle: `${m.artist} (${m.year})`,
-    }));
+    async function getSpotifyTokenForLookup(): Promise<string | null> {
+      try {
+        const clientId = Deno.env.get("SPOTIFY_CLIENT_ID");
+        const clientSecret = Deno.env.get("SPOTIFY_CLIENT_SECRET");
+        if (!clientId || !clientSecret) return null;
+        const basic = btoa(`${clientId}:${clientSecret}`);
+        const tokenRes = await fetch("https://accounts.spotify.com/api/token", {
+          method: "POST",
+          headers: { Authorization: `Basic ${basic}`, "Content-Type": "application/x-www-form-urlencoded" },
+          body: "grant_type=client_credentials",
+        });
+        if (!tokenRes.ok) return null;
+        const tokenData = await tokenRes.json();
+        return tokenData.access_token;
+      } catch {
+        return null;
+      }
+    }
+
+    async function resolveSpotifyId(title: string, artist: string, token: string): Promise<{ id: string | null; url: string | null }> {
+      try {
+        const q = encodeURIComponent(`track:"${title}" artist:"${artist}"`);
+        const res = await fetch(`https://api.spotify.com/v1/search?q=${q}&type=track&limit=1`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return { id: null, url: null };
+        const data = await res.json();
+        const track = data?.tracks?.items?.[0];
+        if (!track) return { id: null, url: null };
+        return { id: track.id, url: track.external_urls?.spotify || null };
+      } catch {
+        return { id: null, url: null };
+      }
+    }
+
+    // Map camelCase AI response to snake_case DB columns, enriching with Spotify IDs
+    const spotifyToken = await getSpotifyTokenForLookup();
+
+    const allRecommendedSongs = [
+      ...(content.closestMatches || []),
+      ...(content.sameEnergy || []),
+    ];
+
+    // Resolve Spotify IDs for all recommended songs in parallel
+    const spotifyIdMap = new Map<string, { id: string | null; url: string | null }>();
+    if (spotifyToken && page_type === "song") {
+      // Also resolve the seed song itself
+      const seedTitle = displayName;
+      const seedResult = await resolveSpotifyId(seedTitle, "", spotifyToken);
+      seedSpotifyTrackId = seedResult.id;
+      console.log(`[Spotify ID] Seed "${seedTitle}": ${seedSpotifyTrackId || "not found"}`);
+    }
+
+    if (spotifyToken) {
+      const lookups = allRecommendedSongs.map(async (m: any) => {
+        const result = await resolveSpotifyId(m.title, m.artist, spotifyToken);
+        const key = `${m.title}|||${m.artist}`;
+        spotifyIdMap.set(key, result);
+        if (result.id) {
+          console.log(`[Spotify ID] "${m.title}" by ${m.artist}: ${result.id}`);
+        }
+      });
+      await Promise.all(lookups);
+    }
+
+    const closestMatches = (content.closestMatches || []).map((m: any) => {
+      const key = `${m.title}|||${m.artist}`;
+      const spotifyInfo = spotifyIdMap.get(key);
+      return {
+        title: m.title,
+        subtitle: `${m.artist} (${m.year})`,
+        spotify_id: spotifyInfo?.id || null,
+      };
+    });
+
+    const sameEnergy = (content.sameEnergy || []).map((m: any) => {
+      const key = `${m.title}|||${m.artist}`;
+      const spotifyInfo = spotifyIdMap.get(key);
+      return {
+        title: m.title,
+        subtitle: `${m.artist} (${m.year})`,
+        spotify_id: spotifyInfo?.id || null,
+      };
+    });
 
     const relatedArtists = (content.relatedArtists || []).map((a: string) => ({
       title: a,
@@ -401,7 +478,7 @@ Return JSON only. No markdown, no code fences.`;
       ? [{ title: "Why These Work", subtitle: content.whyTheseWork }]
       : [];
 
-    const { error: insertError } = await supabase.from("seo_pages").upsert({
+    const upsertData: any = {
       slug,
       page_type,
       title: content.title,
@@ -415,7 +492,13 @@ Return JSON only. No markdown, no code fences.`;
       related_songs: content.relatedSongs || [],
       related_vibes: content.relatedVibes || [],
       related_artist_links: content.relatedArtistLinks || [],
-    });
+    };
+
+    if (seedSpotifyTrackId) {
+      upsertData.spotify_track_id = seedSpotifyTrackId;
+    }
+
+    const { error: insertError } = await supabase.from("seo_pages").upsert(upsertData);
 
     if (insertError) throw insertError;
 
