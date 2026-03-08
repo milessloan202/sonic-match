@@ -7,7 +7,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Cache Spotify token in memory (edge function instance)
 let cachedToken: string | null = null;
 let tokenExpiresAt = 0;
 
@@ -31,9 +30,30 @@ async function getSpotifyToken(): Promise<string> {
 
   const data = await res.json();
   cachedToken = data.access_token;
-  // Expire 60s early to be safe
   tokenExpiresAt = Date.now() + (data.expires_in - 60) * 1000;
   return cachedToken!;
+}
+
+async function fetchYouTubeThumbnail(title: string, artist: string): Promise<string | null> {
+  try {
+    const query = encodeURIComponent(`${title} ${artist}`);
+    const res = await fetch(`https://pipedapi.kavin.rocks/search?q=${query}&filter=videos`, {
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const items = data?.items;
+    if (!items?.length) return null;
+    // Extract video ID from the url field (e.g. "/watch?v=VIDEO_ID")
+    const url = items[0]?.url;
+    if (!url) return null;
+    const match = url.match(/[?&]v=([^&]+)/);
+    const videoId = match?.[1];
+    if (!videoId) return null;
+    return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+  } catch {
+    return null;
+  }
 }
 
 interface SongQuery {
@@ -55,26 +75,36 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const songResults: Record<string, { image_url: string | null; preview_url: string | null; spotify_url: string | null }> = {};
+    const songResults: Record<string, { image_url: string | null; preview_url: string | null; spotify_url: string | null; youtube_thumbnail_url: string | null }> = {};
     const artistResults: Record<string, string | null> = {};
 
     // --- Process songs ---
     if (songs?.length) {
-      // Check cache first
-      const songKeys = songs.map((s) => `${s.title}|||${s.artist}`);
       const { data: cached } = await supabase
         .from("song_image_cache")
-        .select("name, artist, image_url, preview_url, spotify_url");
+        .select("name, artist, image_url, preview_url, spotify_url, youtube_thumbnail_url");
 
-      const cachedMap = new Map<string, { image_url: string | null; preview_url: string | null; spotify_url: string | null }>();
-      (cached || []).forEach((r: any) => cachedMap.set(`${r.name}|||${r.artist}`, { image_url: r.image_url, preview_url: r.preview_url, spotify_url: r.spotify_url }));
+      const cachedMap = new Map<string, { image_url: string | null; preview_url: string | null; spotify_url: string | null; youtube_thumbnail_url: string | null }>();
+      (cached || []).forEach((r: any) => cachedMap.set(`${r.name}|||${r.artist}`, {
+        image_url: r.image_url,
+        preview_url: r.preview_url,
+        spotify_url: r.spotify_url,
+        youtube_thumbnail_url: r.youtube_thumbnail_url,
+      }));
 
       const uncached: SongQuery[] = [];
+      // Songs that are cached but need YouTube thumbnail lookup
+      const needsYoutube: { key: string; song: SongQuery }[] = [];
+
       for (const s of songs) {
         const key = `${s.title}|||${s.artist}`;
         if (cachedMap.has(key)) {
           const c = cachedMap.get(key)!;
-          songResults[key] = { image_url: c.image_url, preview_url: c.preview_url, spotify_url: c.spotify_url };
+          songResults[key] = c;
+          // If no Spotify image AND no YouTube thumbnail yet, queue for YouTube lookup
+          if (!c.image_url && !c.youtube_thumbnail_url) {
+            needsYoutube.push({ key, song: s });
+          }
         } else {
           uncached.push(s);
         }
@@ -83,7 +113,6 @@ serve(async (req) => {
       if (uncached.length > 0) {
         const token = await getSpotifyToken();
 
-        // Batch fetch uncached songs (max ~10 at a time to stay within limits)
         const fetches = uncached.slice(0, 15).map(async (s) => {
           const q = encodeURIComponent(`track:"${s.title}" artist:"${s.artist}"`);
           try {
@@ -104,21 +133,62 @@ serve(async (req) => {
 
         const results = await Promise.all(fetches);
 
-        // Store in cache
-        const toInsert = results.map((r) => ({
-          name: r.song.title,
-          artist: r.song.artist,
-          image_url: r.imageUrl,
-          preview_url: r.previewUrl,
-          spotify_url: r.spotifyUrl,
-        }));
+        // For songs without Spotify artwork, try YouTube
+        const youtubePromises = results
+          .filter((r) => !r.imageUrl)
+          .map(async (r) => {
+            const ytThumb = await fetchYouTubeThumbnail(r.song.title, r.song.artist);
+            return { key: `${r.song.title}|||${r.song.artist}`, ytThumb };
+          });
+
+        const ytResults = await Promise.all(youtubePromises);
+        const ytMap = new Map(ytResults.map((r) => [r.key, r.ytThumb]));
+
+        const toInsert = results.map((r) => {
+          const key = `${r.song.title}|||${r.song.artist}`;
+          return {
+            name: r.song.title,
+            artist: r.song.artist,
+            image_url: r.imageUrl,
+            preview_url: r.previewUrl,
+            spotify_url: r.spotifyUrl,
+            youtube_thumbnail_url: ytMap.get(key) || null,
+          };
+        });
 
         if (toInsert.length > 0) {
           await supabase.from("song_image_cache").upsert(toInsert, { onConflict: "name,artist" });
         }
 
         for (const r of results) {
-          songResults[`${r.song.title}|||${r.song.artist}`] = { image_url: r.imageUrl, preview_url: r.previewUrl, spotify_url: r.spotifyUrl };
+          const key = `${r.song.title}|||${r.song.artist}`;
+          songResults[key] = {
+            image_url: r.imageUrl,
+            preview_url: r.previewUrl,
+            spotify_url: r.spotifyUrl,
+            youtube_thumbnail_url: ytMap.get(key) || null,
+          };
+        }
+      }
+
+      // Handle previously cached songs that need YouTube thumbnails
+      if (needsYoutube.length > 0) {
+        const ytFetches = needsYoutube.slice(0, 10).map(async ({ key, song }) => {
+          const ytThumb = await fetchYouTubeThumbnail(song.title, song.artist);
+          return { key, ytThumb };
+        });
+        const ytResults = await Promise.all(ytFetches);
+
+        for (const { key, ytThumb } of ytResults) {
+          if (ytThumb) {
+            songResults[key].youtube_thumbnail_url = ytThumb;
+            const [name, artist] = key.split("|||");
+            await supabase
+              .from("song_image_cache")
+              .update({ youtube_thumbnail_url: ytThumb })
+              .eq("name", name)
+              .eq("artist", artist);
+          }
         }
       }
     }
