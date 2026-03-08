@@ -265,18 +265,6 @@ const ResultCard = ({
                   >
                     {artist}
                   </Link>
-                  {tag && (
-                    <>
-                      {" • "}
-                      <Link
-                        to={`/vibes/${toSlug(tag)}`}
-                        onClick={(e) => e.stopPropagation()}
-                        className="hover:text-foreground hover:underline underline-offset-2 transition-colors"
-                      >
-                        {tag}
-                      </Link>
-                    </>
-                  )}
                   {year && <span> • {year}</span>}
                 </p>
               ) : subtitle ? (
