@@ -20,6 +20,7 @@ export type Database = {
           created_at: string
           heading: string
           id: string
+          is_indexable: boolean
           meta_description: string | null
           page_type: string
           related_artist_links: Json | null
@@ -38,6 +39,7 @@ export type Database = {
           created_at?: string
           heading: string
           id?: string
+          is_indexable?: boolean
           meta_description?: string | null
           page_type: string
           related_artist_links?: Json | null
@@ -56,6 +58,7 @@ export type Database = {
           created_at?: string
           heading?: string
           id?: string
+          is_indexable?: boolean
           meta_description?: string | null
           page_type?: string
           related_artist_links?: Json | null
