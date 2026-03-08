@@ -17,8 +17,9 @@ const LinkedSummary = ({ text, artistNames }: LinkedSummaryProps) => {
   const segments = useMemo(() => {
     if (!artistNames.length) return [{ type: "text" as const, value: text }];
 
-    // Sort by length descending so longer names match first (e.g. "Joe Budden" before "Joe")
-    const sorted = [...artistNames].sort((a, b) => b.length - a.length);
+    // Filter out any undefined/null/empty entries, then sort longest first
+    const sorted = artistNames.filter((n): n is string => typeof n === "string" && n.length > 0)
+      .sort((a, b) => b.length - a.length);
     // Escape regex special chars
     const escaped = sorted.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
     const pattern = new RegExp(`(${escaped.join("|")})`, "gi");
