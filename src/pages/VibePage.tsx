@@ -8,6 +8,7 @@ import PageSkeleton from "../components/PageSkeleton";
 import DiscoveryPath from "../components/DiscoveryPath";
 import { useSeoPage } from "../hooks/useSeoPage";
 import { useDiscoveryPath } from "../hooks/useDiscoveryPath";
+import { useSpotifyImages } from "../hooks/useSpotifyImages";
 
 const VibePage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -16,8 +17,10 @@ const VibePage = () => {
   const displayName = data?.heading || slug || "";
   const discoverySteps = useDiscoveryPath(displayName, location.pathname);
 
-  if (loading) return <PageSkeleton generating={generating} />;
+  const allSongs = [...(data?.closest_matches || []), ...(data?.same_energy || [])];
+  const { songImages, artistImages } = useSpotifyImages(allSongs, data?.related_artists || []);
 
+  if (loading) return <PageSkeleton generating={generating} />;
   if (error) {
     return (
       <div className="min-h-screen px-4 py-12 max-w-3xl mx-auto space-y-4">
@@ -28,16 +31,11 @@ const VibePage = () => {
       </div>
     );
   }
-
   if (!data) return null;
 
   return (
     <div className="min-h-screen px-4 py-12 max-w-3xl mx-auto space-y-10">
-      <SEOHead
-        title={data.title}
-        description={data.meta_description || undefined}
-        path={`/vibes/${slug}`}
-      />
+      <SEOHead title={data.title} description={data.meta_description || undefined} path={`/vibes/${slug}`} />
       <DiscoveryPath steps={discoverySteps} />
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
         <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -48,23 +46,19 @@ const VibePage = () => {
       </motion.div>
 
       {data.closest_matches.length > 0 && (
-        <ResultSection title="Closest Matches" items={data.closest_matches} linkPrefix="/songs-like" />
+        <ResultSection title="Closest Matches" items={data.closest_matches} linkPrefix="/songs-like" imageType="song" images={songImages} />
       )}
       {data.same_energy.length > 0 && (
-        <ResultSection title="Same Energy" items={data.same_energy} linkPrefix="/songs-like" />
+        <ResultSection title="Same Energy" items={data.same_energy} linkPrefix="/songs-like" imageType="song" images={songImages} />
       )}
       {data.related_artists.length > 0 && (
-        <ResultSection title="Related Artists" items={data.related_artists} linkPrefix="/artists-like" />
+        <ResultSection title="Related Artists" items={data.related_artists} linkPrefix="/artists-like" imageType="artist" images={artistImages} />
       )}
       {data.why_these_work.length > 0 && (
         <ResultSection title="Why These Work" items={data.why_these_work} />
       )}
 
-      <RelatedPages
-        relatedSongs={data.related_songs}
-        relatedArtists={data.related_artist_links}
-        relatedVibes={data.related_vibes}
-      />
+      <RelatedPages relatedSongs={data.related_songs} relatedArtists={data.related_artist_links} relatedVibes={data.related_vibes} />
     </div>
   );
 };
