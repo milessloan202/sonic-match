@@ -7,7 +7,7 @@ import RelatedPages from "../components/RelatedPages";
 import SEOHead from "../components/SEOHead";
 import PageSkeleton from "../components/PageSkeleton";
 import DiscoveryPath from "../components/DiscoveryPath";
-import ViewToggle from "../components/ViewToggle";
+import ViewToggle, { type ViewMode } from "../components/ViewToggle";
 import MusicMap from "../components/MusicMap";
 import { useSeoPage } from "../hooks/useSeoPage";
 import { useDiscoveryPath } from "../hooks/useDiscoveryPath";
