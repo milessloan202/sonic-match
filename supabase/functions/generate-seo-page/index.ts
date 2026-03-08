@@ -381,89 +381,15 @@ Return JSON only. No markdown, no code fences.`;
       throw new Error("Failed to parse AI response as JSON");
     }
 
-    // --- Mood-fit scoring & reranking step ---
-    try {
-      const moodStrictness = deep_cut_mode
-        ? "Use LOOSE thresholds — allow mood-adjacent and genre-crossing songs to rank well if their emotional or atmospheric connection is strong. Permit wider exploration."
-        : "Use STRICT thresholds — strongly prioritize mood accuracy. Penalize songs that are musically related but feel off-mood. The final list should feel cohesive and intentional.";
-
-      const rerankPrompt = `You are a mood-scoring engine. Given a search query and two lists of song recommendations, score each song 0-100 on how well it matches the MOOD and ATMOSPHERE of the search query.
-
-Search query: "${displayName}" (type: ${page_type})
-
-Score each song considering:
-- Emotional tone alignment
-- Tempo appropriateness
-- Production atmosphere match
-- Instrumentation fit
-- Sonic texture similarity
-- Listening context relevance
-
-${moodStrictness}
-
-closestMatches:
-${JSON.stringify(content.closestMatches)}
-
-sameEnergy:
-${JSON.stringify(content.sameEnergy)}
-
-Return ONLY this JSON (no markdown, no code fences):
-{
-  "closestMatches": [{"title": "", "artist": "", "year": 2000, "moodScore": 85}],
-  "sameEnergy": [{"title": "", "artist": "", "year": 2000, "moodScore": 85}]
-}
-
-Return the SAME songs with the same data, just add moodScore and reorder each list from highest to lowest score.`;
-
-      const rerankResponse = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "x-api-key": ANTHROPIC_API_KEY,
-          "anthropic-version": "2023-06-01",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1024,
-          system: "You are a mood-scoring engine. Return only valid JSON. No markdown, no code fences. Preserve all original song data exactly — only add moodScore and reorder.",
-          messages: [{ role: "user", content: rerankPrompt }],
-        }),
-      });
-
-      if (rerankResponse.ok) {
-        const rerankData = await rerankResponse.json();
-        const rerankRaw = rerankData.content?.[0]?.text;
-        if (rerankRaw) {
-          const rerankCleaned = rerankRaw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-          const reranked = JSON.parse(rerankCleaned);
-
-          if (reranked.closestMatches?.length > 0) {
-            content.closestMatches = reranked.closestMatches;
-            console.log(`[MoodFit] Reranked closestMatches. Top score: ${reranked.closestMatches[0]?.moodScore}, Bottom: ${reranked.closestMatches[reranked.closestMatches.length - 1]?.moodScore}`);
-          }
-          if (reranked.sameEnergy?.length > 0) {
-            content.sameEnergy = reranked.sameEnergy;
-            console.log(`[MoodFit] Reranked sameEnergy. Top score: ${reranked.sameEnergy[0]?.moodScore}, Bottom: ${reranked.sameEnergy[reranked.sameEnergy.length - 1]?.moodScore}`);
-          }
-        }
-      } else {
-        console.warn(`[MoodFit] Rerank call failed (${rerankResponse.status}), using original order`);
-      }
-    } catch (rerankErr) {
-      console.warn("[MoodFit] Reranking failed, using original order:", rerankErr);
-    }
-
     // Map camelCase AI response to snake_case DB columns
     const closestMatches = (content.closestMatches || []).map((m: any) => ({
       title: m.title,
       subtitle: `${m.artist} (${m.year})`,
-      tag: m.moodScore != null ? `${m.moodScore}% mood` : undefined,
     }));
 
     const sameEnergy = (content.sameEnergy || []).map((m: any) => ({
       title: m.title,
       subtitle: `${m.artist} (${m.year})`,
-      tag: m.moodScore != null ? `${m.moodScore}% mood` : undefined,
     }));
 
     const relatedArtists = (content.relatedArtists || []).map((a: string) => ({
