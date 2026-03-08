@@ -42,7 +42,7 @@ const VibePage = () => {
       </motion.div>
 
       {data.closest_matches.length > 0 && (
-        <ResultSection title="🎯 Closest Matches" items={data.closest_matches} />
+        <ResultSection title="Closest Matches" items={data.closest_matches} />
       )}
       {data.same_energy.length > 0 && (
         <ResultSection title="⚡ Same Energy" items={data.same_energy} />
