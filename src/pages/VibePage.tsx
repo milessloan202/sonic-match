@@ -1,11 +1,13 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import ResultSection from "../components/ResultSection";
 import RelatedPages from "../components/RelatedPages";
 import SEOHead from "../components/SEOHead";
 import PageSkeleton from "../components/PageSkeleton";
+import DiscoveryPath from "../components/DiscoveryPath";
 import { useSeoPage } from "../hooks/useSeoPage";
+import { useDiscoveryPath } from "../hooks/useDiscoveryPath";
 
 const VibePage = () => {
   const { slug } = useParams<{ slug: string }>();
