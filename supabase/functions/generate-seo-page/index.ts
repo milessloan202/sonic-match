@@ -41,7 +41,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { slug, page_type } = await req.json();
+    const { slug, page_type, deep_cut_mode } = await req.json();
     if (!slug || !page_type) {
       return new Response(JSON.stringify({ error: "slug and page_type required" }), {
         status: 400,
