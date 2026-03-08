@@ -44,7 +44,7 @@ export function useSpotifyImages(songs: SongItem[], artistItems: SongItem[]) {
     fetchedRef.current = true;
 
     const songQueries = songs
-      .map((s) => ({ title: s.title, artist: extractArtist(s.subtitle) }))
+      .map((s) => ({ title: s.title, artist: extractArtist(s.subtitle), spotify_id: s.spotify_id || undefined }))
       .filter((s) => s.title && s.artist);
 
     const artistQueries = artistItems
