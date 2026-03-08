@@ -231,6 +231,7 @@ serve(async (req) => {
               preview_url: r.previewUrl || null,
               spotify_url: r.spotifyUrl || null,
               youtube_thumbnail_url: ytMap.get(key) || null,
+              spotify_track_id: r.spotifyTrackId || null,
             };
           });
 
