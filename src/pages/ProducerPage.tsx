@@ -13,6 +13,7 @@ import { useSeoPage } from "../hooks/useSeoPage";
 import { useDiscoveryPath } from "../hooks/useDiscoveryPath";
 import { useSpotifyImages } from "../hooks/useSpotifyImages";
 import { useIsMobile } from "@/hooks/use-mobile";
+import LinkedSummary from "../components/LinkedSummary";
 
 const ProducerPage = () => {
   const { slug } = useParams<{ slug: string }>();
