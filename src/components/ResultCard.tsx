@@ -164,7 +164,7 @@ const PlayButton = ({ title, subtitle, meta }: { title: string; subtitle?: strin
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            window.open(meta.spotify_url!, "_blank", "noopener,noreferrer");
+            window.open(meta.spotify_url!, "_blank");
           }}
           className="flex items-center gap-1 text-[9px] text-muted-foreground/60 hover:text-[#1DB954] transition-colors"
         >
