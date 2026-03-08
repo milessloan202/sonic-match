@@ -1,0 +1,1 @@
+DELETE FROM public.seo_pages WHERE slug = 'test-blinding-lights-v2';
