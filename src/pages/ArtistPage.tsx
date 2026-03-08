@@ -28,6 +28,10 @@ const ArtistPage = () => {
 
   if (!data) return null;
 
+  const displayName = data.heading.replace(/^Artists Like\s*/i, "");
+  const location = useLocation();
+  const discoverySteps = useDiscoveryPath(displayName, location.pathname);
+
   return (
     <div className="min-h-screen px-4 py-12 max-w-3xl mx-auto space-y-10">
       <SEOHead
