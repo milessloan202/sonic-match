@@ -7,6 +7,7 @@ interface ResultSectionProps {
   linkPrefix?: string;
   imageType?: "song" | "artist";
   images?: Record<string, string | null>;
+  variant?: "default" | "explanation";
 }
 
 const ResultSection = ({ title, items, linkPrefix, imageType, images }: ResultSectionProps) => {
