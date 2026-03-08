@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const SITE_URL = "https://sounddna.app";
+const SITE_URL = "https://sonic-match-six.vercel.app";
 
 const prefixes: Record<string, string> = {
   song: "/songs-like",
