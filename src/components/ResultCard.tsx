@@ -1,12 +1,14 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Disc3, User } from "lucide-react";
+import { Disc3, User, Play, Pause, ExternalLink } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useAudio } from "@/contexts/AudioContext";
+import type { SongMeta } from "@/hooks/useSpotifyImages";
 
 interface ResultCardProps {
   title: string;
@@ -17,6 +19,7 @@ interface ResultCardProps {
   variant?: "default" | "explanation";
   imageUrl?: string | null;
   imageType?: "song" | "artist";
+  songMeta?: SongMeta;
 }
 
 const toSlug = (text: string) =>
@@ -53,12 +56,97 @@ const Thumbnail = ({
     );
   }
 
-  // Fallback
   return (
     <div
       className={`${size} ${shape} shrink-0 bg-muted flex items-center justify-center text-muted-foreground`}
     >
       {isArtist ? <User className="w-5 h-5" /> : <Disc3 className="w-5 h-5" />}
+    </div>
+  );
+};
+
+const PlayButton = ({ title, meta }: { title: string; meta?: SongMeta }) => {
+  const { currentTrack, isPlaying, progress, toggle } = useAudio();
+  const trackId = title;
+  const isActive = currentTrack === trackId && isPlaying;
+  const showProgress = currentTrack === trackId;
+
+  if (!meta?.preview_url) {
+    // No preview — show spotify link or "No preview"
+    if (meta?.spotify_url) {
+      return (
+        <a
+          href={meta.spotify_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="shrink-0 flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary transition-colors"
+        >
+          <ExternalLink className="w-3 h-3" />
+          <span>Spotify</span>
+        </a>
+      );
+    }
+    return (
+      <span className="shrink-0 text-[10px] text-muted-foreground/50 italic">
+        No preview
+      </span>
+    );
+  }
+
+  return (
+    <div className="shrink-0 flex flex-col items-center gap-0.5">
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          toggle(trackId, meta.preview_url!);
+        }}
+        className="relative w-8 h-8 rounded-full bg-primary/10 hover:bg-primary/20 flex items-center justify-center transition-colors group"
+        aria-label={isActive ? "Pause preview" : "Play preview"}
+      >
+        {isActive ? (
+          <Pause className="w-3.5 h-3.5 text-primary" />
+        ) : (
+          <Play className="w-3.5 h-3.5 text-primary ml-0.5" />
+        )}
+        {/* Circular progress ring */}
+        {showProgress && (
+          <svg className="absolute inset-0 w-8 h-8 -rotate-90" viewBox="0 0 32 32">
+            <circle
+              cx="16"
+              cy="16"
+              r="14"
+              fill="none"
+              stroke="hsl(var(--primary) / 0.2)"
+              strokeWidth="2"
+            />
+            <circle
+              cx="16"
+              cy="16"
+              r="14"
+              fill="none"
+              stroke="hsl(var(--primary))"
+              strokeWidth="2"
+              strokeDasharray={`${2 * Math.PI * 14}`}
+              strokeDashoffset={`${2 * Math.PI * 14 * (1 - progress / 100)}`}
+              strokeLinecap="round"
+              className="transition-[stroke-dashoffset] duration-100"
+            />
+          </svg>
+        )}
+      </button>
+      {meta.spotify_url && (
+        <a
+          href={meta.spotify_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="text-[9px] text-muted-foreground/60 hover:text-primary transition-colors"
+        >
+          Spotify
+        </a>
+      )}
     </div>
   );
 };
@@ -72,11 +160,12 @@ const ResultCard = ({
   variant = "default",
   imageUrl,
   imageType,
+  songMeta,
 }: ResultCardProps) => {
   const { artist, year } = parseSubtitle(subtitle);
   const showImage = imageType === "song" || imageType === "artist";
+  const showPlay = imageType === "song";
 
-  // Explanation variant: just render the text as a paragraph, no card chrome
   if (variant === "explanation") {
     return (
       <motion.div
@@ -110,18 +199,20 @@ const ResultCard = ({
                 <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{subtitle}</p>
               )}
             </div>
-            {tag && (
-              <span className="shrink-0 text-xs font-mono px-2 py-1 rounded-md bg-primary/10 text-primary">
-                {tag}
-              </span>
-            )}
+            <div className="flex items-center gap-2 shrink-0">
+              {tag && (
+                <span className="text-xs font-mono px-2 py-1 rounded-md bg-primary/10 text-primary">
+                  {tag}
+                </span>
+              )}
+              {showPlay && <PlayButton title={title} meta={songMeta} />}
+            </div>
           </div>
         </div>
       </div>
     </motion.div>
   );
 
-  // Wrap with tooltip if we have metadata
   const tooltipText =
     imageType === "song" && artist
       ? `${title} — ${artist}${year ? `\n${year}` : ""}`

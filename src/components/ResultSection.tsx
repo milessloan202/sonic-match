@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import ResultCard from "./ResultCard";
+import type { SongMeta, SongMetaMap } from "@/hooks/useSpotifyImages";
 
 interface ResultSectionProps {
   title: string;
@@ -7,10 +8,11 @@ interface ResultSectionProps {
   linkPrefix?: string;
   imageType?: "song" | "artist";
   images?: Record<string, string | null>;
+  songMetaMap?: SongMetaMap;
   variant?: "default" | "explanation";
 }
 
-const ResultSection = ({ title, items, linkPrefix, imageType, images, variant = "default" }: ResultSectionProps) => {
+const ResultSection = ({ title, items, linkPrefix, imageType, images, songMetaMap, variant = "default" }: ResultSectionProps) => {
   return (
     <section className="space-y-4">
       <motion.h2
@@ -30,6 +32,7 @@ const ResultSection = ({ title, items, linkPrefix, imageType, images, variant = 
             variant={variant}
             imageType={variant === "explanation" ? undefined : imageType}
             imageUrl={images?.[item.title] ?? undefined}
+            songMeta={songMetaMap?.[item.title]}
           />
         ))}
       </div>

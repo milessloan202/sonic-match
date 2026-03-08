@@ -55,7 +55,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const songResults: Record<string, string | null> = {};
+    const songResults: Record<string, { image_url: string | null; preview_url: string | null; spotify_url: string | null }> = {};
     const artistResults: Record<string, string | null> = {};
 
     // --- Process songs ---
@@ -64,16 +64,17 @@ serve(async (req) => {
       const songKeys = songs.map((s) => `${s.title}|||${s.artist}`);
       const { data: cached } = await supabase
         .from("song_image_cache")
-        .select("name, artist, image_url");
+        .select("name, artist, image_url, preview_url, spotify_url");
 
-      const cachedMap = new Map<string, string | null>();
-      (cached || []).forEach((r: any) => cachedMap.set(`${r.name}|||${r.artist}`, r.image_url));
+      const cachedMap = new Map<string, { image_url: string | null; preview_url: string | null; spotify_url: string | null }>();
+      (cached || []).forEach((r: any) => cachedMap.set(`${r.name}|||${r.artist}`, { image_url: r.image_url, preview_url: r.preview_url, spotify_url: r.spotify_url }));
 
       const uncached: SongQuery[] = [];
       for (const s of songs) {
         const key = `${s.title}|||${s.artist}`;
         if (cachedMap.has(key)) {
-          songResults[key] = cachedMap.get(key)!;
+          const c = cachedMap.get(key)!;
+          songResults[key] = { image_url: c.image_url, preview_url: c.preview_url, spotify_url: c.spotify_url };
         } else {
           uncached.push(s);
         }
@@ -89,13 +90,15 @@ serve(async (req) => {
             const res = await fetch(`https://api.spotify.com/v1/search?q=${q}&type=track&limit=1`, {
               headers: { Authorization: `Bearer ${token}` },
             });
-            if (!res.ok) return { song: s, imageUrl: null };
+            if (!res.ok) return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null };
             const data = await res.json();
             const track = data?.tracks?.items?.[0];
             const imageUrl = track?.album?.images?.[1]?.url || track?.album?.images?.[0]?.url || null;
-            return { song: s, imageUrl };
+            const previewUrl = track?.preview_url || null;
+            const spotifyUrl = track?.external_urls?.spotify || null;
+            return { song: s, imageUrl, previewUrl, spotifyUrl };
           } catch {
-            return { song: s, imageUrl: null };
+            return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null };
           }
         });
 
@@ -106,6 +109,8 @@ serve(async (req) => {
           name: r.song.title,
           artist: r.song.artist,
           image_url: r.imageUrl,
+          preview_url: r.previewUrl,
+          spotify_url: r.spotifyUrl,
         }));
 
         if (toInsert.length > 0) {
@@ -113,7 +118,7 @@ serve(async (req) => {
         }
 
         for (const r of results) {
-          songResults[`${r.song.title}|||${r.song.artist}`] = r.imageUrl;
+          songResults[`${r.song.title}|||${r.song.artist}`] = { image_url: r.imageUrl, preview_url: r.previewUrl, spotify_url: r.spotifyUrl };
         }
       }
     }

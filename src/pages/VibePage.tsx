@@ -18,7 +18,7 @@ const VibePage = () => {
   const discoverySteps = useDiscoveryPath(displayName, location.pathname);
 
   const allSongs = [...(data?.closest_matches || []), ...(data?.same_energy || [])];
-  const { songImages, artistImages } = useSpotifyImages(allSongs, data?.related_artists || []);
+  const { songImages, songMeta, artistImages } = useSpotifyImages(allSongs, data?.related_artists || []);
 
   if (loading) return <PageSkeleton generating={generating} />;
   if (error) {
@@ -46,10 +46,10 @@ const VibePage = () => {
       </motion.div>
 
       {data.closest_matches.length > 0 && (
-        <ResultSection title="Closest Matches" items={data.closest_matches} linkPrefix="/songs-like" imageType="song" images={songImages} />
+        <ResultSection title="Closest Matches" items={data.closest_matches} linkPrefix="/songs-like" imageType="song" images={songImages} songMetaMap={songMeta} />
       )}
       {data.same_energy.length > 0 && (
-        <ResultSection title="Same Energy" items={data.same_energy} linkPrefix="/songs-like" imageType="song" images={songImages} />
+        <ResultSection title="Same Energy" items={data.same_energy} linkPrefix="/songs-like" imageType="song" images={songImages} songMetaMap={songMeta} />
       )}
       {data.related_artists.length > 0 && (
         <ResultSection title="Related Artists" items={data.related_artists} linkPrefix="/artists-like" imageType="artist" images={artistImages} />
