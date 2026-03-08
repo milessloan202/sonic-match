@@ -70,7 +70,18 @@ function buildNodes(
   add(props.closestMatches, "Closest Matches", linkPrefix);
   add(props.sameEnergy, "Same Energy", linkPrefix);
   add(props.relatedArtists, "Related Artists", "/artists-like");
-  add(props.relatedVibes, "Related Vibes", "/vibes");
+
+  // Related vibes have a different shape: { name, slug }
+  (props.relatedVibes || []).slice(0, 6).forEach((item) => {
+    nodes.push({
+      id: `Related Vibes-${item.name}`,
+      label: item.name,
+      subtitle: undefined,
+      category: "Related Vibes",
+      linkTo: `/vibes/${item.slug}`,
+      color: CATEGORY_COLORS["Related Vibes"] || "hsl(0, 0%, 60%)",
+    });
+  });
 
   return nodes;
 }
