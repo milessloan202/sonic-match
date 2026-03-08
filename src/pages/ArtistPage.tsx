@@ -55,7 +55,7 @@ const ArtistPage = () => {
         <ResultSection title="Related Artists" items={data.related_artists} linkPrefix="/artists-like" imageType="artist" images={artistImages} />
       )}
       {data.why_these_work.length > 0 && (
-        <ResultSection title="Why These Work" items={data.why_these_work} />
+        <ResultSection title="Why These Work" items={data.why_these_work} variant="explanation" />
       )}
 
       <RelatedPages relatedSongs={data.related_songs} relatedArtists={data.related_artist_links} relatedVibes={data.related_vibes} />
