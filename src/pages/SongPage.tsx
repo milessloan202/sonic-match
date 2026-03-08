@@ -15,6 +15,7 @@ import { useSpotifyImages } from "../hooks/useSpotifyImages";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSampleData } from "@/hooks/useSampleData";
 import SampleInfo from "@/components/SampleInfo";
+import LinkedSummary from "../components/LinkedSummary";
 
 const SongPage = () => {
   const { slug } = useParams<{ slug: string }>();
