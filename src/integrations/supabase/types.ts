@@ -35,6 +35,45 @@ export type Database = {
         }
         Relationships: []
       }
+      sample_cache: {
+        Row: {
+          artist_name: string
+          created_at: string
+          id: string
+          looked_up: boolean
+          musicbrainz_recording_id: string | null
+          sample_verified: boolean
+          sampled_artist_name: string | null
+          sampled_recording_id: string | null
+          sampled_song_title: string | null
+          song_title: string
+        }
+        Insert: {
+          artist_name: string
+          created_at?: string
+          id?: string
+          looked_up?: boolean
+          musicbrainz_recording_id?: string | null
+          sample_verified?: boolean
+          sampled_artist_name?: string | null
+          sampled_recording_id?: string | null
+          sampled_song_title?: string | null
+          song_title: string
+        }
+        Update: {
+          artist_name?: string
+          created_at?: string
+          id?: string
+          looked_up?: boolean
+          musicbrainz_recording_id?: string | null
+          sample_verified?: boolean
+          sampled_artist_name?: string | null
+          sampled_recording_id?: string | null
+          sampled_song_title?: string | null
+          song_title?: string
+        }
+        Relationships: []
+      }
       seo_pages: {
         Row: {
           closest_matches: Json | null
