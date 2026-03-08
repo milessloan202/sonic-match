@@ -37,7 +37,6 @@ serve(async (req) => {
       });
     }
 
-    // Generate content with Claude API
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
     if (!ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is not configured");
 
@@ -74,16 +73,16 @@ Return ONLY JSON:
 }
 
 Rules:
-closestMatches = 5 songs
-sameEnergy = 5 songs
-relatedArtists = 3 artists
+closestMatches = exactly 5 songs
+sameEnergy = exactly 5 songs
+relatedArtists = exactly 3 artists
 relatedSongs = 4 related songs with slugs (lowercase-hyphenated)
 relatedVibes = 3 related vibes with slugs
 relatedArtistLinks = 3 related artists with slugs
 title = SEO page title (under 60 chars)
 description = SEO meta description (under 160 chars)
 Use REAL music data - real artist names, real song names, real genres.
-Return JSON only.`;
+Return JSON only. No markdown, no code fences.`;
 
     const aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -95,10 +94,8 @@ Return JSON only.`;
       body: JSON.stringify({
         model: "claude-sonnet-4-5-20250514",
         max_tokens: 2048,
-        system: "You are a music discovery engine. Return only valid JSON, no markdown.",
-        messages: [
-          { role: "user", content: prompt },
-        ],
+        system: "You are a music discovery engine. Return only valid JSON, no markdown, no code fences.",
+        messages: [{ role: "user", content: prompt }],
       }),
     });
 
@@ -118,7 +115,6 @@ Return JSON only.`;
     const rawContent = aiData.content?.[0]?.text;
     if (!rawContent) throw new Error("No AI response content");
 
-    // Parse JSON (handle potential markdown wrapping)
     let content;
     try {
       const cleaned = rawContent.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
@@ -127,11 +123,10 @@ Return JSON only.`;
       throw new Error("Failed to parse AI response as JSON");
     }
 
-    // Map new JSON structure to DB columns
+    // Map camelCase AI response to snake_case DB columns
     const closestMatches = (content.closestMatches || []).map((m: any) => ({
       title: m.title,
       subtitle: `${m.artist} (${m.year})`,
-      tag: undefined,
     }));
 
     const sameEnergy = (content.sameEnergy || []).map((m: any) => ({
@@ -145,10 +140,9 @@ Return JSON only.`;
     }));
 
     const whyTheseWork = content.whyTheseWork
-      ? [{ title: "Why these recommendations work", subtitle: content.whyTheseWork }]
+      ? [{ title: "Why These Work", subtitle: content.whyTheseWork }]
       : [];
 
-    // Save to database
     const { error: insertError } = await supabase.from("seo_pages").insert({
       slug,
       page_type,
