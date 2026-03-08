@@ -34,6 +34,8 @@ const Index = () => {
     const trimmed = q.trim();
     if (!trimmed) return;
 
+    clearDiscoveryPath();
+
     const slug = slugify(trimmed);
     setLoading(true);
     setError(null);
