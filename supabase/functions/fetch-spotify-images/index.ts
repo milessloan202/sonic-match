@@ -90,13 +90,15 @@ serve(async (req) => {
             const res = await fetch(`https://api.spotify.com/v1/search?q=${q}&type=track&limit=1`, {
               headers: { Authorization: `Bearer ${token}` },
             });
-            if (!res.ok) return { song: s, imageUrl: null };
+            if (!res.ok) return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null };
             const data = await res.json();
             const track = data?.tracks?.items?.[0];
             const imageUrl = track?.album?.images?.[1]?.url || track?.album?.images?.[0]?.url || null;
-            return { song: s, imageUrl };
+            const previewUrl = track?.preview_url || null;
+            const spotifyUrl = track?.external_urls?.spotify || null;
+            return { song: s, imageUrl, previewUrl, spotifyUrl };
           } catch {
-            return { song: s, imageUrl: null };
+            return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null };
           }
         });
 
