@@ -38,44 +38,67 @@ async function fetchYouTubeThumbnail(title: string, artist: string): Promise<str
   const query = `${title} ${artist}`;
   console.log(`[YouTube] Searching for: "${query}"`);
 
-  // Try multiple Piped instances for reliability
+  // Try Piped API instance
   const pipedInstances = [
-    "https://pipedapi.kavin.rocks",
-    "https://pipedapi.adminforge.de",
-    "https://pipedapi.in.projectsegfau.lt",
+    "https://api.piped.private.coffee",
   ];
 
   for (const instance of pipedInstances) {
     try {
       const url = `${instance}/search?q=${encodeURIComponent(query)}&filter=videos`;
-      console.log(`[YouTube] Trying instance: ${instance}`);
-      const res = await fetch(url, {
-        signal: AbortSignal.timeout(8000),
-      });
+      console.log(`[YouTube] Trying Piped: ${instance}`);
+      const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
       if (!res.ok) {
-        console.log(`[YouTube] Instance ${instance} returned ${res.status}`);
+        console.log(`[YouTube] Piped ${instance} returned ${res.status}`);
         continue;
       }
       const data = await res.json();
       const items = data?.items;
       if (!items?.length) {
-        console.log(`[YouTube] No results from ${instance}`);
+        console.log(`[YouTube] No Piped results from ${instance}`);
         continue;
       }
       const videoUrl = items[0]?.url;
       if (!videoUrl) continue;
       const match = videoUrl.match(/[?&]v=([^&]+)/);
       const videoId = match?.[1];
-      if (!videoId) {
-        console.log(`[YouTube] Could not extract video ID from: ${videoUrl}`);
-        continue;
-      }
+      if (!videoId) continue;
       const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-      console.log(`[YouTube] Found thumbnail for "${query}": ${thumbnailUrl}`);
+      console.log(`[YouTube] Found via Piped: ${thumbnailUrl}`);
       return thumbnailUrl;
     } catch (e) {
-      console.log(`[YouTube] Instance ${instance} failed: ${e instanceof Error ? e.message : "unknown error"}`);
-      continue;
+      console.log(`[YouTube] Piped ${instance} failed: ${e instanceof Error ? e.message : "unknown"}`);
+    }
+  }
+
+  // Fallback: try Invidious instances
+  const invidiousInstances = [
+    "https://invidious.nikkosphere.com",
+    "https://inv.perditum.com",
+    "https://invidious.materialio.us",
+  ];
+
+  for (const instance of invidiousInstances) {
+    try {
+      const url = `${instance}/api/v1/search?q=${encodeURIComponent(query)}&type=video`;
+      console.log(`[YouTube] Trying Invidious: ${instance}`);
+      const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      if (!res.ok) {
+        console.log(`[YouTube] Invidious ${instance} returned ${res.status}`);
+        continue;
+      }
+      const data = await res.json();
+      if (!Array.isArray(data) || !data.length) {
+        console.log(`[YouTube] No Invidious results from ${instance}`);
+        continue;
+      }
+      const videoId = data[0]?.videoId;
+      if (!videoId) continue;
+      const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+      console.log(`[YouTube] Found via Invidious: ${thumbnailUrl}`);
+      return thumbnailUrl;
+    } catch (e) {
+      console.log(`[YouTube] Invidious ${instance} failed: ${e instanceof Error ? e.message : "unknown"}`);
     }
   }
 
