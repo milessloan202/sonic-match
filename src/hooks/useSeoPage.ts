@@ -11,8 +11,8 @@ interface SeoPageData {
   meta_description: string | null;
   heading: string;
   summary: string | null;
-  closest_matches: { title: string; subtitle?: string; tag?: string }[];
-  same_energy: { title: string; subtitle?: string }[];
+  closest_matches: { title: string; subtitle?: string; tag?: string; spotify_id?: string | null }[];
+  same_energy: { title: string; subtitle?: string; spotify_id?: string | null }[];
   related_artists: { title: string; subtitle?: string }[];
   why_these_work: { title: string; subtitle?: string }[];
   related_songs: RelatedLink[];
