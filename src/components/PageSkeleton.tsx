@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import CrateDigger from "./CrateDigger";
 
 const LOADING_MESSAGES = [
   "Digging through the crates… hold please.",
@@ -30,18 +31,21 @@ const RotatingMessage = () => {
   }, []);
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.p
-        key={index}
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -6 }}
-        transition={{ duration: 0.25 }}
-        className="text-muted-foreground text-sm"
-      >
-        🎵 {LOADING_MESSAGES[index]}
-      </motion.p>
-    </AnimatePresence>
+    <div className="flex items-center gap-4">
+      <CrateDigger size={80} />
+      <AnimatePresence mode="wait">
+        <motion.p
+          key={index}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.25 }}
+          className="text-muted-foreground text-sm"
+        >
+          {LOADING_MESSAGES[index]}
+        </motion.p>
+      </AnimatePresence>
+    </div>
   );
 };
 
