@@ -68,13 +68,13 @@ const ArtistPage = () => {
       ) : (
         <>
           {data.closest_matches.length > 0 && (
-            <ResultSection title="Closest Matches" items={data.closest_matches} linkPrefix="/artists-like" imageType="song" images={songImages} songMetaMap={songMeta} />
+            <ResultSection title="Closest Matches" items={data.closest_matches} linkPrefix="/artists-like" imageType="song" images={songImages} songMetaMap={songMeta} variant={activeView === "cards" ? "card" : "default"} />
           )}
           {data.same_energy.length > 0 && (
-            <ResultSection title="Same Energy" items={data.same_energy} linkPrefix="/artists-like" imageType="song" images={songImages} songMetaMap={songMeta} />
+            <ResultSection title="Same Energy" items={data.same_energy} linkPrefix="/artists-like" imageType="song" images={songImages} songMetaMap={songMeta} variant={activeView === "cards" ? "card" : "default"} />
           )}
           {data.related_artists.length > 0 && (
-            <ResultSection title="Related Artists" items={data.related_artists} linkPrefix="/artists-like" imageType="artist" images={artistImages} />
+            <ResultSection title="Related Artists" items={data.related_artists} linkPrefix="/artists-like" imageType="artist" images={artistImages} variant={activeView === "cards" ? "card" : "default"} />
           )}
           {data.why_these_work.length > 0 && (
             <ResultSection title="Why These Work" items={data.why_these_work} variant="explanation" />
