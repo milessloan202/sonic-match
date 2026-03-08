@@ -97,7 +97,7 @@ const Index = () => {
 
         <div className="space-y-3">
           <h1 className="text-5xl sm:text-6xl font-bold tracking-tight">
-            <span className="text-gradient">SoundAlike</span>
+            <span className="text-gradient">SOUNDDNA</span>
           </h1>
           <p className="text-muted-foreground text-lg">
             Find songs, artists, and moods with the same sonic DNA
