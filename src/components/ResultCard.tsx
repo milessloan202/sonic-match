@@ -10,20 +10,24 @@ interface ResultCardProps {
 const ResultCard = ({ title, subtitle, tag, index = 0 }: ResultCardProps) => {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.04, duration: 0.25 }}
-      className="group flex items-start justify-between gap-3 p-4 rounded-lg border border-border/50 hover:border-border hover:bg-card/50 transition-colors cursor-pointer"
+      transition={{ delay: index * 0.05, duration: 0.3 }}
+      className="group surface-glass rounded-lg p-5 hover:border-primary/30 hover:glow-primary transition-all duration-300 cursor-pointer"
     >
-      <div className="min-w-0">
-        <h3 className="text-sm font-medium text-foreground">{title}</h3>
-        {subtitle && (
-          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{subtitle}</p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="font-medium text-foreground truncate">{title}</h3>
+          {subtitle && (
+            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{subtitle}</p>
+          )}
+        </div>
+        {tag && (
+          <span className="shrink-0 text-xs font-mono px-2 py-1 rounded-md bg-primary/10 text-primary">
+            {tag}
+          </span>
         )}
       </div>
-      {tag && (
-        <span className="shrink-0 text-[11px] font-mono text-muted-foreground">{tag}</span>
-      )}
     </motion.div>
   );
 };

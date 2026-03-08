@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 
 type SearchMode = "song" | "artist" | "vibe";
@@ -15,21 +16,25 @@ const options: { value: SearchMode; label: string }[] = [
 
 const SegmentedSelector = ({ value, onChange }: SegmentedSelectorProps) => {
   return (
-    <div className="inline-flex gap-1">
+    <div className="inline-flex rounded-lg bg-secondary p-1 gap-1">
       {options.map((option) => (
         <button
           key={option.value}
           onClick={() => onChange(option.value)}
-          className="relative px-5 py-1.5 text-sm rounded-full transition-colors"
+          className="relative px-6 py-2 text-sm font-medium rounded-md transition-colors"
         >
           {value === option.value && (
             <motion.div
               layoutId="segment-active"
-              className="absolute inset-0 rounded-full bg-secondary border border-border"
-              transition={{ type: "spring", bounce: 0.15, duration: 0.4 }}
+              className="absolute inset-0 rounded-md bg-primary glow-primary"
+              transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
             />
           )}
-          <span className={`relative z-10 ${value === option.value ? "text-foreground" : "text-muted-foreground"}`}>
+          <span
+            className={`relative z-10 ${
+              value === option.value ? "text-primary-foreground" : "text-muted-foreground"
+            }`}
+          >
             {option.label}
           </span>
         </button>
