@@ -381,102 +381,15 @@ Return JSON only. No markdown, no code fences.`;
       throw new Error("Failed to parse AI response as JSON");
     }
 
-    // --- Mood-fit reranking step ---
-    const moodStrictness = deep_cut_mode
-      ? "Use LOOSE thresholds — allow mood-adjacent and genre-crossing songs to rank well if the emotional or atmospheric thread is real. Favor adventurous picks."
-      : "Use STRICT thresholds — strongly prioritize mood accuracy. Penalize songs that are musically related but feel off-mood. The final order should feel cohesive and intentional.";
-
-    const rerankPrompt = `You are a mood-fit scoring engine. Given a search query and two lists of song recommendations, score and reorder each list so the strongest mood/atmosphere matches appear first.
-
-Search query: "${displayName}"
-Search type: ${page_type}
-${deep_cut_mode ? "Mode: Deep Cut (exploratory)" : "Mode: Normal (precision)"}
-
-${moodStrictness}
-
-Score each song on how well it matches the MOOD and ATMOSPHERE implied by the search query. Consider:
-- Emotional tone alignment
-- Tempo appropriateness
-- Production atmosphere fit
-- Instrumentation mood match
-- Sonic texture compatibility
-- Listening context relevance
-
-Here are the candidates:
-
-closestMatches:
-${JSON.stringify(content.closestMatches)}
-
-sameEnergy:
-${JSON.stringify(content.sameEnergy)}
-
-Return ONLY this JSON (no markdown, no code fences):
-{
-  "closestMatches": [{"title":"","artist":"","year":2000,"moodScore":0.95}],
-  "sameEnergy": [{"title":"","artist":"","year":2000,"moodScore":0.95}]
-}
-
-Rules:
-- Return the SAME songs, just reordered by moodScore (highest first)
-- moodScore is 0.0 to 1.0
-- Do NOT add or remove any songs
-- Do NOT change song titles, artists, or years
-- Return valid JSON only`;
-
-    let rerankedClosest = content.closestMatches || [];
-    let rerankedSameEnergy = content.sameEnergy || [];
-
-    try {
-      console.log("[MoodFit] Starting mood-fit reranking...");
-      const rerankResponse = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "x-api-key": ANTHROPIC_API_KEY,
-          "anthropic-version": "2023-06-01",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1024,
-          system: "You are a mood-scoring engine. Return only valid JSON. No markdown, no code fences. Reorder songs by mood fit score.",
-          messages: [{ role: "user", content: rerankPrompt }],
-        }),
-      });
-
-      if (rerankResponse.ok) {
-        const rerankData = await rerankResponse.json();
-        const rerankRaw = rerankData.content?.[0]?.text;
-        if (rerankRaw) {
-          const cleanedRerank = rerankRaw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-          const reranked = JSON.parse(cleanedRerank);
-
-          if (Array.isArray(reranked.closestMatches) && reranked.closestMatches.length === rerankedClosest.length) {
-            rerankedClosest = reranked.closestMatches;
-            console.log("[MoodFit] closestMatches reranked. Top score:", reranked.closestMatches[0]?.moodScore);
-          }
-          if (Array.isArray(reranked.sameEnergy) && reranked.sameEnergy.length === rerankedSameEnergy.length) {
-            rerankedSameEnergy = reranked.sameEnergy;
-            console.log("[MoodFit] sameEnergy reranked. Top score:", reranked.sameEnergy[0]?.moodScore);
-          }
-        }
-      } else {
-        console.warn("[MoodFit] Rerank API call failed, using original order. Status:", rerankResponse.status);
-      }
-    } catch (rerankErr) {
-      console.warn("[MoodFit] Reranking failed, using original order:", rerankErr);
-    }
-
     // Map camelCase AI response to snake_case DB columns
-    const closestMatches = rerankedClosest.map((m: any) => ({
+    const closestMatches = (content.closestMatches || []).map((m: any) => ({
       title: m.title,
       subtitle: `${m.artist} (${m.year})`,
-      tag: m.moodScore != null ? `Mood ${Math.round(m.moodScore * 100)}%` : undefined,
     }));
 
-    const sameEnergy = rerankedSameEnergy.map((m: any) => ({
+    const sameEnergy = (content.sameEnergy || []).map((m: any) => ({
       title: m.title,
       subtitle: `${m.artist} (${m.year})`,
-      tag: m.moodScore != null ? `Mood ${Math.round(m.moodScore * 100)}%` : undefined,
     }));
 
     const relatedArtists = (content.relatedArtists || []).map((a: string) => ({
