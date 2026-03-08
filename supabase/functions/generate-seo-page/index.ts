@@ -84,10 +84,67 @@ serve(async (req) => {
 
     recordGeneration();
 
+    // --- Spotify seed track lookup for producer pages ---
+    let seedTracks: { title: string; artist: string; year: string }[] = [];
+    if (page_type === "producer") {
+      try {
+        const clientId = Deno.env.get("SPOTIFY_CLIENT_ID")!;
+        const clientSecret = Deno.env.get("SPOTIFY_CLIENT_SECRET")!;
+        const basic = btoa(`${clientId}:${clientSecret}`);
+        const tokenRes = await fetch("https://accounts.spotify.com/api/token", {
+          method: "POST",
+          headers: { Authorization: `Basic ${basic}`, "Content-Type": "application/x-www-form-urlencoded" },
+          body: "grant_type=client_credentials",
+        });
+        if (tokenRes.ok) {
+          const tokenData = await tokenRes.json();
+          const token = tokenData.access_token;
+          const producerName = slug.replace(/-deep$/, "").replace(/-/g, " ");
+
+          // Search Spotify for tracks mentioning this producer
+          const queries = [
+            `producer:"${producerName}"`,
+            `"${producerName}"`,
+          ];
+
+          const seen = new Set<string>();
+          for (const q of queries) {
+            if (seedTracks.length >= 8) break;
+            try {
+              const searchRes = await fetch(
+                `https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=10`,
+                { headers: { Authorization: `Bearer ${token}` } }
+              );
+              if (searchRes.ok) {
+                const searchData = await searchRes.json();
+                const tracks = searchData?.tracks?.items || [];
+                for (const t of tracks) {
+                  if (seedTracks.length >= 8) break;
+                  const key = `${t.name}|||${t.artists?.[0]?.name}`;
+                  if (seen.has(key)) continue;
+                  seen.add(key);
+                  seedTracks.push({
+                    title: t.name,
+                    artist: t.artists?.[0]?.name || "Unknown",
+                    year: t.album?.release_date?.slice(0, 4) || "Unknown",
+                  });
+                }
+              }
+            } catch (e) {
+              console.log(`[Seed] Spotify search failed for query "${q}":`, e);
+            }
+          }
+          console.log(`[Seed] Found ${seedTracks.length} seed tracks for producer "${producerName}"`);
+        }
+      } catch (e) {
+        console.log("[Seed] Spotify token fetch failed, proceeding without seed tracks:", e);
+      }
+    }
+
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
     if (!ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is not configured");
 
-    const displayName = slug.replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+    const displayName = slug.replace(/-deep$/, "").replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
 
     const songPrompt = `You are a world-class music curator — part crate-digger, part musicologist, part the best record store clerk alive. You think in terms of sonic DNA: production fingerprints, harmonic choices, rhythmic feel, and emotional architecture.
 
@@ -177,9 +234,14 @@ whyTheseWork: 2-3 sentences describing the SPECIFIC sonic qualities that create 
 
 summary: A 2-3 sentence evocation of this vibe as a musical atmosphere — what it sounds like, what it feels like physically, and the precise moment you'd reach for it.`;
 
+    const seedTrackBlock = seedTracks.length > 0
+      ? `\n\nVERIFIED SEED TRACKS (confirmed to exist on Spotify — use these as your foundation):\n${seedTracks.map((t, i) => `${i + 1}. "${t.title}" by ${t.artist} (${t.year})`).join("\n")}\n\nUse these seed tracks to understand ${displayName}'s production fingerprint. Your closestMatches SHOULD prioritize tracks from this list or other tracks you are highly confident ${displayName} produced. Do NOT invent producer credits — if you are unsure whether ${displayName} produced a track, do not include it in closestMatches. You may include tracks not in this list ONLY if you have high confidence they are real productions by ${displayName}.`
+      : `\n\nIMPORTANT: No verified seed tracks were found via Spotify. Be EXTRA conservative with closestMatches — only include tracks you are highly confident were produced by ${displayName}. If unsure, choose well-known productions over obscure guesses. Do NOT invent producer credits.`;
+
     const producerPrompt = `You are a world-class music curator — part crate-digger, part studio engineer, part the best A&R executive alive. You think in terms of production DNA: how a producer's sonic fingerprint — their drum programming, synth choices, mixing approach, sampling philosophy, and arrangement instincts — connects tracks across genres and decades.
 
 User is looking for producers similar to: "${displayName}"
+${seedTrackBlock}
 
 Your mission: map the production universe surrounding this producer. Not "related producers" from a streaming algorithm — genuine sonic and technical kinship based on production approach.
 
@@ -191,12 +253,12 @@ Evaluate candidates through these lenses:
 5. **Genre fluency**: ability to work across styles, how their signature translates between genres
 
 CRITICAL RULES:
-- For closestMatches (tracks produced by the queried producer): choose tracks that showcase different dimensions of their production style. Include deep cuts alongside signature productions.
+- For closestMatches (tracks produced by the queried producer): ONLY include tracks you are confident ${displayName} actually produced. Prioritize tracks from the verified seed list above. Do NOT guess producer credits.
 - For sameEnergy (tracks by OTHER producers): maximum 1 track per producer. Find tracks where the production approach shares genuine DNA with the queried producer.
 - For relatedArtists (actually related PRODUCERS): recommend producers, not performing artists. Go one level deeper than the obvious choices.
 - Only recommend songs and artists you are reasonably confident are real and commercially released.
 
-closestMatches: 5 tracks produced by or heavily associated with ${displayName} that best showcase their production range. Include at least 2 lesser-known productions.
+closestMatches: 5 tracks produced by or heavily associated with ${displayName} that best showcase their production range. Prioritize verified seed tracks and other productions you are highly confident about.
 
 sameEnergy: 5 tracks by OTHER producers that share production DNA with ${displayName}'s style — similar drum programming, mixing approach, sonic textures, or arrangement philosophy.
 
