@@ -104,17 +104,17 @@ const PlayButton = ({ title, subtitle, meta }: { title: string; subtitle?: strin
     }
     return (
       <button
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          window.open(youtubeUrl, "_blank", "noopener,noreferrer");
-        }}
-        className="shrink-0 flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-[#FF0000] transition-colors"
-      >
-        <YouTubeIcon className="w-3.5 h-3.5" />
-        <span>Watch on YouTube</span>
-      </button>
-    );
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            window.open(youtubeUrl, "_blank");
+          }}
+          className="shrink-0 flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-[#FF0000] transition-colors"
+        >
+          <YouTubeIcon className="w-3.5 h-3.5" />
+          <span>Watch on YouTube</span>
+        </button>
+      );
   }
 
   return (
