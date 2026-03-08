@@ -1,10 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Search, Loader2, AlertCircle } from "lucide-react";
 import SegmentedSelector, { type SearchMode } from "../components/SegmentedSelector";
 import SearchChip from "../components/SearchChip";
-import ResultSection from "../components/ResultSection";
-import RelatedPages from "../components/RelatedPages";
 import SEOHead from "../components/SEOHead";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -17,91 +16,53 @@ const exampleChips: Record<SearchMode, string[]> = {
 const slugify = (text: string) =>
   text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
-interface SeoResult {
-  heading: string;
-  summary: string | null;
-  closest_matches: { title: string; subtitle?: string; tag?: string }[];
-  same_energy: { title: string; subtitle?: string }[];
-  related_artists: { title: string; subtitle?: string }[];
-  why_these_work: { title: string; subtitle?: string }[];
-  related_songs: { name: string; slug: string }[];
-  related_vibes: { name: string; slug: string }[];
-  related_artist_links: { name: string; slug: string }[];
-}
+const routePrefixes: Record<SearchMode, string> = {
+  song: "/songs-like",
+  artist: "/artists-like",
+  vibe: "/vibes",
+};
 
 const Index = () => {
+  const navigate = useNavigate();
   const [mode, setMode] = useState<SearchMode>("song");
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<SeoResult | null>(null);
 
-  const handleSearch = async () => {
-    const q = query.trim();
-    if (!q) return;
+  const performSearch = async (q: string, searchMode: SearchMode) => {
+    const trimmed = q.trim();
+    if (!trimmed) return;
 
-    const slug = slugify(q);
+    const slug = slugify(trimmed);
     setLoading(true);
     setError(null);
-    setResult(null);
 
     try {
-      // Check DB first
+      // Check if page already exists
       const { data: page } = await supabase
         .from("seo_pages")
-        .select("*")
+        .select("id")
         .eq("slug", slug)
-        .eq("page_type", mode)
+        .eq("page_type", searchMode)
         .maybeSingle();
 
       if (page) {
-        setResult({
-          heading: page.heading,
-          summary: page.summary,
-          closest_matches: (page.closest_matches as any[]) || [],
-          same_energy: (page.same_energy as any[]) || [],
-          related_artists: (page.related_artists as any[]) || [],
-          why_these_work: (page.why_these_work as any[]) || [],
-          related_songs: (page.related_songs as any[]) || [],
-          related_vibes: (page.related_vibes as any[]) || [],
-          related_artist_links: (page.related_artist_links as any[]) || [],
-        });
-        setLoading(false);
+        // Page exists, redirect immediately
+        navigate(`${routePrefixes[searchMode]}/${slug}`);
         return;
       }
 
-      // Generate via edge function
+      // Generate via edge function (saves to DB)
       const { data: fnData, error: fnError } = await supabase.functions.invoke(
         "generate-seo-page",
-        { body: { slug, page_type: mode } }
+        { body: { slug, page_type: searchMode } }
       );
 
       if (fnError) throw fnError;
       if (fnData?.error) throw new Error(fnData.error);
 
-      // Re-fetch the newly created page
-      const { data: newPage } = await supabase
-        .from("seo_pages")
-        .select("*")
-        .eq("slug", slug)
-        .eq("page_type", mode)
-        .maybeSingle();
-
-      if (newPage) {
-        setResult({
-          heading: newPage.heading,
-          summary: newPage.summary,
-          closest_matches: (newPage.closest_matches as any[]) || [],
-          same_energy: (newPage.same_energy as any[]) || [],
-          related_artists: (newPage.related_artists as any[]) || [],
-          why_these_work: (newPage.why_these_work as any[]) || [],
-          related_songs: (newPage.related_songs as any[]) || [],
-          related_vibes: (newPage.related_vibes as any[]) || [],
-          related_artist_links: (newPage.related_artist_links as any[]) || [],
-        });
-      } else {
-        throw new Error("Page was created but could not be loaded.");
-      }
+      // Redirect to the permanent page
+      navigate(`${routePrefixes[searchMode]}/${slug}`);
     } catch (e: any) {
       console.error("Search error:", e);
       setError(e?.message || "Something went wrong. Please try again.");
@@ -110,82 +71,15 @@ const Index = () => {
     }
   };
 
+  const handleSearch = () => performSearch(query, mode);
+
   const handleChip = (chip: string) => {
     setQuery(chip);
-    // Trigger search after state update
-    setTimeout(() => {
-      const slug = slugify(chip);
-      setLoading(true);
-      setError(null);
-      setResult(null);
-
-      (async () => {
-        try {
-          const { data: page } = await supabase
-            .from("seo_pages")
-            .select("*")
-            .eq("slug", slug)
-            .eq("page_type", mode)
-            .maybeSingle();
-
-          if (page) {
-            setResult({
-              heading: page.heading,
-              summary: page.summary,
-              closest_matches: (page.closest_matches as any[]) || [],
-              same_energy: (page.same_energy as any[]) || [],
-              related_artists: (page.related_artists as any[]) || [],
-              why_these_work: (page.why_these_work as any[]) || [],
-              related_songs: (page.related_songs as any[]) || [],
-              related_vibes: (page.related_vibes as any[]) || [],
-              related_artist_links: (page.related_artist_links as any[]) || [],
-            });
-            setLoading(false);
-            return;
-          }
-
-          const { data: fnData, error: fnError } = await supabase.functions.invoke(
-            "generate-seo-page",
-            { body: { slug, page_type: mode } }
-          );
-
-          if (fnError) throw fnError;
-          if (fnData?.error) throw new Error(fnData.error);
-
-          const { data: newPage } = await supabase
-            .from("seo_pages")
-            .select("*")
-            .eq("slug", slug)
-            .eq("page_type", mode)
-            .maybeSingle();
-
-          if (newPage) {
-            setResult({
-              heading: newPage.heading,
-              summary: newPage.summary,
-              closest_matches: (newPage.closest_matches as any[]) || [],
-              same_energy: (newPage.same_energy as any[]) || [],
-              related_artists: (newPage.related_artists as any[]) || [],
-              why_these_work: (newPage.why_these_work as any[]) || [],
-              related_songs: (newPage.related_songs as any[]) || [],
-              related_vibes: (newPage.related_vibes as any[]) || [],
-              related_artist_links: (newPage.related_artist_links as any[]) || [],
-            });
-          } else {
-            throw new Error("Page was created but could not be loaded.");
-          }
-        } catch (e: any) {
-          setError(e?.message || "Something went wrong. Please try again.");
-        } finally {
-          setLoading(false);
-        }
-      })();
-    }, 0);
+    performSearch(chip, mode);
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center px-4 py-16 relative overflow-hidden">
-      {/* Background glow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-primary/5 blur-3xl animate-pulse-glow pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full bg-accent/5 blur-3xl animate-pulse-glow pointer-events-none" />
 
@@ -241,7 +135,7 @@ const Index = () => {
           </button>
         </div>
 
-        {!result && !loading && !error && (
+        {!loading && !error && (
           <div className="flex flex-wrap justify-center gap-2">
             {exampleChips[mode].map((chip) => (
               <SearchChip key={chip} label={chip} onClick={() => handleChip(chip)} />
@@ -250,7 +144,6 @@ const Index = () => {
         )}
       </motion.div>
 
-      {/* Loading state */}
       {loading && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -258,11 +151,10 @@ const Index = () => {
           className="relative z-10 w-full max-w-xl mt-10 text-center space-y-3"
         >
           <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
-          <p className="text-muted-foreground">Generating recommendations with Claude...</p>
+          <p className="text-muted-foreground">Generating recommendations...</p>
         </motion.div>
       )}
 
-      {/* Error state */}
       {error && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -274,39 +166,6 @@ const Index = () => {
             <p className="text-sm font-medium text-destructive">Something went wrong</p>
             <p className="text-sm text-muted-foreground mt-1">{error}</p>
           </div>
-        </motion.div>
-      )}
-
-      {/* Results */}
-      {result && !loading && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="relative z-10 w-full max-w-3xl mt-10 space-y-10 text-left"
-        >
-          <div className="space-y-2">
-            <h2 className="text-3xl sm:text-4xl font-bold text-foreground">{result.heading}</h2>
-            {result.summary && <p className="text-muted-foreground">{result.summary}</p>}
-          </div>
-
-          {result.closest_matches.length > 0 && (
-            <ResultSection title="🎯 Closest Matches" items={result.closest_matches} />
-          )}
-          {result.same_energy.length > 0 && (
-            <ResultSection title="⚡ Same Energy" items={result.same_energy} />
-          )}
-          {result.related_artists.length > 0 && (
-            <ResultSection title="🎤 Related Artists" items={result.related_artists} />
-          )}
-          {result.why_these_work.length > 0 && (
-            <ResultSection title="💡 Why These Work" items={result.why_these_work} />
-          )}
-
-          <RelatedPages
-            relatedSongs={result.related_songs}
-            relatedArtists={result.related_artist_links}
-            relatedVibes={result.related_vibes}
-          />
         </motion.div>
       )}
     </div>
