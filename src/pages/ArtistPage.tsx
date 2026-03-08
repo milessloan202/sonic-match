@@ -54,7 +54,23 @@ const ArtistPage = () => {
           <ViewToggle view={view} onChange={setView} />
         </div>
         <h1 className="text-3xl sm:text-4xl font-bold text-foreground">{data.heading}</h1>
-        {data.summary && <p className="text-muted-foreground">{data.summary}</p>}
+        {data.summary && (
+          <LinkedSummary
+            text={data.summary}
+            artistNames={[
+              ...(data.related_artists || []).map((a: any) => a.title),
+              ...(data.related_artist_links || []).map((a: any) => a.title),
+              ...(data.closest_matches || []).flatMap((s: any) => {
+                const m = s.subtitle?.match(/^(.+?)\s*\(\d{4}\)\s*$/);
+                return m ? [m[1]] : [];
+              }),
+              ...(data.same_energy || []).flatMap((s: any) => {
+                const m = s.subtitle?.match(/^(.+?)\s*\(\d{4}\)\s*$/);
+                return m ? [m[1]] : [];
+              }),
+            ]}
+          />
+        )}
       </motion.div>
 
       {activeView === "map" ? (

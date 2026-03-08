@@ -54,7 +54,15 @@ const VibePage = () => {
           <ViewToggle view={view} onChange={setView} />
         </div>
         <h1 className="text-3xl sm:text-4xl font-bold text-foreground">{data.heading}</h1>
-        {data.summary && <p className="text-muted-foreground">{data.summary}</p>}
+        {data.summary && (
+          <LinkedSummary
+            text={data.summary}
+            artistNames={[
+              ...(data.related_artists || []).map((a: any) => a.title),
+              ...(data.related_artist_links || []).map((a: any) => a.title),
+            ]}
+          />
+        )}
       </motion.div>
 
       {activeView === "map" ? (
