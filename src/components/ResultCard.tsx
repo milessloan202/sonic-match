@@ -69,6 +69,7 @@ const ResultCard = ({
   tag,
   index = 0,
   linkPrefix,
+  variant = "default",
   imageUrl,
   imageType,
 }: ResultCardProps) => {
