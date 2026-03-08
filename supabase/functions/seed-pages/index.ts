@@ -224,7 +224,6 @@ const UNIQUE_SEEDS = SEEDS.filter((s) => {
   return true;
 });
 
-const BATCH_SIZE = 3;
 const DELAY_MS = 2500;
 
 function sleep(ms: number) {
@@ -234,88 +233,100 @@ function sleep(ms: number) {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  try {
+    const body = await req.json().catch(() => ({}));
+    const limit = Math.min(Math.max(body.limit || 10, 1), 50);
+    const offset = Math.max(body.offset || 0, 0);
 
-  // Check which pages already exist
-  const { data: existing } = await supabase
-    .from("seo_pages")
-    .select("slug, page_type");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-  const existingSet = new Set(
-    (existing || []).map((p: any) => `${p.page_type}:${p.slug}`)
-  );
+    // Get existing pages
+    const { data: existing } = await supabase
+      .from("seo_pages")
+      .select("slug, page_type");
 
-  const skipped = UNIQUE_SEEDS.filter((s) => existingSet.has(`${s.page_type}:${s.slug}`));
-  const toGenerate = UNIQUE_SEEDS.filter((s) => !existingSet.has(`${s.page_type}:${s.slug}`));
-
-  console.log(`Seed start: ${UNIQUE_SEEDS.length} total, ${skipped.length} already exist, ${toGenerate.length} to generate`);
-
-  const results: { slug: string; page_type: string; status: string }[] = [];
-  let created = 0;
-  let failed = 0;
-
-  for (let i = 0; i < toGenerate.length; i += BATCH_SIZE) {
-    const batch = toGenerate.slice(i, i + BATCH_SIZE);
-    const batchNum = Math.floor(i / BATCH_SIZE) + 1;
-    const totalBatches = Math.ceil(toGenerate.length / BATCH_SIZE);
-    console.log(`Batch ${batchNum}/${totalBatches}: ${batch.map((b) => b.slug).join(", ")}`);
-
-    const batchResults = await Promise.allSettled(
-      batch.map(async (seed) => {
-        try {
-          const res = await fetch(`${supabaseUrl}/functions/v1/generate-seo-page`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${supabaseServiceKey}`,
-            },
-            body: JSON.stringify(seed),
-          });
-
-          if (res.status === 429) {
-            return { ...seed, status: "rate_limited" };
-          }
-
-          const data = await res.json();
-          if (data.error) {
-            return { ...seed, status: `error: ${data.error}` };
-          }
-          return { ...seed, status: data.status || "created" };
-        } catch (e) {
-          return { ...seed, status: `error: ${e.message}` };
-        }
-      })
+    const existingSet = new Set(
+      (existing || []).map((p: any) => `${p.page_type}:${p.slug}`)
     );
 
-    for (const r of batchResults) {
-      if (r.status === "fulfilled") {
-        results.push(r.value);
-        if (r.value.status === "created") created++;
-        else if (r.value.status.startsWith("error")) failed++;
+    // Slice the seed list from offset
+    const window = UNIQUE_SEEDS.slice(offset, offset + limit);
+    const toGenerate = window.filter((s) => !existingSet.has(`${s.page_type}:${s.slug}`));
+    const alreadyExist = window.filter((s) => existingSet.has(`${s.page_type}:${s.slug}`));
+
+    console.log(`Batch: offset=${offset}, limit=${limit}, window=${window.length}, toGenerate=${toGenerate.length}, skipped=${alreadyExist.length}`);
+
+    let created = 0;
+    let failed = 0;
+    const errors: { slug: string; page_type: string; error: string }[] = [];
+
+    // Process one at a time to stay within timeout
+    for (let i = 0; i < toGenerate.length; i++) {
+      const seed = toGenerate[i];
+      try {
+        const res = await fetch(`${supabaseUrl}/functions/v1/generate-seo-page`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify(seed),
+        });
+
+        if (res.status === 429) {
+          errors.push({ ...seed, error: "rate_limited" });
+          failed++;
+          continue;
+        }
+
+        const data = await res.json();
+        if (data.error) {
+          errors.push({ ...seed, error: data.error });
+          failed++;
+        } else {
+          created++;
+          console.log(`Created: ${seed.page_type}/${seed.slug} (${i + 1}/${toGenerate.length})`);
+        }
+      } catch (e) {
+        errors.push({ ...seed, error: e.message });
+        failed++;
+      }
+
+      if (i < toGenerate.length - 1) {
+        await sleep(DELAY_MS);
       }
     }
 
-    console.log(`Progress: ${Math.min(i + BATCH_SIZE, toGenerate.length)}/${toGenerate.length} processed (${created} created, ${failed} failed)`);
+    const nextOffset = offset + limit;
+    const remaining = Math.max(UNIQUE_SEEDS.length - nextOffset, 0);
+    const done = nextOffset >= UNIQUE_SEEDS.length;
 
-    if (i + BATCH_SIZE < toGenerate.length) {
-      await sleep(DELAY_MS);
-    }
+    const summary = {
+      total_seeds: UNIQUE_SEEDS.length,
+      offset,
+      limit,
+      attempted: toGenerate.length,
+      created,
+      skipped: alreadyExist.length,
+      failed,
+      errors: errors.length > 0 ? errors : undefined,
+      next_offset: done ? null : nextOffset,
+      remaining,
+      done,
+    };
+
+    console.log(`Result: ${JSON.stringify({ ...summary, errors: undefined })}`);
+
+    return new Response(JSON.stringify(summary), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (e) {
+    console.error("seed-pages error:", e);
+    return new Response(
+      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
-
-  const summary = {
-    total_seeds: UNIQUE_SEEDS.length,
-    skipped: skipped.length,
-    attempted: toGenerate.length,
-    created,
-    failed,
-    results,
-  };
-
-  console.log(`Seed complete: ${JSON.stringify({ ...summary, results: undefined })}`);
-
-  return new Response(JSON.stringify(summary), {
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
 });
