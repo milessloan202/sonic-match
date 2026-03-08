@@ -118,12 +118,12 @@ const Thumbnail = ({
 
 const PlayButton = ({ title, subtitle, meta }: { title: string; subtitle?: string; meta?: SongMeta }) => {
   const { currentTrack, isPlaying, progress, toggle } = useAudio();
-  const trackId = title;
+  const pbArtist = subtitle ? subtitle.replace(/\s*\(\d{4}\)\s*$/, "").trim() : "";
+  const trackId = pbArtist ? `${title}|||${pbArtist}` : title;
   const isActive = currentTrack === trackId && isPlaying;
   const showProgress = currentTrack === trackId;
 
-  const artist = subtitle ? subtitle.replace(/\s*\(\d{4}\)\s*$/, "").trim() : "";
-  const youtubeUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(`${title} ${artist}`.trim())}`;
+  const youtubeUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(`${title} ${pbArtist}`.trim())}`;
 
   if (!meta?.preview_url) {
     if (meta?.spotify_url) {

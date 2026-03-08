@@ -43,10 +43,17 @@ const CATEGORY_LINK_PREFIX: Record<string, string> = {
   "Related Vibes": "/vibes",
 };
 
+function extractArtist(subtitle?: string): string {
+  if (!subtitle) return "";
+  return subtitle.replace(/\s*\(\d{4}\)\s*$/, "").trim();
+}
+
 function buildNodes(
   props: MusicMapProps
 ): MapNode[] {
   const nodes: MapNode[] = [];
+  const isSongLink =
+    props.pageType === "song" || props.pageType === "producer" || props.pageType === "vibe";
   const linkPrefix =
     props.pageType === "song"
       ? "/songs-like"
@@ -57,13 +64,18 @@ function buildNodes(
       : "/vibes";
 
   const add = (items: { title: string; subtitle?: string }[] | undefined, category: string, prefix: string) => {
+    const isSongCategory = prefix === "/songs-like";
     (items || []).slice(0, 6).forEach((item) => {
+      const artist = extractArtist(item.subtitle);
+      const slug = isSongCategory && artist
+        ? `${toSlug(item.title)}-${toSlug(artist)}`
+        : toSlug(item.title);
       nodes.push({
-        id: `${category}-${item.title}`,
+        id: `${category}-${item.title}-${artist}`,
         label: item.title,
         subtitle: item.subtitle,
         category,
-        linkTo: `${prefix}/${toSlug(item.title)}`,
+        linkTo: `${prefix}/${slug}`,
         color: CATEGORY_COLORS[category] || "hsl(0, 0%, 60%)",
       });
     });
