@@ -166,21 +166,40 @@ serve(async (req) => {
         const token = await getSpotifyToken();
 
         const fetches = uncached.slice(0, 15).map(async (s) => {
-          const q = encodeURIComponent(`track:"${s.title}" artist:"${s.artist}"`);
           try {
-            const res = await fetch(`https://api.spotify.com/v1/search?q=${q}&type=track&limit=1`, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-            if (!res.ok) return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null };
-            const data = await res.json();
-            const track = data?.tracks?.items?.[0];
+            let track: any = null;
+
+            // Prefer direct track lookup by Spotify ID
+            if (s.spotify_id) {
+              const res = await fetch(`https://api.spotify.com/v1/tracks/${s.spotify_id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+              });
+              if (res.ok) {
+                track = await res.json();
+                console.log(`[Spotify] "${s.title}" resolved via track ID ${s.spotify_id}`);
+              }
+            }
+
+            // Fallback to search
+            if (!track) {
+              const q = encodeURIComponent(`track:"${s.title}" artist:"${s.artist}"`);
+              const res = await fetch(`https://api.spotify.com/v1/search?q=${q}&type=track&limit=1`, {
+                headers: { Authorization: `Bearer ${token}` },
+              });
+              if (res.ok) {
+                const data = await res.json();
+                track = data?.tracks?.items?.[0];
+              }
+            }
+
             const imageUrl = track?.album?.images?.[1]?.url || track?.album?.images?.[0]?.url || null;
             const previewUrl = track?.preview_url || null;
             const spotifyUrl = track?.external_urls?.spotify || null;
-            console.log(`[Spotify] "${s.title}" by ${s.artist}: artwork=${imageUrl ? "found" : "missing"}`);
-            return { song: s, imageUrl, previewUrl, spotifyUrl };
+            const spotifyTrackId = track?.id || s.spotify_id || null;
+            console.log(`[Spotify] "${s.title}" by ${s.artist}: artwork=${imageUrl ? "found" : "missing"}, id=${spotifyTrackId || "none"}`);
+            return { song: s, imageUrl, previewUrl, spotifyUrl, spotifyTrackId };
           } catch {
-            return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null };
+            return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null, spotifyTrackId: null };
           }
         });
 
