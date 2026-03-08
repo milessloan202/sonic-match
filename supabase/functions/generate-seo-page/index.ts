@@ -175,7 +175,12 @@ relatedArtists: 3 artists whose broader catalog overlaps most with the sonic wor
 
 whyTheseWork: 2-3 sentences explaining the SPECIFIC sonic thread connecting these recommendations. Reference concrete musical details: name the synth texture, the drum pattern, the harmonic movement, the production technique. Never use phrases like "similar vibe," "same feel," "fans of X will enjoy," or "same energy." Write like a music journalist who respects the reader's intelligence.
 
-summary: A 2-3 sentence description of what makes this track sonically distinctive — its production fingerprint, its emotional architecture, and the specific type of listener it rewards.`;
+summary: A 2-3 sentence description of what makes this track sonically distinctive — its production fingerprint, its emotional architecture, and the specific type of listener it rewards.
+
+SAMPLE INFORMATION RULE (CRITICAL):
+- Do NOT mention sampling, interpolation, borrowed melodies, or sample sources in any field (whyTheseWork, summary, or anywhere else).
+- Sample information is handled by a separate verified lookup system. Any mention of samples by you will be unverified and potentially fabricated.
+- If a track is well-known for sampling another track, you may NOT reference that fact. Leave sample attribution to the external verification system.`;
 
     const artistPrompt = `You are a world-class music curator — part crate-digger, part musicologist, part the best record store clerk alive. You think in terms of artistic DNA: how an artist's sonic identity, production choices, and creative evolution connect them to the broader musical landscape.
 
