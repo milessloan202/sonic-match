@@ -12,6 +12,7 @@ import { clearDiscoveryPath } from "../hooks/useDiscoveryPath";
 const exampleChips: Record<SearchMode, string[]> = {
   song: ["Redbone – Childish Gambino", "Ivy – Frank Ocean", "Electric Feel – MGMT"],
   artist: ["Tame Impala", "SZA", "Bon Iver"],
+  producer: ["Pharrell", "Madlib", "Brian Eno"],
   vibe: ["Late night drive", "Golden hour chill", "Rainy lo-fi"],
 };
 
@@ -21,6 +22,7 @@ const slugify = (text: string) =>
 const routePrefixes: Record<SearchMode, string> = {
   song: "/songs-like",
   artist: "/artists-like",
+  producer: "/producers-like",
   vibe: "/vibes",
 };
 
