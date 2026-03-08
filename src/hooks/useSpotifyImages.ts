@@ -10,6 +10,7 @@ export interface SongMeta {
   image_url: string | null;
   preview_url: string | null;
   spotify_url: string | null;
+  youtube_thumbnail_url: string | null;
 }
 
 export interface ImageMap {
@@ -30,10 +31,10 @@ export function useSpotifyImages(songs: SongItem[], artistItems: SongItem[]) {
   const [artistImages, setArtistImages] = useState<ImageMap>({});
   const fetchedRef = useRef(false);
 
-  // Derived image-only map for backward compat
+  // Derived image-only map: uses Spotify artwork, falls back to YouTube thumbnail
   const songImages: ImageMap = {};
   for (const [k, v] of Object.entries(songMeta)) {
-    songImages[k] = v.image_url;
+    songImages[k] = v.image_url || v.youtube_thumbnail_url || null;
   }
 
   useEffect(() => {

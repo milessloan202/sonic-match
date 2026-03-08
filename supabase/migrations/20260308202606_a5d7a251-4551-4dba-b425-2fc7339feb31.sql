@@ -1,0 +1,1 @@
+ALTER TABLE public.song_image_cache ADD COLUMN youtube_thumbnail_url text DEFAULT NULL;

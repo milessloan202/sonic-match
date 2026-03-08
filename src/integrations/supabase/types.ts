@@ -104,6 +104,7 @@ export type Database = {
           name: string
           preview_url: string | null
           spotify_url: string | null
+          youtube_thumbnail_url: string | null
         }
         Insert: {
           artist: string
@@ -113,6 +114,7 @@ export type Database = {
           name: string
           preview_url?: string | null
           spotify_url?: string | null
+          youtube_thumbnail_url?: string | null
         }
         Update: {
           artist?: string
@@ -122,6 +124,7 @@ export type Database = {
           name?: string
           preview_url?: string | null
           spotify_url?: string | null
+          youtube_thumbnail_url?: string | null
         }
         Relationships: []
       }
