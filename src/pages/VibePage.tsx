@@ -11,7 +11,10 @@ import { useDiscoveryPath } from "../hooks/useDiscoveryPath";
 
 const VibePage = () => {
   const { slug } = useParams<{ slug: string }>();
+  const location = useLocation();
   const { data, loading, generating, error } = useSeoPage(slug, "vibe");
+  const displayName = data?.heading || slug || "";
+  const discoverySteps = useDiscoveryPath(displayName, location.pathname);
 
   if (loading) return <PageSkeleton generating={generating} />;
 
@@ -27,10 +30,6 @@ const VibePage = () => {
   }
 
   if (!data) return null;
-
-  const displayName = data.heading;
-  const location = useLocation();
-  const discoverySteps = useDiscoveryPath(displayName, location.pathname);
 
   return (
     <div className="min-h-screen px-4 py-12 max-w-3xl mx-auto space-y-10">
