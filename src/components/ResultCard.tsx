@@ -77,29 +77,31 @@ const PlayButton = ({ title, subtitle, meta }: { title: string; subtitle?: strin
   if (!meta?.preview_url) {
     if (meta?.spotify_url) {
       return (
-        <a
-          href={meta.spotify_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            window.open(meta.spotify_url!, "_blank", "noopener,noreferrer");
+          }}
           className="shrink-0 flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary transition-colors"
         >
           <ExternalLink className="w-3 h-3" />
           <span>Open in Spotify</span>
-        </a>
+        </button>
       );
     }
     return (
-      <a
-        href={youtubeUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={(e) => e.stopPropagation()}
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          window.open(youtubeUrl, "_blank", "noopener,noreferrer");
+        }}
         className="shrink-0 flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary transition-colors"
       >
         <ExternalLink className="w-3 h-3" />
         <span>Watch on YouTube</span>
-      </a>
+      </button>
     );
   }
 
