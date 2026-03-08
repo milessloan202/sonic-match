@@ -14,6 +14,7 @@ interface ResultCardProps {
   tag?: string;
   index?: number;
   linkPrefix?: string;
+  variant?: "default" | "explanation";
   imageUrl?: string | null;
   imageType?: "song" | "artist";
 }
