@@ -140,33 +140,45 @@ export type Database = {
       song_image_cache: {
         Row: {
           artist: string
+          cache_version: number | null
           created_at: string
+          expires_at: string | null
           id: string
           image_url: string | null
+          last_http_status: number | null
           name: string
           preview_url: string | null
+          resolver_status: string | null
           spotify_track_id: string | null
           spotify_url: string | null
           youtube_thumbnail_url: string | null
         }
         Insert: {
           artist: string
+          cache_version?: number | null
           created_at?: string
+          expires_at?: string | null
           id?: string
           image_url?: string | null
+          last_http_status?: number | null
           name: string
           preview_url?: string | null
+          resolver_status?: string | null
           spotify_track_id?: string | null
           spotify_url?: string | null
           youtube_thumbnail_url?: string | null
         }
         Update: {
           artist?: string
+          cache_version?: number | null
           created_at?: string
+          expires_at?: string | null
           id?: string
           image_url?: string | null
+          last_http_status?: number | null
           name?: string
           preview_url?: string | null
+          resolver_status?: string | null
           spotify_track_id?: string | null
           spotify_url?: string | null
           youtube_thumbnail_url?: string | null

@@ -158,7 +158,7 @@ serve(async (req) => {
     if (songs?.length) {
       const { data: cached } = await supabase
         .from("song_image_cache")
-        .select("name, artist, image_url, preview_url, spotify_url, spotify_track_id, created_at");
+        .select("name, artist, image_url, preview_url, spotify_url, spotify_track_id, created_at, resolver_status, expires_at, cache_version");
 
       const cachedMap = new Map<string, {
         image_url: string | null;
@@ -166,6 +166,9 @@ serve(async (req) => {
         spotify_url: string | null;
         spotify_track_id: string | null;
         created_at: string;
+        resolver_status: string | null;
+        expires_at: string | null;
+        cache_version: number | null;
       }>();
       (cached || []).forEach((r: any) => {
         cachedMap.set(`${r.name}|||${r.artist}`, r);
@@ -180,11 +183,14 @@ serve(async (req) => {
         if (c) {
           const isResolved = !!(c.spotify_url || c.spotify_track_id);
 
-          // If this is a "not found" entry, check if it's stale
+          // If this is a "not found" entry, check if it's expired or stale
           if (!isResolved) {
+            const isExpired = c.expires_at && new Date(c.expires_at).getTime() < Date.now();
             const age = Date.now() - new Date(c.created_at).getTime();
-            if (age > NOT_FOUND_CACHE_MAX_AGE_MS) {
-              if (DEBUG) console.log(`♻️ [Cache] Stale not-found for "${s.title}" by ${s.artist} (${Math.round(age / 3600000)}h old) — will retry`);
+            const isStale = !c.expires_at && age > NOT_FOUND_CACHE_MAX_AGE_MS;
+            
+            if (isExpired || isStale) {
+              if (DEBUG) console.log(`♻️ [Cache] Expired not-found for "${s.title}" by ${s.artist} (expires_at=${c.expires_at}, age=${Math.round(age / 3600000)}h) — will retry`);
               uncached.push(s);
               continue;
             }
@@ -195,7 +201,7 @@ serve(async (req) => {
             image_url: c.image_url,
             preview_url: c.preview_url,
             spotify_url: c.spotify_url,
-            spotify_track_id: null,
+            spotify_track_id: c.spotify_track_id,
           };
           if (DEBUG) console.log(`📦 [Cache] ${isResolved ? "HIT" : "NOT_FOUND"} "${s.title}" by ${s.artist}`);
         } else {
@@ -330,11 +336,23 @@ serve(async (req) => {
                 return fail("not_found");
               }
 
-              // 3. Match evaluation
+              // 3. Match evaluation — log all candidates
+              if (DEBUG && tracks.length > 0) {
+                console.log(`  [Candidates] ${tracks.length} tracks for "${s.title}" by ${s.artist}:`);
+                for (const t of tracks.slice(0, 5)) {
+                  const candidateArtists = t.artists?.map((a: any) => a.name).join(", ") || "?";
+                  const hasArt = !!(t.album?.images?.length);
+                  console.log(`    → "${t.name}" by ${candidateArtists} | id=${t.id} | art=${hasArt} | preview=${!!t.preview_url}`);
+                }
+              }
+
               // Try: artist+title → artist-only → title-only
               track = tracks.find((t: any) => {
                 const names = t.artists?.map((a: any) => a.name) || [];
-                return artistsMatch(s.artist, names) && titlesMatch(s.title, t.name);
+                const tm = titlesMatch(s.title, t.name);
+                const am = artistsMatch(s.artist, names);
+                if (DEBUG) console.log(`    [Eval] "${t.name}" by ${names.join(",")} — title=${tm}, artist=${am}`);
+                return am && tm;
               });
 
               if (!track) {
@@ -378,6 +396,7 @@ serve(async (req) => {
         }
 
         // 5. Cache writes — ONLY resolved and not_found (genuine misses)
+        const CACHE_VERSION = 2;
         const toInsert = results
           .filter((r) => r.status === "resolved" || r.status === "not_found")
           .map((r) => ({
@@ -388,12 +407,17 @@ serve(async (req) => {
             spotify_url: r.spotifyUrl,
             youtube_thumbnail_url: null,
             spotify_track_id: r.spotifyTrackId,
+            resolver_status: r.status,
+            cache_version: CACHE_VERSION,
+            expires_at: r.status === "not_found"
+              ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24h for not_found
+              : null, // resolved entries don't expire
           }));
 
         if (toInsert.length > 0) {
           const resolved = toInsert.filter(r => r.spotify_url).length;
           const notFound = toInsert.length - resolved;
-          console.log(`💾 [Cache Write] ${toInsert.length} entries (${resolved} resolved, ${notFound} genuine not_found)`);
+          console.log(`💾 [Cache Write] ${toInsert.length} entries (${resolved} resolved, ${notFound} genuine not_found) v${CACHE_VERSION}`);
           await supabase.from("song_image_cache").upsert(toInsert, { onConflict: "name,artist" });
         }
 
