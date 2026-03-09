@@ -158,7 +158,7 @@ serve(async (req) => {
     if (songs?.length) {
       const { data: cached } = await supabase
         .from("song_image_cache")
-        .select("name, artist, image_url, preview_url, spotify_url, spotify_track_id, created_at");
+        .select("name, artist, image_url, preview_url, spotify_url, spotify_track_id, created_at, resolver_status, expires_at, cache_version");
 
       const cachedMap = new Map<string, {
         image_url: string | null;
@@ -166,6 +166,9 @@ serve(async (req) => {
         spotify_url: string | null;
         spotify_track_id: string | null;
         created_at: string;
+        resolver_status: string | null;
+        expires_at: string | null;
+        cache_version: number | null;
       }>();
       (cached || []).forEach((r: any) => {
         cachedMap.set(`${r.name}|||${r.artist}`, r);
