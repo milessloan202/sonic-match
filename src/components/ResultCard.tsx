@@ -126,31 +126,30 @@ const PlayButton = ({ title, subtitle, meta }: { title: string; subtitle?: strin
   const youtubeUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(`${title} ${pbArtist}`.trim())}`;
 
   if (!meta?.preview_url) {
-    if (meta?.spotify_url) {
-      return (
+    const spotifyUrl = meta?.spotify_url || `https://open.spotify.com/search/${encodeURIComponent(`${title} ${pbArtist}`.trim())}`;
+    return (
+      <div className="shrink-0 flex flex-col items-center gap-1">
         <a
-          href={meta.spotify_url}
+          href={spotifyUrl}
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
-          className="shrink-0 flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-[#1DB954] transition-colors"
+          className="flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-[#1DB954] transition-colors"
         >
           <SpotifyIcon className="w-3.5 h-3.5" />
-          <span>Open in Spotify</span>
+          <span>{meta?.spotify_url ? "Open in Spotify" : "Find on Spotify"}</span>
         </a>
-      );
-    }
-    return (
-      <a
-        href={youtubeUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={(e) => e.stopPropagation()}
-        className="shrink-0 flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-[#FF0000] transition-colors"
-      >
-        <YouTubeIcon className="w-3.5 h-3.5" />
-        <span>Watch on YouTube</span>
-      </a>
+        <a
+          href={youtubeUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="flex items-center gap-1 text-[9px] text-muted-foreground/60 hover:text-[#FF0000] transition-colors"
+        >
+          <YouTubeIcon className="w-2.5 h-2.5" />
+          <span>YouTube</span>
+        </a>
+      </div>
     );
   }
 
