@@ -9,12 +9,6 @@ import SEOHead from "../components/SEOHead";
 import { supabase } from "@/integrations/supabase/client";
 import { clearDiscoveryPath } from "../hooks/useDiscoveryPath";
 
-const exampleChips: Record<SearchMode, string[]> = {
-  song: ["Redbone – Childish Gambino", "Ivy – Frank Ocean", "Electric Feel – MGMT"],
-  artist: ["Tame Impala", "SZA", "Bon Iver"],
-  producer: ["Pharrell", "Madlib", "Brian Eno"],
-  vibe: ["Late night drive", "Golden hour chill", "Rainy lo-fi"],
-};
 
 const slugify = (text: string) =>
   text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
