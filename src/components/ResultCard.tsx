@@ -241,6 +241,7 @@ const ResultCard = ({
   imageUrl,
   imageType,
   songMeta,
+  metaLoaded = true,
 }: ResultCardProps) => {
   const { artist, year } = parseSubtitle(subtitle);
   const showImage = imageType === "song" || imageType === "artist";
