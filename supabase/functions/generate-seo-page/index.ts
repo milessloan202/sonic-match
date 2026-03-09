@@ -375,7 +375,11 @@ serve(async (req) => {
     const metadataBlock = buildMetadataBlock(verifiedMetadata);
     const factualInstructions = getFactualInstructions(verifiedMetadata.metadata_confidence);
 
-    // --- Spotify seed track lookup for producer pages ---
+    // --- Fetch overused songs for anti-repetition ---
+    const overusedSongs = await getFrequentlyRecommendedSongs(supabase, page_type);
+    const antiRepetitionBlock = buildAntiRepetitionBlock(overusedSongs);
+    console.log(`[AntiRepetition] Found ${overusedSongs.length} overused songs for page_type="${page_type}"`);
+
     let seedTracks: { title: string; artist: string; year: string }[] = [];
     if (page_type === "producer" && spotifyToken) {
       try {
