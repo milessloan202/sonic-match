@@ -1,13 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Artist {
   name: string;
@@ -21,10 +15,14 @@ const slugify = (text: string) =>
 const AlbumCarousel = () => {
   const [artists, setArtists] = useState<Artist[]>([]);
   const [isPaused, setIsPaused] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const animationRef = useRef<number>();
+  const offsetRef = useRef(0);
+  const lastTimeRef = useRef<number>(0);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const fetchArtists = async () => {
-      // Fetch artist images from cache
       const { data: artistData } = await supabase
         .from("artist_image_cache")
         .select("name, image_url")
@@ -32,16 +30,14 @@ const AlbumCarousel = () => {
         .limit(20);
 
       if (artistData && artistData.length > 0) {
-        const formattedArtists = artistData.map((artist) => ({
-          name: artist.name,
-          slug: slugify(artist.name),
-          imageUrl: artist.image_url!,
-        }));
-        setArtists(formattedArtists);
+        setArtists(artistData.map((a) => ({
+          name: a.name,
+          slug: slugify(a.name),
+          imageUrl: a.image_url!,
+        })));
         return;
       }
 
-      // Fallback: get album covers from song cache
       const { data: songData } = await supabase
         .from("song_image_cache")
         .select("artist, image_url")
@@ -49,82 +45,94 @@ const AlbumCarousel = () => {
         .limit(20);
 
       if (songData) {
-        // Group by artist and take first image
         const artistMap = new Map<string, string>();
-        songData.forEach((song) => {
-          if (!artistMap.has(song.artist)) {
-            artistMap.set(song.artist, song.image_url!);
-          }
+        songData.forEach((s) => {
+          if (!artistMap.has(s.artist)) artistMap.set(s.artist, s.image_url!);
         });
-
-        const formattedArtists = Array.from(artistMap.entries()).map(([name, imageUrl]) => ({
+        setArtists(Array.from(artistMap.entries()).map(([name, imageUrl]) => ({
           name,
           slug: slugify(name),
           imageUrl,
-        }));
-        setArtists(formattedArtists);
+        })));
       }
     };
-
     fetchArtists();
   }, []);
 
+  // CSS-based scroll animation
+  useEffect(() => {
+    if (artists.length === 0) return;
+
+    const SPEED = 50; // pixels per second
+    const itemWidth = 294; // 282 + 12 gap
+    const totalWidth = artists.length * itemWidth;
+
+    const animate = (time: number) => {
+      if (!lastTimeRef.current) lastTimeRef.current = time;
+      const delta = time - lastTimeRef.current;
+      lastTimeRef.current = time;
+
+      if (!isPaused) {
+        offsetRef.current -= (SPEED * delta) / 1000;
+        if (Math.abs(offsetRef.current) >= totalWidth) {
+          offsetRef.current += totalWidth;
+        }
+        if (scrollRef.current) {
+          scrollRef.current.style.transform = `translateX(${offsetRef.current}px)`;
+        }
+      }
+
+      animationRef.current = requestAnimationFrame(animate);
+    };
+
+    animationRef.current = requestAnimationFrame(animate);
+    return () => {
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+    };
+  }, [artists, isPaused]);
+
   if (artists.length === 0) return null;
 
-  // Duplicate artists array to create seamless loop
   const duplicatedArtists = [...artists, ...artists, ...artists];
 
   return (
-    <TooltipProvider>
-      <div className="relative w-full overflow-hidden">
-        <div
-          className="flex gap-3"
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => setIsPaused(false)}
-        >
-          <motion.div
-            className="flex gap-3"
-            animate={{
-              x: [0, -artists.length * 294], // 282px width + 12px gap
-            }}
-            transition={{
-              x: {
-                repeat: Infinity,
-                repeatType: "loop",
-                duration: artists.length * 3,
-                ease: "linear",
-              },
-            }}
-            style={{
-              animationPlayState: isPaused ? "paused" : "running",
-            }}
+    <div
+      className="relative w-full overflow-hidden"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
+      <div
+        ref={scrollRef}
+        className="flex gap-3 will-change-transform"
+      >
+        {duplicatedArtists.map((artist, index) => (
+          <Link
+            key={`${artist.slug}-${index}`}
+            to={`/artists-like/${artist.slug}`}
+            className="shrink-0 group relative"
           >
-            {duplicatedArtists.map((artist, index) => (
-              <Tooltip key={`${artist.slug}-${index}`} delayDuration={200}>
-                <TooltipTrigger asChild>
-                  <Link
-                    to={`/artists-like/${artist.slug}`}
-                    className="shrink-0 group"
-                  >
-                    <div className="w-[282px] h-[282px] rounded-md overflow-hidden border border-border/50 hover:border-primary/50 transition-all duration-300 hover:scale-105 hover:glow-primary">
-                      <img
-                        src={artist.imageUrl}
-                        alt={artist.name}
-                        className="w-full h-full object-cover object-center"
-                        loading="lazy"
-                      />
-                    </div>
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="font-medium">{artist.name}</p>
-                </TooltipContent>
-              </Tooltip>
-            ))}
-          </motion.div>
-        </div>
+            <div className="w-[282px] h-[282px] rounded-md overflow-hidden border border-border/50 hover:border-primary/50 transition-all duration-300 hover:scale-105">
+              <img
+                src={artist.imageUrl}
+                alt={artist.name}
+                className="w-full h-full object-cover object-center"
+                loading="lazy"
+              />
+              {/* Desktop: hover overlay */}
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none p-3 pt-8 hidden sm:flex items-end z-10">
+                <p className="text-white font-medium text-sm truncate">{artist.name}</p>
+              </div>
+            </div>
+            {/* Mobile: always-visible name below */}
+            {isMobile && (
+              <p className="text-xs text-muted-foreground mt-1.5 truncate text-center w-[282px]">
+                {artist.name}
+              </p>
+            )}
+          </Link>
+        ))}
       </div>
-    </TooltipProvider>
+    </div>
   );
 };
 
