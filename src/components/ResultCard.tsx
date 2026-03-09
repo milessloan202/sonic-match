@@ -125,29 +125,39 @@ const PlayButton = ({ title, subtitle, meta }: { title: string; subtitle?: strin
 
   const youtubeUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(`${title} ${pbArtist}`.trim())}`;
 
+  // Determine if Spotify has the track (spotify_url means a valid track was found)
+  const hasSpotify = !!meta?.spotify_url;
+
   if (!meta?.preview_url) {
-    const spotifyUrl = meta?.spotify_url || `https://open.spotify.com/search/${encodeURIComponent(`${title} ${pbArtist}`.trim())}`;
+    // No preview available — show either Spotify or YouTube (not both)
+    if (hasSpotify) {
+      return (
+        <div className="shrink-0 flex flex-col items-center gap-1">
+          <a
+            href={meta.spotify_url!}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-[#1DB954] transition-colors"
+          >
+            <SpotifyIcon className="w-3.5 h-3.5" />
+            <span>Open on Spotify</span>
+          </a>
+        </div>
+      );
+    }
+
     return (
       <div className="shrink-0 flex flex-col items-center gap-1">
-        <a
-          href={spotifyUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className="flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-[#1DB954] transition-colors"
-        >
-          <SpotifyIcon className="w-3.5 h-3.5" />
-          <span>{meta?.spotify_url ? "Open in Spotify" : "Find on Spotify"}</span>
-        </a>
         <a
           href={youtubeUrl}
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
-          className="flex items-center gap-1 text-[9px] text-muted-foreground/60 hover:text-[#FF0000] transition-colors"
+          className="flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-[#FF0000] transition-colors"
         >
-          <YouTubeIcon className="w-2.5 h-2.5" />
-          <span>YouTube</span>
+          <YouTubeIcon className="w-3.5 h-3.5" />
+          <span>Watch on YouTube</span>
         </a>
       </div>
     );
