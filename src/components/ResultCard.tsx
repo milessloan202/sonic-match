@@ -17,12 +17,6 @@ const SpotifyIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const YouTubeIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-  </svg>
-);
-
 interface ResultCardProps {
   title: string;
   subtitle?: string;
@@ -58,43 +52,19 @@ const Thumbnail = ({
   url,
   type,
   alt,
-  songMeta,
 }: {
   url?: string | null;
   type?: "song" | "artist";
   alt: string;
-  songMeta?: SongMeta;
 }) => {
   const isArtist = type === "artist";
   const size = "w-12 h-12";
   const shape = isArtist ? "rounded-full" : "rounded-md";
 
-  // Build fallback chain: Spotify artwork → YouTube thumbnail → null
-  const fallbackUrls: string[] = [];
-  if (url) fallbackUrls.push(url);
-  if (songMeta?.youtube_thumbnail_url && songMeta.youtube_thumbnail_url !== url) {
-    fallbackUrls.push(songMeta.youtube_thumbnail_url);
-  }
-  if (songMeta?.image_url && songMeta.image_url !== url && !fallbackUrls.includes(songMeta.image_url)) {
-    fallbackUrls.unshift(songMeta.image_url);
-  }
-
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [loaded, setLoaded] = useState(false);
+  const [errored, setErrored] = useState(false);
 
-  const currentUrl = fallbackUrls[currentIndex] || null;
-
-  const handleError = () => {
-    console.warn(`[Thumbnail] Image failed to load for "${alt}": ${currentUrl}`);
-    if (currentIndex < fallbackUrls.length - 1) {
-      setCurrentIndex((i) => i + 1);
-      setLoaded(false);
-    } else {
-      setCurrentIndex(fallbackUrls.length); // force placeholder
-    }
-  };
-
-  if (!currentUrl || currentIndex >= fallbackUrls.length) {
+  if (!url || errored) {
     return <PlaceholderIcon isArtist={isArtist} size={size} shape={shape} />;
   }
 
@@ -106,11 +76,11 @@ const Thumbnail = ({
         </div>
       )}
       <img
-        src={currentUrl}
+        src={url}
         alt={alt}
         loading="lazy"
         onLoad={() => setLoaded(true)}
-        onError={handleError}
+        onError={() => setErrored(true)}
         className={`w-full h-full object-cover transition-opacity duration-200 ${loaded ? "opacity-100" : "opacity-0"}`}
       />
     </div>
@@ -124,12 +94,9 @@ const PlayButton = ({ title, subtitle, meta, metaLoaded }: { title: string; subt
   const isActive = currentTrack === trackId && isPlaying;
   const showProgress = currentTrack === trackId;
 
-  const youtubeUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(`${title} ${pbArtist}`.trim())}`;
-
-  // Determine if Spotify has the track (spotify_url means a valid track was found)
   const hasSpotify = !!meta?.spotify_url;
 
-  // If meta hasn't loaded yet, show a subtle loading indicator instead of YouTube
+  // Loading state
   if (!metaLoaded) {
     return (
       <div className="shrink-0 flex flex-col items-center gap-1">
@@ -138,8 +105,8 @@ const PlayButton = ({ title, subtitle, meta, metaLoaded }: { title: string; subt
     );
   }
 
+  // No preview — show Spotify link or "Not on Spotify"
   if (!meta?.preview_url) {
-    // No preview available — show either Spotify or YouTube (not both)
     if (hasSpotify) {
       return (
         <div className="shrink-0 flex flex-col items-center gap-1">
@@ -159,16 +126,7 @@ const PlayButton = ({ title, subtitle, meta, metaLoaded }: { title: string; subt
 
     return (
       <div className="shrink-0 flex flex-col items-center gap-1">
-        <a
-          href={youtubeUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className="flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-[#FF0000] transition-colors"
-        >
-          <YouTubeIcon className="w-3.5 h-3.5" />
-          <span>Watch on YouTube</span>
-        </a>
+        <span className="text-[10px] text-muted-foreground/50">Not on Spotify</span>
       </div>
     );
   }
@@ -189,24 +147,12 @@ const PlayButton = ({ title, subtitle, meta, metaLoaded }: { title: string; subt
         ) : (
           <Play className="w-3.5 h-3.5 text-primary ml-0.5" />
         )}
-        {/* Circular progress ring */}
         {showProgress && (
           <svg className="absolute inset-0 w-8 h-8 -rotate-90" viewBox="0 0 32 32">
+            <circle cx="16" cy="16" r="14" fill="none" stroke="hsl(var(--primary) / 0.2)" strokeWidth="2" />
             <circle
-              cx="16"
-              cy="16"
-              r="14"
-              fill="none"
-              stroke="hsl(var(--primary) / 0.2)"
-              strokeWidth="2"
-            />
-            <circle
-              cx="16"
-              cy="16"
-              r="14"
-              fill="none"
-              stroke="hsl(var(--primary))"
-              strokeWidth="2"
+              cx="16" cy="16" r="14" fill="none"
+              stroke="hsl(var(--primary))" strokeWidth="2"
               strokeDasharray={`${2 * Math.PI * 14}`}
               strokeDashoffset={`${2 * Math.PI * 14 * (1 - progress / 100)}`}
               strokeLinecap="round"
@@ -271,7 +217,7 @@ const ResultCard = ({
       }`}
     >
       <div className="flex items-center gap-3">
-        {showImage && <Thumbnail url={imageUrl} type={imageType} alt={title} songMeta={songMeta} />}
+        {showImage && <Thumbnail url={imageUrl} type={imageType} alt={title} />}
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
@@ -313,10 +259,7 @@ const ResultCard = ({
     <TooltipProvider delayDuration={300}>
       <Tooltip>
         <TooltipTrigger asChild>{cardContent}</TooltipTrigger>
-        <TooltipContent
-          side="top"
-          className="max-w-xs whitespace-pre-line text-xs"
-        >
+        <TooltipContent side="top" className="max-w-xs whitespace-pre-line text-xs">
           {tooltipText}
         </TooltipContent>
       </Tooltip>
@@ -326,7 +269,6 @@ const ResultCard = ({
   );
 
   if (linkPrefix) {
-    // For song links, include artist in slug to avoid title collisions
     const linkSlug =
       linkPrefix === "/songs-like" && artist
         ? `${toSlug(title)}-${toSlug(artist)}`

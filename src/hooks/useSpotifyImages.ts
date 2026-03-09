@@ -39,10 +39,10 @@ export function useSpotifyImages(songs: SongItem[], artistItems: SongItem[]) {
   const [metaLoaded, setMetaLoaded] = useState(false);
   const fetchedRef = useRef(false);
 
-  // Derived image-only map keyed by title|||artist
+  // Derived image-only map keyed by title|||artist (Spotify only)
   const songImages: ImageMap = {};
   for (const [k, v] of Object.entries(songMeta)) {
-    songImages[k] = v.image_url || v.youtube_thumbnail_url || null;
+    songImages[k] = v.image_url || null;
   }
 
   useEffect(() => {

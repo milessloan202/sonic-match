@@ -34,73 +34,16 @@ async function getSpotifyToken(): Promise<string> {
   return cachedToken!;
 }
 
-async function fetchYouTubeThumbnail(title: string, artist: string): Promise<string | null> {
-  const query = `${title} ${artist}`;
-  console.log(`[YouTube] Searching for: "${query}"`);
-
-  const pipedInstances = [
-    "https://api.piped.private.coffee",
-  ];
-
-  for (const instance of pipedInstances) {
-    try {
-      const url = `${instance}/search?q=${encodeURIComponent(query)}&filter=videos`;
-      const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
-      if (!res.ok) continue;
-      const data = await res.json();
-      const items = data?.items;
-      if (!items?.length) continue;
-      const videoUrl = items[0]?.url;
-      if (!videoUrl) continue;
-      const match = videoUrl.match(/[?&]v=([^&]+)/);
-      const videoId = match?.[1];
-      if (!videoId) continue;
-      const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-      console.log(`✅ [YouTube] Found: ${thumbnailUrl}`);
-      return thumbnailUrl;
-    } catch (e) {
-      console.log(`[YouTube] Piped ${instance} failed: ${e instanceof Error ? e.message : "unknown"}`);
-    }
-  }
-
-  const invidiousInstances = [
-    "https://invidious.nikkosphere.com",
-    "https://inv.perditum.com",
-    "https://invidious.materialio.us",
-  ];
-
-  for (const instance of invidiousInstances) {
-    try {
-      const url = `${instance}/api/v1/search?q=${encodeURIComponent(query)}&type=video`;
-      const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
-      if (!res.ok) continue;
-      const data = await res.json();
-      if (!Array.isArray(data) || !data.length) continue;
-      const videoId = data[0]?.videoId;
-      if (!videoId) continue;
-      const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-      console.log(`✅ [YouTube] Found via Invidious: ${thumbnailUrl}`);
-      return thumbnailUrl;
-    } catch (e) {
-      console.log(`[YouTube] Invidious ${instance} failed: ${e instanceof Error ? e.message : "unknown"}`);
-    }
-  }
-
-  console.log(`[YouTube] All instances failed for: "${query}"`);
-  return null;
-}
-
 /** Fetch with retry on 429 rate limit — caps wait to 3s, gives up fast */
 async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 1): Promise<Response> {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     const res = await fetch(url, options);
     if (res.status === 429 && attempt < maxRetries) {
       const retryAfter = parseInt(res.headers.get("Retry-After") || "2", 10);
-      // Cap wait at 3 seconds — if Spotify says wait longer, just bail
       if (retryAfter > 5) {
         console.log(`⛔ [Spotify] Rate limited (429), Retry-After=${retryAfter}s is too long — skipping`);
         await res.text();
-        return res; // Return the 429 so caller handles it as a failure
+        return res;
       }
       const waitMs = Math.min(retryAfter * 1000, 3000);
       console.log(`⏳ [Spotify] Rate limited (429), waiting ${waitMs}ms before retry ${attempt + 1}/${maxRetries}`);
@@ -112,7 +55,6 @@ async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 1)
   }
   return fetch(url, options);
 }
-
 
 function normalizeTitle(t: string): string {
   return t
@@ -126,7 +68,6 @@ function normalizeTitle(t: string): string {
     .trim();
 }
 
-/** Sanitize artist name for better Spotify search */
 function sanitizeArtist(artist: string): string {
   return artist
     .replace(/\s*&\s*/g, " ")
@@ -147,14 +88,11 @@ function titlesMatch(a: string, b: string): boolean {
 
 function artistsMatch(queryArtist: string, trackArtists: string[]): boolean {
   const normalized = sanitizeArtist(queryArtist).toLowerCase();
-  // Split query artist into parts (e.g. "Lil Jon The East Side Boyz" -> ["lil jon", "east side boyz"])
   const queryParts = normalized.split(/\s+the\s+/i).map(p => p.trim()).filter(Boolean);
   
   return trackArtists.some((a) => {
     const na = a.toLowerCase().trim();
-    // Direct match
     if (na === normalized || na.includes(normalized) || normalized.includes(na)) return true;
-    // Check if any query part matches
     if (queryParts.some(part => na.includes(part) || part.includes(na))) return true;
     return false;
   });
@@ -174,7 +112,7 @@ interface SongResult {
   image_url: string | null;
   preview_url: string | null;
   spotify_url: string | null;
-  youtube_thumbnail_url: string | null;
+  youtube_thumbnail_url: null; // kept for interface compat, always null
 }
 
 serve(async (req) => {
@@ -194,21 +132,19 @@ serve(async (req) => {
     if (songs?.length) {
       const { data: cached } = await supabase
         .from("song_image_cache")
-        .select("name, artist, image_url, preview_url, spotify_url, youtube_thumbnail_url, spotify_track_id");
+        .select("name, artist, image_url, preview_url, spotify_url, spotify_track_id");
 
-      const cachedMap = new Map<string, { image_url: string | null; preview_url: string | null; spotify_url: string | null; youtube_thumbnail_url: string | null; spotify_track_id: string | null }>();
+      const cachedMap = new Map<string, { image_url: string | null; preview_url: string | null; spotify_url: string | null; spotify_track_id: string | null }>();
       (cached || []).forEach((r: any) => {
         cachedMap.set(`${r.name}|||${r.artist}`, {
           image_url: r.image_url,
           preview_url: r.preview_url,
           spotify_url: r.spotify_url,
-          youtube_thumbnail_url: r.youtube_thumbnail_url,
           spotify_track_id: r.spotify_track_id,
         });
       });
 
       const uncached: SongQuery[] = [];
-      const needsYoutube: { key: string; song: SongQuery }[] = [];
 
       for (const s of songs) {
         const key = `${s.title}|||${s.artist}`;
@@ -216,20 +152,14 @@ serve(async (req) => {
           const c = cachedMap.get(key)!;
           const isVerified = !!(c.spotify_url || c.spotify_track_id);
           
-          // Always return cached data (verified or not)
           songResults[key] = {
             image_url: c.image_url,
             preview_url: c.preview_url,
             spotify_url: c.spotify_url,
-            youtube_thumbnail_url: c.youtube_thumbnail_url,
+            youtube_thumbnail_url: null,
           };
           
-          console.log(`📦 [Cache] "${s.title}" by ${s.artist} — verified=${isVerified}, artwork=${c.image_url ? "spotify" : c.youtube_thumbnail_url ? "youtube" : "none"}`);
-          
-          // If no artwork at all, queue for YouTube thumbnail
-          if (!c.image_url && !c.youtube_thumbnail_url) {
-            needsYoutube.push({ key, song: s });
-          }
+          console.log(`📦 [Cache] "${s.title}" by ${s.artist} — verified=${isVerified}, artwork=${c.image_url ? "spotify" : "none"}`);
         } else {
           uncached.push(s);
         }
@@ -239,7 +169,6 @@ serve(async (req) => {
         console.log(`[Spotify] Fetching ${uncached.length} uncached songs`);
         const token = await getSpotifyToken();
 
-        // Process songs SEQUENTIALLY with delays to avoid Spotify 429 rate limiting
         const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
         
         const processOneSong = async (s: SongQuery) => {
@@ -258,14 +187,13 @@ serve(async (req) => {
                 track = await res.json();
                 console.log(`✅ [Spotify] "${s.title}" verified via track ID ${s.spotify_id}`);
               } else {
-                await res.text(); // consume body
+                await res.text();
                 console.log(`⚠️ [Spotify] Track ID ${s.spotify_id} failed with status ${res.status}`);
               }
             }
 
             // Fallback to search
             if (!track) {
-              // Strategy 1: Strict field search with sanitized artist
               const strictQ = encodeURIComponent(`track:"${s.title}" artist:"${sanitizedArtist}"`);
               const res1 = await fetchWithRetry(`https://api.spotify.com/v1/search?q=${strictQ}&type=track&limit=5`, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -281,7 +209,6 @@ serve(async (req) => {
                 console.log(`  [Spotify] Strict search returned status ${res1.status}`);
               }
 
-              // Strategy 2: Broad keyword search
               if (tracks.length === 0) {
                 console.log(`🔄 [Spotify] Trying broad search for "${s.title}" by ${sanitizedArtist}`);
                 const broadQ = encodeURIComponent(`${s.title} ${sanitizedArtist}`);
@@ -297,7 +224,6 @@ serve(async (req) => {
                 }
               }
 
-              // Strategy 3: Title-only search as last resort
               if (tracks.length === 0) {
                 console.log(`🔄 [Spotify] Trying title-only search for "${s.title}"`);
                 const titleQ = encodeURIComponent(`track:"${s.title}"`);
@@ -318,13 +244,11 @@ serve(async (req) => {
                 return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null, spotifyTrackId: null, verified: false };
               }
 
-              // Match with fuzzy title + artist matching
               track = tracks.find((t: any) => {
                 const trackArtistNames = t.artists?.map((a: any) => a.name) || [];
                 return artistsMatch(s.artist, trackArtistNames) && titlesMatch(s.title, t.name);
               });
 
-              // If no fuzzy match, try artist-only match
               if (!track) {
                 track = tracks.find((t: any) => {
                   const trackArtistNames = t.artists?.map((a: any) => a.name) || [];
@@ -335,7 +259,6 @@ serve(async (req) => {
                 }
               }
 
-              // Last resort: accept first result if title matches closely
               if (!track) {
                 track = tracks.find((t: any) => titlesMatch(s.title, t.name));
                 if (track) {
@@ -344,7 +267,7 @@ serve(async (req) => {
               }
 
               if (!track) {
-                console.log(`❌ [Spotify] No match for "${s.title}" by ${s.artist} — ${tracks.length} candidates: ${tracks.slice(0, 3).map((t: any) => `"${t.name}" by ${t.artists.map((a: any) => a.name).join(", ")}`).join(" | ")}`);
+                console.log(`❌ [Spotify] No match for "${s.title}" by ${s.artist} — ${tracks.length} candidates`);
                 return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null, spotifyTrackId: null, verified: false };
               }
 
@@ -364,84 +287,44 @@ serve(async (req) => {
           }
         };
 
-        // Process sequentially with 150ms delay between songs to avoid 429
         const results = [];
         for (const s of uncached.slice(0, 15)) {
           const result = await processOneSong(s);
           results.push(result);
-          // Small delay between songs to stay under Spotify rate limit
           if (uncached.indexOf(s) < uncached.length - 1) {
             await delay(150);
           }
         }
-        // Fetch YouTube thumbnails for ALL songs that lack artwork (verified or not)
-        const needingArtwork = results.filter((r) => !r.imageUrl);
-        console.log(`[YouTube] ${needingArtwork.length} songs need YouTube thumbnail fallback`);
 
-        const youtubePromises = needingArtwork.map(async (r) => {
-          const ytThumb = await fetchYouTubeThumbnail(r.song.title, r.song.artist);
-          return { key: `${r.song.title}|||${r.song.artist}`, ytThumb };
-        });
-
-        const ytResults = await Promise.all(youtubePromises);
-        const ytMap = new Map(ytResults.map((r) => [r.key, r.ytThumb]));
-
-        // Cache ALL songs (verified and unverified) so we don't re-query
-        const toInsert = results.map((r) => {
-          const key = `${r.song.title}|||${r.song.artist}`;
-          return {
-            name: r.song.title,
-            artist: r.song.artist,
-            image_url: r.imageUrl || null,
-            preview_url: r.previewUrl || null,
-            spotify_url: r.spotifyUrl || null,
-            youtube_thumbnail_url: ytMap.get(key) || null,
-            spotify_track_id: r.spotifyTrackId || null,
-          };
-        });
+        // Cache all songs
+        const toInsert = results.map((r) => ({
+          name: r.song.title,
+          artist: r.song.artist,
+          image_url: r.imageUrl || null,
+          preview_url: r.previewUrl || null,
+          spotify_url: r.spotifyUrl || null,
+          youtube_thumbnail_url: null,
+          spotify_track_id: r.spotifyTrackId || null,
+        }));
 
         if (toInsert.length > 0) {
           console.log(`💾 [Cache] Saving ${toInsert.length} songs (${results.filter(r => r.verified).length} verified, ${results.filter(r => !r.verified).length} unverified)`);
           await supabase.from("song_image_cache").upsert(toInsert, { onConflict: "name,artist" });
         }
 
-        // Return ALL songs (verified get Spotify data, unverified get YouTube data)
         for (const r of results) {
           const key = `${r.song.title}|||${r.song.artist}`;
-          const ytThumb = ytMap.get(key) || null;
           
           songResults[key] = {
             image_url: r.imageUrl,
             preview_url: r.previewUrl,
             spotify_url: r.spotifyUrl,
-            youtube_thumbnail_url: ytThumb,
+            youtube_thumbnail_url: null,
           };
           
-          const artworkSource = r.imageUrl ? "spotify" : ytThumb ? "youtube" : "none";
-          const action = r.spotifyUrl ? "spotify" : "youtube-fallback";
+          const artworkSource = r.imageUrl ? "spotify" : "placeholder";
+          const action = r.spotifyUrl ? "spotify" : "not-on-spotify";
           console.log(`📋 [Result] "${r.song.title}" by ${r.song.artist} — artwork=${artworkSource}, action=${action}`);
-        }
-      }
-
-      // Handle cached songs that need YouTube thumbnails
-      if (needsYoutube.length > 0) {
-        console.log(`[YouTube] ${needsYoutube.length} cached songs need YouTube thumbnail retry`);
-        const ytFetches = needsYoutube.slice(0, 10).map(async ({ key, song }) => {
-          const ytThumb = await fetchYouTubeThumbnail(song.title, song.artist);
-          return { key, ytThumb };
-        });
-        const ytResults = await Promise.all(ytFetches);
-
-        for (const { key, ytThumb } of ytResults) {
-          if (ytThumb) {
-            songResults[key].youtube_thumbnail_url = ytThumb;
-            const [name, artist] = key.split("|||");
-            await supabase
-              .from("song_image_cache")
-              .update({ youtube_thumbnail_url: ytThumb })
-              .eq("name", name)
-              .eq("artist", artist);
-          }
         }
       }
     }
