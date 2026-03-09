@@ -248,8 +248,10 @@ serve(async (req) => {
               }
                 
               if (tracks.length === 0) {
-                console.log(`❌ [Spotify] No results for "${s.title}" by ${s.artist} (all strategies)`);
-                return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null, spotifyTrackId: null, verified: false };
+                // Check if we were rate limited (all searches returned null from fetchWithRetry)
+                const wasRateLimited = !res1;
+                console.log(`❌ [Spotify] No results for "${s.title}" by ${s.artist} (all strategies)${wasRateLimited ? " — RATE LIMITED, will NOT cache" : ""}`);
+                return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null, spotifyTrackId: null, verified: false, rateLimited: wasRateLimited };
               }
 
               track = tracks.find((t: any) => {
@@ -275,8 +277,8 @@ serve(async (req) => {
               }
 
               if (!track) {
-                console.log(`❌ [Spotify] No match for "${s.title}" by ${s.artist} — ${tracks.length} candidates`);
-                return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null, spotifyTrackId: null, verified: false };
+              console.log(`❌ [Spotify] No match for "${s.title}" by ${s.artist} — ${tracks.length} candidates`);
+                return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null, spotifyTrackId: null, verified: false, rateLimited: false };
               }
 
               console.log(`✅ [Spotify] MATCHED "${s.title}" by ${s.artist} → "${track.name}" by ${track.artists.map((a: any) => a.name).join(", ")}`);
@@ -288,10 +290,10 @@ serve(async (req) => {
             const spotifyTrackId = track?.id || s.spotify_id || null;
             
             console.log(`✅ [Spotify] VERIFIED "${s.title}" by ${s.artist}: artwork=${imageUrl ? "yes" : "no"}, preview=${previewUrl ? "yes" : "no"}, id=${spotifyTrackId}`);
-            return { song: s, imageUrl, previewUrl, spotifyUrl, spotifyTrackId, verified: true };
+            return { song: s, imageUrl, previewUrl, spotifyUrl, spotifyTrackId, verified: true, rateLimited: false };
           } catch (err) {
             console.log(`❌ [Spotify] Error for "${s.title}" by ${s.artist}: ${err instanceof Error ? err.message : "unknown"}`);
-            return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null, spotifyTrackId: null, verified: false };
+            return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null, spotifyTrackId: null, verified: false, rateLimited: false };
           }
         };
 
@@ -304,8 +306,8 @@ serve(async (req) => {
           }
         }
 
-        // Cache all songs
-        const toInsert = results.map((r) => ({
+        // Cache only non-rate-limited songs (don't poison cache with 429 failures)
+        const toInsert = results.filter((r) => !r.rateLimited).map((r) => ({
           name: r.song.title,
           artist: r.song.artist,
           image_url: r.imageUrl || null,
