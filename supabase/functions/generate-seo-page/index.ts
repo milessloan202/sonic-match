@@ -430,6 +430,7 @@ serve(async (req) => {
 User is looking for songs similar to: "${displayName}"
 ${metadataBlock}
 ${factualInstructions}
+${antiRepetitionBlock}
 
 Your mission: find songs that live in the SAME MUSICAL UNIVERSE. Not the same Spotify playlist — the same sonic bloodline.
 
