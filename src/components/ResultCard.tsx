@@ -311,7 +311,11 @@ const ResultCard = ({
       linkPrefix === "/songs-like" && artist
         ? `${toSlug(title)}-${toSlug(artist)}`
         : toSlug(title);
-    return <Link to={`${linkPrefix}/${linkSlug}`}>{wrappedContent}</Link>;
+    return (
+      <Link to={`${linkPrefix}/${linkSlug}`} className="block">
+        {wrappedContent}
+      </Link>
+    );
   }
 
   return wrappedContent;
