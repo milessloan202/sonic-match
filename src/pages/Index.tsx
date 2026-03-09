@@ -206,7 +206,7 @@ const Index = () => {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
         className="relative z-10 w-full mt-12">
-        
+          <p className="text-sm text-muted-foreground mb-4 pl-1">📀 Pull one from the shelf.</p>
           <AlbumCarousel />
         </motion.div>
       }
