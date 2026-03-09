@@ -105,7 +105,26 @@ const PlayButton = ({ title, subtitle, meta, metaLoaded }: { title: string; subt
     );
   }
 
-  // No preview — show Spotify link or "Not on Spotify"
+  // Determine status-based messaging
+  const status = meta?.status;
+
+  if (status === "temporary_failure") {
+    return (
+      <div className="shrink-0 flex flex-col items-center gap-1">
+        <span className="text-[10px] text-muted-foreground/50">Spotify temporarily unavailable</span>
+      </div>
+    );
+  }
+
+  if (status === "error") {
+    return (
+      <div className="shrink-0 flex flex-col items-center gap-1">
+        <span className="text-[10px] text-muted-foreground/50">Couldn't load track</span>
+      </div>
+    );
+  }
+
+  // No preview — show Spotify link or "Not available on Spotify"
   if (!meta?.preview_url) {
     if (hasSpotify) {
       return (
@@ -126,7 +145,7 @@ const PlayButton = ({ title, subtitle, meta, metaLoaded }: { title: string; subt
 
     return (
       <div className="shrink-0 flex flex-col items-center gap-1">
-        <span className="text-[10px] text-muted-foreground/50">Not on Spotify</span>
+        <span className="text-[10px] text-muted-foreground/50">Not available on Spotify</span>
       </div>
     );
   }
