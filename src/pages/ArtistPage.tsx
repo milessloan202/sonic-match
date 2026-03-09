@@ -89,7 +89,7 @@ const ArtistPage = () => {
             <ResultSection title="Closest Matches" items={data.closest_matches} linkPrefix="/songs-like" imageType="song" images={songImages} songMetaMap={songMeta} />
           )}
           {data.same_energy.length > 0 && (
-            <ResultSection title="Same Energy" items={data.same_energy} linkPrefix="/songs-like" imageType="song" images={songImages} songMetaMap={songMeta} />
+            <ResultSection title="Similar Vibe" items={data.same_energy} linkPrefix="/songs-like" imageType="song" images={songImages} songMetaMap={songMeta} />
           )}
           {data.related_artists.length > 0 && (
             <ResultSection title="Related Artists" items={data.related_artists} linkPrefix="/artists-like" imageType="artist" images={artistImages} />
