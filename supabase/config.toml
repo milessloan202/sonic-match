@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.fetch-samples]
 verify_jwt = false
+
+[functions.resolve-song]
+verify_jwt = false

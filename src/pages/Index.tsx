@@ -47,11 +47,31 @@ const Index = () => {
 
     clearDiscoveryPath();
 
-    const slug = deepCut ? `${slugify(trimmed)}-deep` : slugify(trimmed);
     setLoading(true);
     setError(null);
 
     try {
+      let slug = deepCut ? `${slugify(trimmed)}-deep` : slugify(trimmed);
+
+      // For song searches, resolve via Spotify to get canonical slug
+      if (searchMode === "song") {
+        try {
+          const { data: resolveData, error: resolveError } = await supabase.functions.invoke(
+            "resolve-song",
+            { body: { query: trimmed } }
+          );
+
+          if (!resolveError && resolveData?.slug) {
+            // Use the resolved slug with artist name
+            slug = deepCut ? `${resolveData.slug}-deep` : resolveData.slug;
+          }
+        } catch (e) {
+          console.warn("Song resolution failed, using basic slug:", e);
+          // Continue with basic slug if resolution fails
+        }
+      }
+
+      // Check if page already exists
       const { data: page } = await supabase
         .from("seo_pages")
         .select("id")
@@ -64,6 +84,7 @@ const Index = () => {
         return;
       }
 
+      // Generate new page
       const { data: fnData, error: fnError } = await supabase.functions.invoke(
         "generate-seo-page",
         { body: { slug, page_type: searchMode, deep_cut_mode: deepCut } }
