@@ -11,13 +11,13 @@ import { clearDiscoveryPath } from "../hooks/useDiscoveryPath";
 
 
 const slugify = (text: string) =>
-  text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
 const routePrefixes: Record<SearchMode, string> = {
   song: "/songs-like",
   artist: "/artists-like",
   producer: "/producers-like",
-  vibe: "/vibes",
+  vibe: "/vibes"
 };
 
 const DEEP_CUT_KEY = "deep-cut-mode";
@@ -66,12 +66,12 @@ const Index = () => {
       }
 
       // Check if page already exists
-      const { data: page } = await supabase
-        .from("seo_pages")
-        .select("id")
-        .eq("slug", slug)
-        .eq("page_type", searchMode)
-        .maybeSingle();
+      const { data: page } = await supabase.
+      from("seo_pages").
+      select("id").
+      eq("slug", slug).
+      eq("page_type", searchMode).
+      maybeSingle();
 
       if (page) {
         navigate(`${routePrefixes[searchMode]}/${slug}`);
@@ -108,17 +108,17 @@ const Index = () => {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="relative z-10 w-full max-w-xl text-center space-y-8"
-      >
+        className="relative z-10 w-full max-w-xl text-center space-y-8">
+        
         <SEOHead
           title="SOUNDDNA – Discover Music With the Same Sonic DNA"
           description="Find songs, artists, and moods with the same sonic DNA. AI-powered music discovery engine."
-          path="/"
-        />
+          path="/" />
+        
 
         <div className="space-y-3">
           <h1 className="text-5xl sm:text-6xl font-bold tracking-tight">
-            <span className="text-gradient">SOUNDDNA</span>
+            <span className="text-gradient">SOUND.DNA</span>
           </h1>
           <p className="text-muted-foreground text-lg">
             Find songs, artists, and moods with the same sonic DNA
@@ -137,22 +137,22 @@ const Index = () => {
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               disabled={loading}
               placeholder={
-                mode === "song"
-                  ? "Enter a song name..."
-                  : mode === "artist"
-                  ? "Enter an artist name..."
-                  : mode === "producer"
-                  ? "Enter a producer name..."
-                  : "Describe a vibe..."
+              mode === "song" ?
+              "Enter a song name..." :
+              mode === "artist" ?
+              "Enter an artist name..." :
+              mode === "producer" ?
+              "Enter a producer name..." :
+              "Describe a vibe..."
               }
-              className="w-full h-12 pl-12 pr-4 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all disabled:opacity-50"
-            />
+              className="w-full h-12 pl-12 pr-4 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all disabled:opacity-50" />
+            
           </div>
           <button
             onClick={handleSearch}
             disabled={loading}
-            className="h-12 px-6 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 glow-primary transition-all disabled:opacity-50 flex items-center gap-2"
-          >
+            className="h-12 px-6 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 glow-primary transition-all disabled:opacity-50 flex items-center gap-2">
+            
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
             {loading ? "Searching..." : "Search"}
           </button>
@@ -163,8 +163,8 @@ const Index = () => {
           <Switch
             id="deep-cut"
             checked={deepCut}
-            onCheckedChange={toggleDeepCut}
-          />
+            onCheckedChange={toggleDeepCut} />
+          
           <label htmlFor="deep-cut" className="cursor-pointer text-left">
             <span className="text-sm font-medium text-foreground">Deep Cut Mode</span>
             <span className="block text-xs text-muted-foreground">Find hidden gems and lesser-known tracks</span>
@@ -172,46 +172,46 @@ const Index = () => {
         </div>
       </motion.div>
 
-      {loading && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="relative z-10 w-full max-w-xl mt-10 text-center space-y-3"
-        >
+      {loading &&
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="relative z-10 w-full max-w-xl mt-10 text-center space-y-3">
+        
           <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
           <p className="text-muted-foreground">
             {deepCut ? "Digging for hidden gems..." : "Generating recommendations..."}
           </p>
         </motion.div>
-      )}
+      }
 
-      {error && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="relative z-10 w-full max-w-xl mt-10 p-4 rounded-lg bg-destructive/10 border border-destructive/20 flex items-start gap-3"
-        >
+      {error &&
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative z-10 w-full max-w-xl mt-10 p-4 rounded-lg bg-destructive/10 border border-destructive/20 flex items-start gap-3">
+        
           <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-medium text-destructive">Something went wrong</p>
             <p className="text-sm text-muted-foreground mt-1">{error}</p>
           </div>
         </motion.div>
-      )}
+      }
 
       {/* Album Carousel at the bottom */}
-      {!loading && !error && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="relative z-10 w-full mt-12"
-        >
+      {!loading && !error &&
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.4 }}
+        className="relative z-10 w-full mt-12">
+        
           <AlbumCarousel />
         </motion.div>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 };
 
 export default Index;
