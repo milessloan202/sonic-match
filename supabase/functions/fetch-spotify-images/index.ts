@@ -290,7 +290,7 @@ serve(async (req) => {
             const spotifyTrackId = track?.id || s.spotify_id || null;
             
             console.log(`✅ [Spotify] VERIFIED "${s.title}" by ${s.artist}: artwork=${imageUrl ? "yes" : "no"}, preview=${previewUrl ? "yes" : "no"}, id=${spotifyTrackId}`);
-            return { song: s, imageUrl, previewUrl, spotifyUrl, spotifyTrackId, verified: true };
+            return { song: s, imageUrl, previewUrl, spotifyUrl, spotifyTrackId, verified: true, rateLimited: false };
           } catch (err) {
             console.log(`❌ [Spotify] Error for "${s.title}" by ${s.artist}: ${err instanceof Error ? err.message : "unknown"}`);
             return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null, spotifyTrackId: null, verified: false, rateLimited: false };
