@@ -293,7 +293,7 @@ const ResultCard = ({
             </div>
             {showPlay && (
               <div className="shrink-0">
-                <PlayButton title={title} subtitle={subtitle} meta={songMeta} />
+                <PlayButton title={title} subtitle={subtitle} meta={songMeta} metaLoaded={metaLoaded} />
               </div>
             )}
           </div>
