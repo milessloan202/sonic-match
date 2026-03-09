@@ -117,22 +117,13 @@ const Index = () => {
       >
         <div className="w-full max-w-xl mx-auto space-y-4"
       >
-        <SEOHead
-          title="SOUNDDNA – Discover Music With the Same Sonic DNA"
-          description="Find songs, artists, and moods with the same sonic DNA. AI-powered music discovery engine."
-          path="/"
-        />
+          <SEOHead
+            title="SOUNDDNA – Discover Music With the Same Sonic DNA"
+            description="Find songs, artists, and moods with the same sonic DNA. AI-powered music discovery engine."
+            path="/"
+          />
 
-        <div className="space-y-3">
-          <h1 className="text-5xl sm:text-6xl font-bold tracking-tight">
-            <span className="text-gradient">SOUNDDNA</span>
-          </h1>
-          <p className="text-muted-foreground text-lg">
-            Find songs, artists, and moods with the same sonic DNA
-          </p>
-        </div>
-
-        <SegmentedSelector value={mode} onChange={setMode} />
+          <SegmentedSelector value={mode} onChange={setMode} />
 
         <div className="flex gap-2">
           <div className="relative flex-1">
