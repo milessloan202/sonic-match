@@ -262,7 +262,7 @@ serve(async (req) => {
             if (!track) {
               // Strategy 1: Strict field search with sanitized artist
               const strictQ = encodeURIComponent(`track:"${s.title}" artist:"${sanitizedArtist}"`);
-              const res1 = await fetch(`https://api.spotify.com/v1/search?q=${strictQ}&type=track&limit=5`, {
+              const res1 = await fetchWithRetry(`https://api.spotify.com/v1/search?q=${strictQ}&type=track&limit=5`, {
                 headers: { Authorization: `Bearer ${token}` },
               });
               
