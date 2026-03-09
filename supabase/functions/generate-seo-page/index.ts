@@ -494,6 +494,7 @@ summary: A 2-3 sentence description of ${displayName}'s sonic identity — their
     const vibePrompt = `You are a world-class music curator who understands that a "vibe" is a precise sonic atmosphere — a complete sensory environment encoded in sound.
 
 User is searching for music that matches: "${displayName}"
+${antiRepetitionBlock}
 
 Your mission: curate the definitive sonic palette for this atmosphere. Not a generic mood playlist — a carefully selected set of tracks that ARE this feeling in its most potent form.
 
