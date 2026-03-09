@@ -90,21 +90,26 @@ async function fetchYouTubeThumbnail(title: string, artist: string): Promise<str
   return null;
 }
 
-/** Fetch with retry on 429 rate limit */
-async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 2): Promise<Response> {
+/** Fetch with retry on 429 rate limit — caps wait to 3s, gives up fast */
+async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 1): Promise<Response> {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     const res = await fetch(url, options);
     if (res.status === 429 && attempt < maxRetries) {
-      const retryAfter = parseInt(res.headers.get("Retry-After") || "1", 10);
-      const waitMs = Math.max(retryAfter * 1000, 1000) + attempt * 500;
+      const retryAfter = parseInt(res.headers.get("Retry-After") || "2", 10);
+      // Cap wait at 3 seconds — if Spotify says wait longer, just bail
+      if (retryAfter > 5) {
+        console.log(`⛔ [Spotify] Rate limited (429), Retry-After=${retryAfter}s is too long — skipping`);
+        await res.text();
+        return res; // Return the 429 so caller handles it as a failure
+      }
+      const waitMs = Math.min(retryAfter * 1000, 3000);
       console.log(`⏳ [Spotify] Rate limited (429), waiting ${waitMs}ms before retry ${attempt + 1}/${maxRetries}`);
-      await res.text(); // consume body
+      await res.text();
       await new Promise(resolve => setTimeout(resolve, waitMs));
       continue;
     }
     return res;
   }
-  // Should not reach here, but fallback
   return fetch(url, options);
 }
 
