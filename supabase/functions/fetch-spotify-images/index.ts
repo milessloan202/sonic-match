@@ -248,8 +248,10 @@ serve(async (req) => {
               }
                 
               if (tracks.length === 0) {
-                console.log(`❌ [Spotify] No results for "${s.title}" by ${s.artist} (all strategies)`);
-                return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null, spotifyTrackId: null, verified: false };
+                // Check if we were rate limited (all searches returned null from fetchWithRetry)
+                const wasRateLimited = !res1;
+                console.log(`❌ [Spotify] No results for "${s.title}" by ${s.artist} (all strategies)${wasRateLimited ? " — RATE LIMITED, will NOT cache" : ""}`);
+                return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null, spotifyTrackId: null, verified: false, rateLimited: wasRateLimited };
               }
 
               track = tracks.find((t: any) => {
