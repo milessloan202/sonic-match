@@ -98,10 +98,6 @@ const Index = () => {
 
   const handleSearch = () => performSearch(query, mode);
 
-  const handleChip = (chip: string) => {
-    setQuery(chip);
-    performSearch(chip, mode);
-  };
 
   return (
     <div className="min-h-screen flex flex-col items-center relative overflow-hidden">
