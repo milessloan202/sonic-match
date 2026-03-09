@@ -125,35 +125,61 @@ const Index = () => {
 
           <SegmentedSelector value={mode} onChange={setMode} />
 
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                disabled={loading}
+                placeholder={
+                  mode === "song"
+                    ? "Enter a song name..."
+                    : mode === "artist"
+                    ? "Enter an artist name..."
+                    : mode === "producer"
+                    ? "Enter a producer name..."
+                    : "Describe a vibe..."
+                }
+                className="w-full h-12 pl-12 pr-4 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all disabled:opacity-50"
+              />
+            </div>
+            <button
+              onClick={handleSearch}
               disabled={loading}
-              placeholder={
-                mode === "song"
-                  ? "Enter a song name..."
-                  : mode === "artist"
-                  ? "Enter an artist name..."
-                  : mode === "producer"
-                  ? "Enter a producer name..."
-                  : "Describe a vibe..."
-              }
-              className="w-full h-12 pl-12 pr-4 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all disabled:opacity-50"
-            />
+              className="h-12 px-6 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 glow-primary transition-all disabled:opacity-50 flex items-center gap-2"
+            >
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+              {loading ? "Searching..." : "Search"}
+            </button>
           </div>
-          <button
-            onClick={handleSearch}
-            disabled={loading}
-            className="h-12 px-6 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 glow-primary transition-all disabled:opacity-50 flex items-center gap-2"
-          >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-            {loading ? "Searching..." : "Search"}
-          </button>
+
+          {/* Deep Cut Mode toggle */}
+          <div className="flex items-center justify-center gap-3">
+            <Switch
+              id="deep-cut"
+              checked={deepCut}
+              onCheckedChange={toggleDeepCut}
+            />
+            <label htmlFor="deep-cut" className="cursor-pointer text-left">
+              <span className="text-sm font-medium text-foreground">Deep Cut Mode</span>
+              <span className="block text-xs text-muted-foreground">Find hidden gems and lesser-known tracks</span>
+            </label>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Main content area */}
+      <div className="relative z-10 w-full max-w-xl px-4 py-8 text-center space-y-8">
+        <div className="space-y-3">
+          <h1 className="text-5xl sm:text-6xl font-bold tracking-tight">
+            <span className="text-gradient">SOUNDDNA</span>
+          </h1>
+          <p className="text-muted-foreground text-lg">
+            Find songs, artists, and moods with the same sonic DNA
+          </p>
         </div>
 
         {/* Deep Cut Mode toggle */}
