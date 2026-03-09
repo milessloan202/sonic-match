@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-interface Artist {
+interface CarouselItem {
   name: string;
   slug: string;
   imageUrl: string;
