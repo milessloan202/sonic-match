@@ -277,8 +277,8 @@ serve(async (req) => {
               }
 
               if (!track) {
-                console.log(`❌ [Spotify] No match for "${s.title}" by ${s.artist} — ${tracks.length} candidates`);
-                return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null, spotifyTrackId: null, verified: false };
+              console.log(`❌ [Spotify] No match for "${s.title}" by ${s.artist} — ${tracks.length} candidates`);
+                return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null, spotifyTrackId: null, verified: false, rateLimited: false };
               }
 
               console.log(`✅ [Spotify] MATCHED "${s.title}" by ${s.artist} → "${track.name}" by ${track.artists.map((a: any) => a.name).join(", ")}`);
