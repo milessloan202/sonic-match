@@ -78,13 +78,13 @@ const AlbumCarousel = () => {
         <motion.div
           className="flex gap-3"
           animate={{
-            x: [0, -artists.length * (100 + 12)], // 100px width + 12px gap
+            x: [0, -artists.length * 112], // 100px width + 12px gap
           }}
           transition={{
             x: {
               repeat: Infinity,
               repeatType: "loop",
-              duration: artists.length * 3, // 3 seconds per item
+              duration: artists.length * 3,
               ease: "linear",
             },
           }}
