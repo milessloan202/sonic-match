@@ -37,6 +37,208 @@ async function isDailyLimited(supabase: any): Promise<boolean> {
   return (count ?? 0) >= DAILY_LIMIT;
 }
 
+// ============= VERIFIED METADATA LAYER =============
+
+interface VerifiedMetadata {
+  song_title: string | null;
+  artist_name: string | null;
+  spotify_track_id: string | null;
+  year: string | null;
+  genres: string[];
+  album_name: string | null;
+  producer_name: string | null; // only if verified
+  sampled_song_title: string | null; // only if verified
+  sampled_artist_name: string | null; // only if verified
+  sample_verified: boolean;
+  metadata_confidence: "high" | "medium" | "low";
+}
+
+async function fetchVerifiedMetadata(
+  displayName: string,
+  pageType: string,
+  supabase: any,
+  spotifyToken: string | null
+): Promise<VerifiedMetadata> {
+  const metadata: VerifiedMetadata = {
+    song_title: null,
+    artist_name: null,
+    spotify_track_id: null,
+    year: null,
+    genres: [],
+    album_name: null,
+    producer_name: null,
+    sampled_song_title: null,
+    sampled_artist_name: null,
+    sample_verified: false,
+    metadata_confidence: "low",
+  };
+
+  if (pageType !== "song") {
+    return metadata;
+  }
+
+  // Parse song title and artist from displayName (format: "Song Title – Artist Name" or just "Song Title")
+  const dashMatch = displayName.match(/^(.+?)\s*[–—-]\s*(.+)$/);
+  let songTitle = dashMatch ? dashMatch[1].trim() : displayName;
+  let artistName = dashMatch ? dashMatch[2].trim() : null;
+
+  metadata.song_title = songTitle;
+  metadata.artist_name = artistName;
+
+  let confidencePoints = 0;
+
+  // 1. Fetch from Spotify for enriched metadata
+  if (spotifyToken) {
+    try {
+      const query = artistName 
+        ? `track:"${songTitle}" artist:"${artistName}"`
+        : `track:"${songTitle}"`;
+      const res = await fetch(
+        `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=1`,
+        { headers: { Authorization: `Bearer ${spotifyToken}` } }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        const track = data?.tracks?.items?.[0];
+        if (track) {
+          metadata.spotify_track_id = track.id;
+          metadata.song_title = track.name;
+          metadata.artist_name = track.artists?.[0]?.name || artistName;
+          metadata.year = track.album?.release_date?.slice(0, 4) || null;
+          metadata.album_name = track.album?.name || null;
+          confidencePoints += 2;
+
+          // Fetch artist genres if available
+          const artistId = track.artists?.[0]?.id;
+          if (artistId) {
+            try {
+              const artistRes = await fetch(
+                `https://api.spotify.com/v1/artists/${artistId}`,
+                { headers: { Authorization: `Bearer ${spotifyToken}` } }
+              );
+              if (artistRes.ok) {
+                const artistData = await artistRes.json();
+                metadata.genres = artistData.genres?.slice(0, 5) || [];
+                if (metadata.genres.length > 0) confidencePoints += 1;
+              }
+            } catch (e) {
+              console.log("[Metadata] Failed to fetch artist genres:", e);
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.log("[Metadata] Spotify lookup failed:", e);
+    }
+  }
+
+  // 2. Check sample_cache for verified sample information
+  if (metadata.song_title && metadata.artist_name) {
+    try {
+      const { data: sampleData } = await supabase
+        .from("sample_cache")
+        .select("*")
+        .eq("song_title", metadata.song_title)
+        .eq("artist_name", metadata.artist_name)
+        .maybeSingle();
+
+      if (sampleData?.looked_up && sampleData?.sample_verified) {
+        metadata.sampled_song_title = sampleData.sampled_song_title;
+        metadata.sampled_artist_name = sampleData.sampled_artist_name;
+        metadata.sample_verified = true;
+        confidencePoints += 2;
+      }
+    } catch (e) {
+      console.log("[Metadata] Sample cache lookup failed:", e);
+    }
+  }
+
+  // Determine confidence level
+  if (confidencePoints >= 4) {
+    metadata.metadata_confidence = "high";
+  } else if (confidencePoints >= 2) {
+    metadata.metadata_confidence = "medium";
+  } else {
+    metadata.metadata_confidence = "low";
+  }
+
+  console.log(`[Metadata] Confidence: ${metadata.metadata_confidence} (${confidencePoints} points)`);
+  return metadata;
+}
+
+function buildMetadataBlock(metadata: VerifiedMetadata): string {
+  if (!metadata.song_title) return "";
+
+  const lines: string[] = [];
+  lines.push("\n\n=== VERIFIED METADATA (MUST USE THESE FACTS) ===");
+  
+  if (metadata.song_title) lines.push(`Song Title: "${metadata.song_title}"`);
+  if (metadata.artist_name) lines.push(`Artist: ${metadata.artist_name}`);
+  if (metadata.year) lines.push(`Year: ${metadata.year}`);
+  if (metadata.album_name) lines.push(`Album: ${metadata.album_name}`);
+  if (metadata.genres.length > 0) lines.push(`Genres: ${metadata.genres.join(", ")}`);
+  
+  if (metadata.sample_verified && metadata.sampled_song_title) {
+    lines.push(`VERIFIED SAMPLE: This track samples "${metadata.sampled_song_title}" by ${metadata.sampled_artist_name}`);
+  }
+
+  lines.push(`\nMetadata Confidence: ${metadata.metadata_confidence.toUpperCase()}`);
+  lines.push("=== END VERIFIED METADATA ===\n");
+
+  return lines.join("\n");
+}
+
+function getFactualInstructions(confidence: "high" | "medium" | "low"): string {
+  const baseInstructions = `
+FACTUAL ACCURACY RULES (CRITICAL — STRICTLY ENFORCED):
+
+1. YOU MAY DESCRIBE:
+   - Mood, atmosphere, and emotional character (e.g., "melancholic tone," "euphoric build")
+   - Sonic textures and production qualities (e.g., "glossy synths," "lo-fi warmth," "crisp drums")
+   - Rhythmic feel and groove (e.g., "driving rhythm," "laid-back swing")
+   - Genre positioning and stylistic elements
+   - General era or decade character
+
+2. YOU MAY NOT INVENT:
+   - Producer credits (unless provided in verified metadata)
+   - Sample sources or interpolations (unless provided in verified metadata)
+   - Specific instrumentation claims (e.g., "built around a Fender Rhodes")
+   - Studio or recording details
+   - Collaboration or writing credits
+   - Historical claims about the recording process
+
+3. SAMPLE RULE:
+   - ONLY mention sampling if VERIFIED SAMPLE appears in the metadata above
+   - If sample info is verified, you MAY reference it naturally in the summary
+   - If no verified sample info exists, do NOT speculate about samples`;
+
+  if (confidence === "low") {
+    return baseInstructions + `
+
+4. LOW CONFIDENCE MODE:
+   - Write broader, more impressionistic descriptions
+   - Focus on mood, atmosphere, and sonic character
+   - Avoid specific factual claims about the track's creation
+   - Use phrases like "evokes," "channels," "recalls" rather than definitive statements`;
+  } else if (confidence === "medium") {
+    return baseInstructions + `
+
+4. MEDIUM CONFIDENCE MODE:
+   - You may use verified metadata fields (year, artist, genres) confidently
+   - For other details, lean toward description over assertion
+   - Balance specificity with caution on unverified facts`;
+  } else {
+    return baseInstructions + `
+
+4. HIGH CONFIDENCE MODE:
+   - Use all verified metadata fields confidently
+   - You may write with more specificity about the track's sonic character
+   - Still do NOT invent production credits, samples, or historical claims beyond metadata`;
+  }
+}
+
+// ============= END VERIFIED METADATA LAYER =============
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -84,12 +286,12 @@ serve(async (req) => {
 
     recordGeneration();
 
-    // --- Spotify seed track lookup for producer pages ---
-    let seedTracks: { title: string; artist: string; year: string }[] = [];
-    if (page_type === "producer") {
-      try {
-        const clientId = Deno.env.get("SPOTIFY_CLIENT_ID")!;
-        const clientSecret = Deno.env.get("SPOTIFY_CLIENT_SECRET")!;
+    // --- Get Spotify token early for metadata lookup ---
+    let spotifyToken: string | null = null;
+    try {
+      const clientId = Deno.env.get("SPOTIFY_CLIENT_ID");
+      const clientSecret = Deno.env.get("SPOTIFY_CLIENT_SECRET");
+      if (clientId && clientSecret) {
         const basic = btoa(`${clientId}:${clientSecret}`);
         const tokenRes = await fetch("https://accounts.spotify.com/api/token", {
           method: "POST",
@@ -98,57 +300,71 @@ serve(async (req) => {
         });
         if (tokenRes.ok) {
           const tokenData = await tokenRes.json();
-          const token = tokenData.access_token;
-          const producerName = slug.replace(/-deep$/, "").replace(/-/g, " ");
-
-          // Search Spotify for tracks mentioning this producer
-          const queries = [
-            `producer:"${producerName}"`,
-            `"${producerName}"`,
-          ];
-
-          const seen = new Set<string>();
-          for (const q of queries) {
-            if (seedTracks.length >= 8) break;
-            try {
-              const searchRes = await fetch(
-                `https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=10`,
-                { headers: { Authorization: `Bearer ${token}` } }
-              );
-              if (searchRes.ok) {
-                const searchData = await searchRes.json();
-                const tracks = searchData?.tracks?.items || [];
-                for (const t of tracks) {
-                  if (seedTracks.length >= 8) break;
-                  const key = `${t.name}|||${t.artists?.[0]?.name}`;
-                  if (seen.has(key)) continue;
-                  seen.add(key);
-                  seedTracks.push({
-                    title: t.name,
-                    artist: t.artists?.[0]?.name || "Unknown",
-                    year: t.album?.release_date?.slice(0, 4) || "Unknown",
-                  });
-                }
-              }
-            } catch (e) {
-              console.log(`[Seed] Spotify search failed for query "${q}":`, e);
-            }
-          }
-          console.log(`[Seed] Found ${seedTracks.length} seed tracks for producer "${producerName}"`);
+          spotifyToken = tokenData.access_token;
         }
+      }
+    } catch (e) {
+      console.log("[Spotify] Token fetch failed:", e);
+    }
+
+    const displayName = slug.replace(/-deep$/, "").replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+
+    // --- Fetch verified metadata for song pages ---
+    const verifiedMetadata = await fetchVerifiedMetadata(displayName, page_type, supabase, spotifyToken);
+    const metadataBlock = buildMetadataBlock(verifiedMetadata);
+    const factualInstructions = getFactualInstructions(verifiedMetadata.metadata_confidence);
+
+    // --- Spotify seed track lookup for producer pages ---
+    let seedTracks: { title: string; artist: string; year: string }[] = [];
+    if (page_type === "producer" && spotifyToken) {
+      try {
+        const producerName = slug.replace(/-deep$/, "").replace(/-/g, " ");
+        const queries = [
+          `producer:"${producerName}"`,
+          `"${producerName}"`,
+        ];
+
+        const seen = new Set<string>();
+        for (const q of queries) {
+          if (seedTracks.length >= 8) break;
+          try {
+            const searchRes = await fetch(
+              `https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=10`,
+              { headers: { Authorization: `Bearer ${spotifyToken}` } }
+            );
+            if (searchRes.ok) {
+              const searchData = await searchRes.json();
+              const tracks = searchData?.tracks?.items || [];
+              for (const t of tracks) {
+                if (seedTracks.length >= 8) break;
+                const key = `${t.name}|||${t.artists?.[0]?.name}`;
+                if (seen.has(key)) continue;
+                seen.add(key);
+                seedTracks.push({
+                  title: t.name,
+                  artist: t.artists?.[0]?.name || "Unknown",
+                  year: t.album?.release_date?.slice(0, 4) || "Unknown",
+                });
+              }
+            }
+          } catch (e) {
+            console.log(`[Seed] Spotify search failed for query "${q}":`, e);
+          }
+        }
+        console.log(`[Seed] Found ${seedTracks.length} seed tracks for producer "${producerName}"`);
       } catch (e) {
-        console.log("[Seed] Spotify token fetch failed, proceeding without seed tracks:", e);
+        console.log("[Seed] Spotify producer lookup failed:", e);
       }
     }
 
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
     if (!ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is not configured");
 
-    const displayName = slug.replace(/-deep$/, "").replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
-
     const songPrompt = `You are a world-class music curator — part crate-digger, part musicologist, part the best record store clerk alive. You think in terms of sonic DNA: production fingerprints, harmonic choices, rhythmic feel, and emotional architecture.
 
 User is looking for songs similar to: "${displayName}"
+${metadataBlock}
+${factualInstructions}
 
 Your mission: find songs that live in the SAME MUSICAL UNIVERSE. Not the same Spotify playlist — the same sonic bloodline.
 
@@ -175,12 +391,7 @@ relatedArtists: 3 artists whose broader catalog overlaps most with the sonic wor
 
 whyTheseWork: 2-3 sentences explaining the SPECIFIC sonic thread connecting these recommendations. Reference concrete musical details: name the synth texture, the drum pattern, the harmonic movement, the production technique. Never use phrases like "similar vibe," "same feel," "fans of X will enjoy," or "same energy." Write like a music journalist who respects the reader's intelligence.
 
-summary: A 2-3 sentence description of what makes this track sonically distinctive — its production fingerprint, its emotional architecture, and the specific type of listener it rewards. CRITICAL: The first sentence MUST begin with "{Artist Name}'s \"{Song Title}\"" to clearly identify the song. Example: "Joe Budden's \"Pump It Up\" is an early-2000s soul-sample hip-hop track built around a driving piano loop and crisp drum programming."
-
-SAMPLE INFORMATION RULE (CRITICAL):
-- Do NOT mention sampling, interpolation, borrowed melodies, or sample sources in any field (whyTheseWork, summary, or anywhere else).
-- Sample information is handled by a separate verified lookup system. Any mention of samples by you will be unverified and potentially fabricated.
-- If a track is well-known for sampling another track, you may NOT reference that fact. Leave sample attribution to the external verification system.`;
+summary: A 2-3 sentence description of what makes this track sonically distinctive — its production fingerprint, its emotional architecture, and the specific type of listener it rewards. CRITICAL: The first sentence MUST begin with "{Artist Name}'s \"{Song Title}\"" to clearly identify the song. Example: "Joe Budden's \"Pump It Up\" is an early-2000s soul-sample hip-hop track built around a driving piano loop and crisp drum programming."`;
 
     const artistPrompt = `You are a world-class music curator — part crate-digger, part musicologist, part the best record store clerk alive. You think in terms of artistic DNA: how an artist's sonic identity, production choices, and creative evolution connect them to the broader musical landscape.
 
@@ -200,6 +411,8 @@ CRITICAL RULES:
 - Maximum 1 track per artist across all lists.
 - At least 2 picks per list should be genuinely surprising discoveries that reveal non-obvious connections.
 - For relatedArtists: go one level deeper than the streaming algorithm's top suggestions. Find artists who share specific sonic qualities, not just genre labels.
+
+${factualInstructions}
 
 closestMatches: 5 tracks by OTHER artists (NOT ${displayName}) that most closely match ${displayName}'s sonic signature — production style, vocal approach, lyrical territory, and musical DNA. These should scratch the same itch as ${displayName}'s best work.
 
@@ -229,6 +442,8 @@ CRITICAL RULES:
 - Do NOT pick the most overplayed tracks associated with this mood. Find the songs that truly embody the atmosphere, not the ones that show up on every mood playlist.
 - Include tracks from at least 3 different decades across your recommendations.
 - At least 2 picks per list should be genuine discoveries — tracks most listeners haven't heard but that perfectly crystallize this atmosphere.
+
+${factualInstructions}
 
 closestMatches: 5 songs that ARE this vibe in its purest form — the definitive soundtrack. These should feel inevitable and essential, not generic or predictable.
 
@@ -263,6 +478,8 @@ CRITICAL RULES:
 - For sameEnergy (tracks by OTHER producers): maximum 1 track per producer. Find tracks where the production approach shares genuine DNA with the queried producer.
 - For relatedArtists (actually related PRODUCERS): recommend producers, not performing artists. Go one level deeper than the obvious choices.
 - Only recommend songs and artists you are reasonably confident are real and commercially released.
+
+${factualInstructions}
 
 closestMatches: 5 tracks produced by or heavily associated with ${displayName} that best showcase their production range. Prioritize verified seed tracks and other productions you are highly confident about.
 
@@ -358,7 +575,27 @@ Return JSON only. No markdown, no code fences.`;
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 2048,
-        system: "You are a world-class music discovery engine with encyclopedic knowledge of production techniques, genre lineages, and sonic connections across decades. You think like a legendary record store clerk, not a streaming algorithm. Return only valid JSON, no markdown, no code fences.\n\nCRITICAL ACCURACY RULES:\n- Every track you recommend MUST be a REAL song by a REAL artist that was commercially released and is likely to appear in major music catalogs (Spotify, Apple Music, etc.).\n- Only recommend songs and artists you are reasonably confident are real and commercially released. If uncertain, do NOT guess — choose a different recommendation that you ARE confident about.\n- Do NOT invent plausible-sounding song titles, alternate versions, unreleased recordings, or fictional deep cuts.\n- Prefer a correct, somewhat more familiar song over an obscure track you are unsure about. Deep cuts are welcome ONLY when your confidence is high.\n- Never duplicate artists across recommendation lists.\n- If you cannot think of enough high-confidence obscure picks, widen your pool and choose real, musically relevant tracks instead of forcing rarity at the expense of accuracy.\n- Prioritize musical DNA over popularity, but NEVER prioritize obscurity over accuracy.\n\nSAMPLE INFORMATION RULE (CRITICAL):\n- NEVER mention sampling, interpolation, borrowed melodies, or sample sources in ANY field.\n- Sample data is handled by a separate verified system (MusicBrainz). Any sample references you generate are unverified and potentially fabricated.\n- Do NOT reference sampling even for well-known cases. Leave all sample attribution to the external verification system.",
+        system: `You are a world-class music discovery engine with encyclopedic knowledge of production techniques, genre lineages, and sonic connections across decades. You think like a legendary record store clerk, not a streaming algorithm. Return only valid JSON, no markdown, no code fences.
+
+CRITICAL ACCURACY RULES:
+- Every track you recommend MUST be a REAL song by a REAL artist that was commercially released and is likely to appear in major music catalogs (Spotify, Apple Music, etc.).
+- Only recommend songs and artists you are reasonably confident are real and commercially released. If uncertain, do NOT guess — choose a different recommendation that you ARE confident about.
+- Do NOT invent plausible-sounding song titles, alternate versions, unreleased recordings, or fictional deep cuts.
+- Prefer a correct, somewhat more familiar song over an obscure track you are unsure about. Deep cuts are welcome ONLY when your confidence is high.
+- Never duplicate artists across recommendation lists.
+- If you cannot think of enough high-confidence obscure picks, widen your pool and choose real, musically relevant tracks instead of forcing rarity at the expense of accuracy.
+- Prioritize musical DNA over popularity, but NEVER prioritize obscurity over accuracy.
+
+FACTUAL WRITING RULES (CRITICAL):
+- You MAY describe mood, atmosphere, sonic textures, rhythmic feel, and emotional character using interpretive language.
+- You MAY NOT invent or state as fact: producer credits, sample sources, specific instrument models, studio details, or historical claims about the recording process — UNLESS this information is explicitly provided in the VERIFIED METADATA section of the prompt.
+- If verified sample information is provided, you may naturally reference it. If not, do NOT mention sampling at all.
+- When metadata confidence is LOW, write broader, impressionistic descriptions. When confidence is HIGH, you may be more specific about verified facts.
+
+SAMPLE INFORMATION RULE (CRITICAL):
+- NEVER mention sampling, interpolation, borrowed melodies, or sample sources UNLESS the VERIFIED METADATA explicitly includes sample information.
+- Sample data is handled by a separate verified system (MusicBrainz). Any sample references you generate without verified metadata are unverified and potentially fabricated.
+- Do NOT reference sampling even for well-known cases unless metadata confirms it.`,
         messages: [{ role: "user", content: prompt }],
       }),
     });
@@ -388,26 +625,7 @@ Return JSON only. No markdown, no code fences.`;
     }
 
     // --- Resolve Spotify track IDs for song pages ---
-    let seedSpotifyTrackId: string | null = null;
-
-    async function getSpotifyTokenForLookup(): Promise<string | null> {
-      try {
-        const clientId = Deno.env.get("SPOTIFY_CLIENT_ID");
-        const clientSecret = Deno.env.get("SPOTIFY_CLIENT_SECRET");
-        if (!clientId || !clientSecret) return null;
-        const basic = btoa(`${clientId}:${clientSecret}`);
-        const tokenRes = await fetch("https://accounts.spotify.com/api/token", {
-          method: "POST",
-          headers: { Authorization: `Basic ${basic}`, "Content-Type": "application/x-www-form-urlencoded" },
-          body: "grant_type=client_credentials",
-        });
-        if (!tokenRes.ok) return null;
-        const tokenData = await tokenRes.json();
-        return tokenData.access_token;
-      } catch {
-        return null;
-      }
-    }
+    let seedSpotifyTrackId: string | null = verifiedMetadata.spotify_track_id;
 
     async function resolveSpotifyId(title: string, artist: string, token: string): Promise<{ id: string | null; url: string | null }> {
       try {
@@ -426,8 +644,6 @@ Return JSON only. No markdown, no code fences.`;
     }
 
     // Map camelCase AI response to snake_case DB columns, enriching with Spotify IDs
-    const spotifyToken = await getSpotifyTokenForLookup();
-
     const allRecommendedSongs = [
       ...(content.closestMatches || []),
       ...(content.sameEnergy || []),
@@ -435,13 +651,6 @@ Return JSON only. No markdown, no code fences.`;
 
     // Resolve Spotify IDs for all recommended songs in parallel
     const spotifyIdMap = new Map<string, { id: string | null; url: string | null }>();
-    if (spotifyToken && page_type === "song") {
-      // Also resolve the seed song itself
-      const seedTitle = displayName;
-      const seedResult = await resolveSpotifyId(seedTitle, "", spotifyToken);
-      seedSpotifyTrackId = seedResult.id;
-      console.log(`[Spotify ID] Seed "${seedTitle}": ${seedSpotifyTrackId || "not found"}`);
-    }
 
     if (spotifyToken) {
       const lookups = allRecommendedSongs.map(async (m: any) => {
