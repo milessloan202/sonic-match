@@ -182,27 +182,17 @@ const Index = () => {
           </p>
         </div>
 
-        {/* Deep Cut Mode toggle */}
-        <div className="flex items-center justify-center gap-3">
-          <Switch
-            id="deep-cut"
-            checked={deepCut}
-            onCheckedChange={toggleDeepCut}
-          />
-          <label htmlFor="deep-cut" className="cursor-pointer text-left">
-            <span className="text-sm font-medium text-foreground">Deep Cut Mode</span>
-            <span className="block text-xs text-muted-foreground">Find hidden gems and lesser-known tracks</span>
-          </label>
-        </div>
-
+        {/* Album Carousel */}
         {!loading && !error && (
-          <div className="flex flex-wrap justify-center gap-2">
-            {exampleChips[mode].map((chip) => (
-              <SearchChip key={chip} label={chip} onClick={() => handleChip(chip)} />
-            ))}
-          </div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            <AlbumCarousel />
+          </motion.div>
         )}
-      </motion.div>
+      </div>
 
       {loading && (
         <motion.div
