@@ -90,7 +90,25 @@ async function fetchYouTubeThumbnail(title: string, artist: string): Promise<str
   return null;
 }
 
-/** Normalize a title for fuzzy comparison */
+/** Fetch with retry on 429 rate limit */
+async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 2): Promise<Response> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const res = await fetch(url, options);
+    if (res.status === 429 && attempt < maxRetries) {
+      const retryAfter = parseInt(res.headers.get("Retry-After") || "1", 10);
+      const waitMs = Math.max(retryAfter * 1000, 1000) + attempt * 500;
+      console.log(`⏳ [Spotify] Rate limited (429), waiting ${waitMs}ms before retry ${attempt + 1}/${maxRetries}`);
+      await res.text(); // consume body
+      await new Promise(resolve => setTimeout(resolve, waitMs));
+      continue;
+    }
+    return res;
+  }
+  // Should not reach here, but fallback
+  return fetch(url, options);
+}
+
+
 function normalizeTitle(t: string): string {
   return t
     .toLowerCase()
