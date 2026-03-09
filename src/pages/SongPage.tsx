@@ -34,7 +34,7 @@ const SongPage = () => {
   const { sample } = useSampleData(songTitleForSample, artistForSample);
 
   const allSongs = [...(data?.closest_matches || []), ...(data?.same_energy || [])];
-  const { songImages, songMeta, artistImages } = useSpotifyImages(allSongs, data?.related_artists || []);
+  const { songImages, songMeta, artistImages, metaLoaded } = useSpotifyImages(allSongs, data?.related_artists || []);
 
   if (loading) return <PageSkeleton generating={generating} />;
   if (error) {
