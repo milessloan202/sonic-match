@@ -195,7 +195,7 @@ serve(async (req) => {
             image_url: c.image_url,
             preview_url: c.preview_url,
             spotify_url: c.spotify_url,
-            spotify_track_id: null,
+            spotify_track_id: c.spotify_track_id,
           };
           if (DEBUG) console.log(`📦 [Cache] ${isResolved ? "HIT" : "NOT_FOUND"} "${s.title}" by ${s.artist}`);
         } else {
