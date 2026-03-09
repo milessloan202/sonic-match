@@ -104,15 +104,18 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center px-4 py-16 relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center relative overflow-hidden">
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-primary/5 blur-3xl animate-pulse-glow pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full bg-accent/5 blur-3xl animate-pulse-glow pointer-events-none" />
 
+      {/* Sticky search section */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="relative z-10 w-full max-w-xl text-center space-y-8"
+        className="sticky top-0 z-20 w-full bg-background/80 backdrop-blur-lg border-b border-border/50 px-4 py-4"
+      >
+        <div className="w-full max-w-xl mx-auto space-y-4"
       >
         <SEOHead
           title="SOUNDDNA – Discover Music With the Same Sonic DNA"
