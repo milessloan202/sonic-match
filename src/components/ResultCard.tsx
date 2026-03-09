@@ -116,7 +116,7 @@ const Thumbnail = ({
   );
 };
 
-const PlayButton = ({ title, subtitle, meta }: { title: string; subtitle?: string; meta?: SongMeta }) => {
+const PlayButton = ({ title, subtitle, meta, metaLoaded }: { title: string; subtitle?: string; meta?: SongMeta; metaLoaded?: boolean }) => {
   const { currentTrack, isPlaying, progress, toggle } = useAudio();
   const pbArtist = subtitle ? subtitle.replace(/\s*\(\d{4}\)\s*$/, "").trim() : "";
   const trackId = pbArtist ? `${title}|||${pbArtist}` : title;
@@ -127,6 +127,15 @@ const PlayButton = ({ title, subtitle, meta }: { title: string; subtitle?: strin
 
   // Determine if Spotify has the track (spotify_url means a valid track was found)
   const hasSpotify = !!meta?.spotify_url;
+
+  // If meta hasn't loaded yet, show a subtle loading indicator instead of YouTube
+  if (!metaLoaded) {
+    return (
+      <div className="shrink-0 flex flex-col items-center gap-1">
+        <div className="w-3.5 h-3.5 rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground/70 animate-spin" />
+      </div>
+    );
+  }
 
   if (!meta?.preview_url) {
     // No preview available — show either Spotify or YouTube (not both)

@@ -106,6 +106,38 @@ async function fetchYouTubeThumbnail(title: string, artist: string): Promise<str
   return null;
 }
 
+/** Normalize a title for fuzzy comparison */
+function normalizeTitle(t: string): string {
+  return t
+    .toLowerCase()
+    .replace(/\(.*?\)/g, "") // remove parenthetical (Remastered 2023), (feat. X)
+    .replace(/\[.*?\]/g, "") // remove bracketed [Deluxe Edition]
+    .replace(/[-–—]/g, " ")
+    .replace(/[^a-z0-9\s]/g, "") // remove punctuation
+    .replace(/\b(remaster(ed)?|deluxe|edition|version|edit|mix|mono|stereo|single|album)\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Check if two titles are a fuzzy match */
+function titlesMatch(a: string, b: string): boolean {
+  const na = normalizeTitle(a);
+  const nb = normalizeTitle(b);
+  if (na === nb) return true;
+  // One contains the other (handles "Song" vs "Song - Remastered")
+  if (na.includes(nb) || nb.includes(na)) return true;
+  return false;
+}
+
+/** Check if artist names match (fuzzy) */
+function artistsMatch(queryArtist: string, trackArtists: string[]): boolean {
+  const normalized = queryArtist.toLowerCase().trim();
+  return trackArtists.some((a) => {
+    const na = a.toLowerCase().trim();
+    return na === normalized || na.includes(normalized) || normalized.includes(na);
+  });
+}
+
 interface SongQuery {
   title: string;
   artist: string;
