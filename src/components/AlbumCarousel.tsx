@@ -78,7 +78,7 @@ const AlbumCarousel = () => {
         <motion.div
           className="flex gap-3"
           animate={{
-            x: [0, -artists.length * 112], // 100px width + 12px gap
+            x: [0, -artists.length * 137], // 125px width + 12px gap
           }}
           transition={{
             x: {
