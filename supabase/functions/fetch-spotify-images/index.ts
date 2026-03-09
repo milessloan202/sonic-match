@@ -390,6 +390,7 @@ serve(async (req) => {
         }
 
         // 5. Cache writes — ONLY resolved and not_found (genuine misses)
+        const CACHE_VERSION = 2;
         const toInsert = results
           .filter((r) => r.status === "resolved" || r.status === "not_found")
           .map((r) => ({
@@ -400,12 +401,17 @@ serve(async (req) => {
             spotify_url: r.spotifyUrl,
             youtube_thumbnail_url: null,
             spotify_track_id: r.spotifyTrackId,
+            resolver_status: r.status,
+            cache_version: CACHE_VERSION,
+            expires_at: r.status === "not_found"
+              ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24h for not_found
+              : null, // resolved entries don't expire
           }));
 
         if (toInsert.length > 0) {
           const resolved = toInsert.filter(r => r.spotify_url).length;
           const notFound = toInsert.length - resolved;
-          console.log(`💾 [Cache Write] ${toInsert.length} entries (${resolved} resolved, ${notFound} genuine not_found)`);
+          console.log(`💾 [Cache Write] ${toInsert.length} entries (${resolved} resolved, ${notFound} genuine not_found) v${CACHE_VERSION}`);
           await supabase.from("song_image_cache").upsert(toInsert, { onConflict: "name,artist" });
         }
 
