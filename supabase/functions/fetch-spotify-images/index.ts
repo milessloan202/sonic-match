@@ -216,7 +216,10 @@ serve(async (req) => {
         console.log(`[Spotify] Fetching ${uncached.length} uncached songs`);
         const token = await getSpotifyToken();
 
-        const fetches = uncached.slice(0, 15).map(async (s) => {
+        // Process songs SEQUENTIALLY with delays to avoid Spotify 429 rate limiting
+        const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+        
+        const processOneSong = async (s: SongQuery) => {
           const sanitizedArtist = sanitizeArtist(s.artist);
           console.log(`🔍 [Spotify] Querying "${s.title}" by ${s.artist} (sanitized: "${sanitizedArtist}")`);
           
