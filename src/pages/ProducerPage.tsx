@@ -25,7 +25,7 @@ const ProducerPage = () => {
   const isMobile = useIsMobile();
 
   const allSongs = [...(data?.closest_matches || []), ...(data?.same_energy || [])];
-  const { songImages, songMeta, artistImages } = useSpotifyImages(allSongs, data?.related_artists || []);
+  const { songImages, songMeta, artistImages, metaLoaded } = useSpotifyImages(allSongs, data?.related_artists || []);
 
   if (loading) return <PageSkeleton generating={generating} />;
   if (error) {
@@ -78,10 +78,10 @@ const ProducerPage = () => {
       ) : (
         <>
           {data.closest_matches.length > 0 && (
-            <ResultSection title="Closest Matches" items={data.closest_matches} linkPrefix="/songs-like" imageType="song" images={songImages} songMetaMap={songMeta} />
+            <ResultSection title="Closest Matches" items={data.closest_matches} linkPrefix="/songs-like" imageType="song" images={songImages} songMetaMap={songMeta} metaLoaded={metaLoaded} />
           )}
           {data.same_energy.length > 0 && (
-            <ResultSection title="Similar Vibe" items={data.same_energy} linkPrefix="/songs-like" imageType="song" images={songImages} songMetaMap={songMeta} />
+            <ResultSection title="Similar Vibe" items={data.same_energy} linkPrefix="/songs-like" imageType="song" images={songImages} songMetaMap={songMeta} metaLoaded={metaLoaded} />
           )}
           {data.related_artists.length > 0 && (
             <ResultSection title="Related Producers" items={data.related_artists} linkPrefix="/producers-like" imageType="artist" images={artistImages} />

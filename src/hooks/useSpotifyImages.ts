@@ -36,6 +36,7 @@ export function songKey(title: string, subtitle?: string): string {
 export function useSpotifyImages(songs: SongItem[], artistItems: SongItem[]) {
   const [songMeta, setSongMeta] = useState<SongMetaMap>({});
   const [artistImages, setArtistImages] = useState<ImageMap>({});
+  const [metaLoaded, setMetaLoaded] = useState(false);
   const fetchedRef = useRef(false);
 
   // Derived image-only map keyed by title|||artist
@@ -57,17 +58,22 @@ export function useSpotifyImages(songs: SongItem[], artistItems: SongItem[]) {
       .map((a) => ({ name: a.title }))
       .filter((a) => a.name);
 
-    if (songQueries.length === 0 && artistQueries.length === 0) return;
+    if (songQueries.length === 0 && artistQueries.length === 0) {
+      setMetaLoaded(true);
+      return;
+    }
 
     supabase.functions
       .invoke("fetch-spotify-images", {
         body: { songs: songQueries, artists: artistQueries },
       })
       .then(({ data, error }) => {
-        if (error || !data) return;
+        if (error || !data) {
+          setMetaLoaded(true);
+          return;
+        }
 
         if (data.songs) {
-          // Backend returns keys as "title|||artist" — keep as-is
           const mapped: SongMetaMap = {};
           for (const [key, meta] of Object.entries(data.songs as Record<string, SongMeta>)) {
             mapped[key] = meta;
@@ -78,8 +84,9 @@ export function useSpotifyImages(songs: SongItem[], artistItems: SongItem[]) {
         if (data.artists) {
           setArtistImages(data.artists as ImageMap);
         }
+        setMetaLoaded(true);
       });
   }, [songs, artistItems]);
 
-  return { songImages, songMeta, artistImages };
+  return { songImages, songMeta, artistImages, metaLoaded };
 }
