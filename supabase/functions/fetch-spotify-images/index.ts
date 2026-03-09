@@ -183,11 +183,14 @@ serve(async (req) => {
         if (c) {
           const isResolved = !!(c.spotify_url || c.spotify_track_id);
 
-          // If this is a "not found" entry, check if it's stale
+          // If this is a "not found" entry, check if it's expired or stale
           if (!isResolved) {
+            const isExpired = c.expires_at && new Date(c.expires_at).getTime() < Date.now();
             const age = Date.now() - new Date(c.created_at).getTime();
-            if (age > NOT_FOUND_CACHE_MAX_AGE_MS) {
-              if (DEBUG) console.log(`♻️ [Cache] Stale not-found for "${s.title}" by ${s.artist} (${Math.round(age / 3600000)}h old) — will retry`);
+            const isStale = !c.expires_at && age > NOT_FOUND_CACHE_MAX_AGE_MS;
+            
+            if (isExpired || isStale) {
+              if (DEBUG) console.log(`♻️ [Cache] Expired not-found for "${s.title}" by ${s.artist} (expires_at=${c.expires_at}, age=${Math.round(age / 3600000)}h) — will retry`);
               uncached.push(s);
               continue;
             }
