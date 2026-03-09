@@ -330,11 +330,23 @@ serve(async (req) => {
                 return fail("not_found");
               }
 
-              // 3. Match evaluation
+              // 3. Match evaluation — log all candidates
+              if (DEBUG && tracks.length > 0) {
+                console.log(`  [Candidates] ${tracks.length} tracks for "${s.title}" by ${s.artist}:`);
+                for (const t of tracks.slice(0, 5)) {
+                  const candidateArtists = t.artists?.map((a: any) => a.name).join(", ") || "?";
+                  const hasArt = !!(t.album?.images?.length);
+                  console.log(`    → "${t.name}" by ${candidateArtists} | id=${t.id} | art=${hasArt} | preview=${!!t.preview_url}`);
+                }
+              }
+
               // Try: artist+title → artist-only → title-only
               track = tracks.find((t: any) => {
                 const names = t.artists?.map((a: any) => a.name) || [];
-                return artistsMatch(s.artist, names) && titlesMatch(s.title, t.name);
+                const tm = titlesMatch(s.title, t.name);
+                const am = artistsMatch(s.artist, names);
+                if (DEBUG) console.log(`    [Eval] "${t.name}" by ${names.join(",")} — title=${tm}, artist=${am}`);
+                return am && tm;
               });
 
               if (!track) {
