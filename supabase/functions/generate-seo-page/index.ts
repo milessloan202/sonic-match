@@ -175,7 +175,7 @@ relatedArtists: 3 artists whose broader catalog overlaps most with the sonic wor
 
 whyTheseWork: 2-3 sentences explaining the SPECIFIC sonic thread connecting these recommendations. Reference concrete musical details: name the synth texture, the drum pattern, the harmonic movement, the production technique. Never use phrases like "similar vibe," "same feel," "fans of X will enjoy," or "same energy." Write like a music journalist who respects the reader's intelligence.
 
-summary: A 2-3 sentence description of what makes this track sonically distinctive — its production fingerprint, its emotional architecture, and the specific type of listener it rewards.
+summary: A 2-3 sentence description of what makes this track sonically distinctive — its production fingerprint, its emotional architecture, and the specific type of listener it rewards. CRITICAL: The first sentence MUST begin with "{Artist Name}'s \"{Song Title}\"" to clearly identify the song. Example: "Joe Budden's \"Pump It Up\" is an early-2000s soul-sample hip-hop track built around a driving piano loop and crisp drum programming."
 
 SAMPLE INFORMATION RULE (CRITICAL):
 - Do NOT mention sampling, interpolation, borrowed melodies, or sample sources in any field (whyTheseWork, summary, or anywhere else).
