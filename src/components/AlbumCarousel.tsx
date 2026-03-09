@@ -12,6 +12,37 @@ interface Artist {
 const slugify = (text: string) =>
   text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
+/** Fisher-Yates shuffle */
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/**
+ * Pick a curated subset: shuffle the full pool, then pick `count` unique artists.
+ * Simple but effective — each visit gets a different random subset.
+ */
+function curateSelection(pool: Artist[], count: number): Artist[] {
+  const shuffled = shuffle(pool);
+  const seen = new Set<string>();
+  const result: Artist[] = [];
+
+  for (const artist of shuffled) {
+    if (seen.has(artist.name)) continue;
+    seen.add(artist.name);
+    result.push(artist);
+    if (result.length >= count) break;
+  }
+
+  return result;
+}
+
+const CAROUSEL_SIZE = 18;
+
 const AlbumCarousel = () => {
   const [artists, setArtists] = useState<Artist[]>([]);
   const [isPaused, setIsPaused] = useState(false);
@@ -23,47 +54,52 @@ const AlbumCarousel = () => {
 
   useEffect(() => {
     const fetchArtists = async () => {
+      // Fetch a large pool to curate from
       const { data: artistData } = await supabase
         .from("artist_image_cache")
         .select("name, image_url")
         .not("image_url", "is", null)
-        .limit(20);
+        .limit(200);
 
       if (artistData && artistData.length > 0) {
-        setArtists(artistData.map((a) => ({
+        const pool = artistData.map((a) => ({
           name: a.name,
           slug: slugify(a.name),
           imageUrl: a.image_url!,
-        })));
+        }));
+        setArtists(curateSelection(pool, CAROUSEL_SIZE));
         return;
       }
 
+      // Fallback to song_image_cache
       const { data: songData } = await supabase
         .from("song_image_cache")
         .select("artist, image_url")
         .not("image_url", "is", null)
-        .limit(20);
+        .limit(100);
 
       if (songData) {
         const artistMap = new Map<string, string>();
         songData.forEach((s) => {
           if (!artistMap.has(s.artist)) artistMap.set(s.artist, s.image_url!);
         });
-        setArtists(Array.from(artistMap.entries()).map(([name, imageUrl]) => ({
+        const pool = Array.from(artistMap.entries()).map(([name, imageUrl]) => ({
           name,
           slug: slugify(name),
           imageUrl,
-        })));
+        }));
+        setArtists(curateSelection(pool, CAROUSEL_SIZE));
       }
     };
     fetchArtists();
+    // No deps — re-runs on every mount (homepage return)
   }, []);
 
-  // CSS-based scroll animation
+  // rAF scroll animation
   useEffect(() => {
     if (artists.length === 0) return;
 
-    const SPEED = 50; // pixels per second
+    const SPEED = 50;
     const itemWidth = 294; // 282 + 12 gap
     const totalWidth = artists.length * itemWidth;
 
