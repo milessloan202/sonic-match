@@ -306,11 +306,15 @@ serve(async (req) => {
         }
       }
 
-      // Handle previously cached songs that need YouTube thumbnails
+      // Handle previously cached VERIFIED songs that need YouTube thumbnails
       if (needsYoutube.length > 0) {
-        console.log(`[YouTube] ${needsYoutube.length} cached songs need YouTube thumbnail retry`);
+        console.log(`[YouTube] ${needsYoutube.length} verified cached songs need YouTube thumbnail retry`);
         const ytFetches = needsYoutube.slice(0, 10).map(async ({ key, song }) => {
+          console.log(`🎥 [YouTube] Fetching fallback for cached "${song.title}" by ${song.artist}`);
           const ytThumb = await fetchYouTubeThumbnail(song.title, song.artist);
+          if (ytThumb) {
+            console.log(`✅ [YouTube] Found fallback for cached "${song.title}"`);
+          }
           return { key, ytThumb };
         });
         const ytResults = await Promise.all(ytFetches);
