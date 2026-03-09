@@ -11,9 +11,10 @@ interface ResultSectionProps {
   images?: Record<string, string | null>;
   songMetaMap?: SongMetaMap;
   variant?: "default" | "explanation";
+  metaLoaded?: boolean;
 }
 
-const ResultSection = ({ title, items, linkPrefix, imageType, images, songMetaMap, variant = "default" }: ResultSectionProps) => {
+const ResultSection = ({ title, items, linkPrefix, imageType, images, songMetaMap, variant = "default", metaLoaded }: ResultSectionProps) => {
   return (
     <section className="space-y-4">
       <motion.h2
