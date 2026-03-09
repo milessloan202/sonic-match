@@ -90,7 +90,25 @@ async function fetchYouTubeThumbnail(title: string, artist: string): Promise<str
   return null;
 }
 
-/** Normalize a title for fuzzy comparison */
+/** Fetch with retry on 429 rate limit */
+async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 2): Promise<Response> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const res = await fetch(url, options);
+    if (res.status === 429 && attempt < maxRetries) {
+      const retryAfter = parseInt(res.headers.get("Retry-After") || "1", 10);
+      const waitMs = Math.max(retryAfter * 1000, 1000) + attempt * 500;
+      console.log(`⏳ [Spotify] Rate limited (429), waiting ${waitMs}ms before retry ${attempt + 1}/${maxRetries}`);
+      await res.text(); // consume body
+      await new Promise(resolve => setTimeout(resolve, waitMs));
+      continue;
+    }
+    return res;
+  }
+  // Should not reach here, but fallback
+  return fetch(url, options);
+}
+
+
 function normalizeTitle(t: string): string {
   return t
     .toLowerCase()
@@ -216,7 +234,10 @@ serve(async (req) => {
         console.log(`[Spotify] Fetching ${uncached.length} uncached songs`);
         const token = await getSpotifyToken();
 
-        const fetches = uncached.slice(0, 15).map(async (s) => {
+        // Process songs SEQUENTIALLY with delays to avoid Spotify 429 rate limiting
+        const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+        
+        const processOneSong = async (s: SongQuery) => {
           const sanitizedArtist = sanitizeArtist(s.artist);
           console.log(`🔍 [Spotify] Querying "${s.title}" by ${s.artist} (sanitized: "${sanitizedArtist}")`);
           
@@ -241,7 +262,7 @@ serve(async (req) => {
             if (!track) {
               // Strategy 1: Strict field search with sanitized artist
               const strictQ = encodeURIComponent(`track:"${s.title}" artist:"${sanitizedArtist}"`);
-              const res1 = await fetch(`https://api.spotify.com/v1/search?q=${strictQ}&type=track&limit=5`, {
+              const res1 = await fetchWithRetry(`https://api.spotify.com/v1/search?q=${strictQ}&type=track&limit=5`, {
                 headers: { Authorization: `Bearer ${token}` },
               });
               
@@ -259,7 +280,7 @@ serve(async (req) => {
               if (tracks.length === 0) {
                 console.log(`🔄 [Spotify] Trying broad search for "${s.title}" by ${sanitizedArtist}`);
                 const broadQ = encodeURIComponent(`${s.title} ${sanitizedArtist}`);
-                const res2 = await fetch(`https://api.spotify.com/v1/search?q=${broadQ}&type=track&limit=10`, {
+                const res2 = await fetchWithRetry(`https://api.spotify.com/v1/search?q=${broadQ}&type=track&limit=10`, {
                   headers: { Authorization: `Bearer ${token}` },
                 });
                 if (res2.ok) {
@@ -275,7 +296,7 @@ serve(async (req) => {
               if (tracks.length === 0) {
                 console.log(`🔄 [Spotify] Trying title-only search for "${s.title}"`);
                 const titleQ = encodeURIComponent(`track:"${s.title}"`);
-                const res3 = await fetch(`https://api.spotify.com/v1/search?q=${titleQ}&type=track&limit=10`, {
+                const res3 = await fetchWithRetry(`https://api.spotify.com/v1/search?q=${titleQ}&type=track&limit=10`, {
                   headers: { Authorization: `Bearer ${token}` },
                 });
                 if (res3.ok) {
@@ -336,10 +357,18 @@ serve(async (req) => {
             console.log(`❌ [Spotify] Error for "${s.title}" by ${s.artist}: ${err instanceof Error ? err.message : "unknown"}`);
             return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null, spotifyTrackId: null, verified: false };
           }
-        });
+        };
 
-        const results = await Promise.all(fetches);
-
+        // Process sequentially with 150ms delay between songs to avoid 429
+        const results = [];
+        for (const s of uncached.slice(0, 15)) {
+          const result = await processOneSong(s);
+          results.push(result);
+          // Small delay between songs to stay under Spotify rate limit
+          if (uncached.indexOf(s) < uncached.length - 1) {
+            await delay(150);
+          }
+        }
         // Fetch YouTube thumbnails for ALL songs that lack artwork (verified or not)
         const needingArtwork = results.filter((r) => !r.imageUrl);
         console.log(`[YouTube] ${needingArtwork.length} songs need YouTube thumbnail fallback`);
