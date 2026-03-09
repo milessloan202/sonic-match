@@ -6,6 +6,7 @@ const SITE_URL = "https://sonic-match-six.vercel.app";
 const prefixes: Record<string, string> = {
   song: "/songs-like",
   artist: "/artists-like",
+  producer: "/producers-like",
   vibe: "/vibes",
 };
 

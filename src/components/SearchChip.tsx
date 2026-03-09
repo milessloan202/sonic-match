@@ -1,3 +1,6 @@
+// NOTE: This component is intentionally unused for now.
+// It is kept for Lovable compatibility and future use as a quick-search chip on the homepage.
+
 interface SearchChipProps {
   label: string;
   onClick: () => void;
