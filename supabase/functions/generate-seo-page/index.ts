@@ -531,6 +531,7 @@ summary: A 2-3 sentence evocation of this vibe as a musical atmosphere — what 
 
 User is looking for producers similar to: "${displayName}"
 ${seedTrackBlock}
+${antiRepetitionBlock}
 
 Your mission: map the production universe surrounding this producer. Not "related producers" from a streaming algorithm — genuine sonic and technical kinship based on production approach.
 
