@@ -233,39 +233,63 @@ serve(async (req) => {
               }
             }
 
-            // Fallback to search with strict matching
+            // Fallback to search — try strict first, then broad
             if (!track) {
-              const q = encodeURIComponent(`track:"${s.title}" artist:"${s.artist}"`);
-              const res = await fetch(`https://api.spotify.com/v1/search?q=${q}&type=track&limit=5`, {
+              // Strategy 1: Strict field search
+              const strictQ = encodeURIComponent(`track:"${s.title}" artist:"${s.artist}"`);
+              const res1 = await fetch(`https://api.spotify.com/v1/search?q=${strictQ}&type=track&limit=5`, {
                 headers: { Authorization: `Bearer ${token}` },
               });
               
-              if (res.ok) {
-                const data = await res.json();
-                const tracks = data?.tracks?.items || [];
-                
-                if (tracks.length === 0) {
-                  console.log(`❌ [Spotify] No results for "${s.title}" by ${s.artist}`);
-                  return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null, spotifyTrackId: null, verified: false };
-                }
+              let tracks: any[] = [];
+              if (res1.ok) {
+                const data = await res1.json();
+                tracks = data?.tracks?.items || [];
+              }
 
-                // Strict artist matching: normalize and compare
-                const normalizedArtist = s.artist.toLowerCase().trim();
-                track = tracks.find((t: any) => {
-                  const trackArtists = t.artists?.map((a: any) => a.name.toLowerCase().trim()) || [];
-                  return trackArtists.some((a: string) => a === normalizedArtist || a.includes(normalizedArtist) || normalizedArtist.includes(a));
+              // Strategy 2: Broad keyword search if strict returned nothing
+              if (tracks.length === 0) {
+                console.log(`🔄 [Spotify] Strict search failed for "${s.title}" by ${s.artist}, trying broad search`);
+                const broadQ = encodeURIComponent(`${s.title} ${s.artist}`);
+                const res2 = await fetch(`https://api.spotify.com/v1/search?q=${broadQ}&type=track&limit=10`, {
+                  headers: { Authorization: `Bearer ${token}` },
                 });
-
-                if (!track) {
-                  console.log(`❌ [Spotify] DISCARDED "${s.title}" by ${s.artist} — Found ${tracks.length} tracks but none matched artist. Found artists: ${tracks.map((t: any) => t.artists.map((a: any) => a.name).join(", ")).join(" | ")}`);
-                  return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null, spotifyTrackId: null, verified: false };
+                if (res2.ok) {
+                  const data2 = await res2.json();
+                  tracks = data2?.tracks?.items || [];
                 }
-
-                console.log(`✅ [Spotify] "${s.title}" verified with artist match: ${track.artists.map((a: any) => a.name).join(", ")}`);
-              } else {
-                console.log(`⚠️ [Spotify] Search failed with status ${res.status}`);
+              }
+                
+              if (tracks.length === 0) {
+                console.log(`❌ [Spotify] No results for "${s.title}" by ${s.artist} (strict + broad)`);
                 return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null, spotifyTrackId: null, verified: false };
               }
+
+              // Match with fuzzy title + artist matching
+              track = tracks.find((t: any) => {
+                const trackArtistNames = t.artists?.map((a: any) => a.name) || [];
+                const hasArtistMatch = artistsMatch(s.artist, trackArtistNames);
+                const hasTitleMatch = titlesMatch(s.title, t.name);
+                return hasArtistMatch && hasTitleMatch;
+              });
+
+              // If no fuzzy match, try artist-only match (title may differ significantly)
+              if (!track) {
+                track = tracks.find((t: any) => {
+                  const trackArtistNames = t.artists?.map((a: any) => a.name) || [];
+                  return artistsMatch(s.artist, trackArtistNames);
+                });
+                if (track) {
+                  console.log(`⚠️ [Spotify] Accepted artist-only match for "${s.title}" by ${s.artist}: found "${track.name}" by ${track.artists.map((a: any) => a.name).join(", ")}`);
+                }
+              }
+
+              if (!track) {
+                console.log(`❌ [Spotify] DISCARDED "${s.title}" by ${s.artist} — Found ${tracks.length} tracks but none matched. Found: ${tracks.slice(0, 3).map((t: any) => `"${t.name}" by ${t.artists.map((a: any) => a.name).join(", ")}`).join(" | ")}`);
+                return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null, spotifyTrackId: null, verified: false };
+              }
+
+              console.log(`✅ [Spotify] "${s.title}" verified with match: "${track.name}" by ${track.artists.map((a: any) => a.name).join(", ")}`);
             }
 
             const imageUrl = track?.album?.images?.[1]?.url || track?.album?.images?.[0]?.url || null;
