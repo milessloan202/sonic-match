@@ -237,7 +237,68 @@ FACTUAL ACCURACY RULES (CRITICAL — STRICTLY ENFORCED):
   }
 }
 
-// ============= END VERIFIED METADATA LAYER =============
+// ============= ANTI-REPETITION LAYER =============
+
+async function getFrequentlyRecommendedSongs(supabase: any, pageType: string): Promise<string[]> {
+  try {
+    // Fetch the 100 most recent pages of this type
+    const { data: recentPages } = await supabase
+      .from("seo_pages")
+      .select("closest_matches, same_energy")
+      .eq("page_type", pageType)
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    if (!recentPages || recentPages.length === 0) return [];
+
+    // Count song occurrences across all recommendations
+    const songCounts = new Map<string, number>();
+    for (const page of recentPages) {
+      const allSongs = [
+        ...((page.closest_matches as any[]) || []),
+        ...((page.same_energy as any[]) || []),
+      ];
+      for (const song of allSongs) {
+        const key = song.title?.toLowerCase()?.trim();
+        if (key) {
+          songCounts.set(key, (songCounts.get(key) || 0) + 1);
+        }
+      }
+    }
+
+    // Songs appearing in 10%+ of recent pages are "overused"
+    const threshold = Math.max(5, Math.floor(recentPages.length * 0.1));
+    const overused: string[] = [];
+    for (const [title, count] of songCounts.entries()) {
+      if (count >= threshold) {
+        overused.push(`"${title}" (appeared ${count} times)`);
+      }
+    }
+
+    return overused.slice(0, 15); // Cap at 15 to keep prompt manageable
+  } catch (e) {
+    console.log("[AntiRepetition] Failed to fetch frequency data:", e);
+    return [];
+  }
+}
+
+function buildAntiRepetitionBlock(overusedSongs: string[]): string {
+  if (overusedSongs.length === 0) return "";
+
+  return `
+
+=== ANTI-REPETITION GUIDANCE ===
+The following songs have been recommended very frequently across recent searches. They are NOT banned, but you should ONLY include them if they are genuinely one of the strongest possible matches for this specific query. If equally strong alternatives exist, prefer the alternative.
+
+Overused songs to deprioritize:
+${overusedSongs.map(s => `- ${s}`).join("\n")}
+
+Instead of defaulting to these, dig deeper: find tracks that are equally valid sonic matches but less obvious. Think like a record store clerk who notices they've been recommending the same album all week and consciously reaches for something different but equally fitting.
+=== END ANTI-REPETITION GUIDANCE ===
+`;
+}
+
+// ============= END ANTI-REPETITION LAYER =============
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
