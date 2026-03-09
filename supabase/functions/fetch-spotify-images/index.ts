@@ -296,7 +296,7 @@ serve(async (req) => {
               if (tracks.length === 0) {
                 console.log(`🔄 [Spotify] Trying title-only search for "${s.title}"`);
                 const titleQ = encodeURIComponent(`track:"${s.title}"`);
-                const res3 = await fetch(`https://api.spotify.com/v1/search?q=${titleQ}&type=track&limit=10`, {
+                const res3 = await fetchWithRetry(`https://api.spotify.com/v1/search?q=${titleQ}&type=track&limit=10`, {
                   headers: { Authorization: `Bearer ${token}` },
                 });
                 if (res3.ok) {
