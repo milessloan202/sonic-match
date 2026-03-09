@@ -34,22 +34,28 @@ async function getSpotifyToken(): Promise<string> {
   return cachedToken!;
 }
 
-/** Fetch with retry on 429 rate limit — caps wait to 3s, gives up fast */
-async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 1): Promise<Response> {
+/** Fetch with retry on 429 rate limit — returns null if rate-limited too long */
+async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 1): Promise<Response | null> {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     const res = await fetch(url, options);
     if (res.status === 429 && attempt < maxRetries) {
       const retryAfter = parseInt(res.headers.get("Retry-After") || "2", 10);
+      // Drain body to free connection
+      try { await res.text(); } catch {}
       if (retryAfter > 5) {
         console.log(`⛔ [Spotify] Rate limited (429), Retry-After=${retryAfter}s is too long — skipping`);
-        await res.text();
-        return res;
+        return null;
       }
       const waitMs = Math.min(retryAfter * 1000, 3000);
       console.log(`⏳ [Spotify] Rate limited (429), waiting ${waitMs}ms before retry ${attempt + 1}/${maxRetries}`);
-      await res.text();
       await new Promise(resolve => setTimeout(resolve, waitMs));
       continue;
+    }
+    if (res.status === 429) {
+      // Last attempt still 429 — drain and return null
+      try { await res.text(); } catch {}
+      console.log(`⛔ [Spotify] Still rate limited after ${maxRetries} retries — giving up`);
+      return null;
     }
     return res;
   }
