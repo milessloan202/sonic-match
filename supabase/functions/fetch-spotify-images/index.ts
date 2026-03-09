@@ -34,22 +34,28 @@ async function getSpotifyToken(): Promise<string> {
   return cachedToken!;
 }
 
-/** Fetch with retry on 429 rate limit — caps wait to 3s, gives up fast */
-async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 1): Promise<Response> {
+/** Fetch with retry on 429 rate limit — returns null if rate-limited too long */
+async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 1): Promise<Response | null> {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     const res = await fetch(url, options);
     if (res.status === 429 && attempt < maxRetries) {
       const retryAfter = parseInt(res.headers.get("Retry-After") || "2", 10);
+      // Drain body to free connection
+      try { await res.text(); } catch {}
       if (retryAfter > 5) {
         console.log(`⛔ [Spotify] Rate limited (429), Retry-After=${retryAfter}s is too long — skipping`);
-        await res.text();
-        return res;
+        return null;
       }
       const waitMs = Math.min(retryAfter * 1000, 3000);
       console.log(`⏳ [Spotify] Rate limited (429), waiting ${waitMs}ms before retry ${attempt + 1}/${maxRetries}`);
-      await res.text();
       await new Promise(resolve => setTimeout(resolve, waitMs));
       continue;
+    }
+    if (res.status === 429) {
+      // Last attempt still 429 — drain and return null
+      try { await res.text(); } catch {}
+      console.log(`⛔ [Spotify] Still rate limited after ${maxRetries} retries — giving up`);
+      return null;
     }
     return res;
   }
@@ -200,13 +206,15 @@ serve(async (req) => {
               });
               
               let tracks: any[] = [];
-              if (res1.ok) {
+              if (res1 && res1.ok) {
                 const data = await res1.json();
                 tracks = data?.tracks?.items || [];
                 console.log(`  [Spotify] Strict search returned ${tracks.length} results`);
-              } else {
-                await res1.text();
+              } else if (res1) {
+                try { await res1.text(); } catch {}
                 console.log(`  [Spotify] Strict search returned status ${res1.status}`);
+              } else {
+                console.log(`  [Spotify] Strict search skipped (rate limited)`);
               }
 
               if (tracks.length === 0) {
@@ -215,12 +223,12 @@ serve(async (req) => {
                 const res2 = await fetchWithRetry(`https://api.spotify.com/v1/search?q=${broadQ}&type=track&limit=10`, {
                   headers: { Authorization: `Bearer ${token}` },
                 });
-                if (res2.ok) {
+                if (res2 && res2.ok) {
                   const data2 = await res2.json();
                   tracks = data2?.tracks?.items || [];
                   console.log(`  [Spotify] Broad search returned ${tracks.length} results`);
-                } else {
-                  await res2.text();
+                } else if (res2) {
+                  try { await res2.text(); } catch {}
                 }
               }
 
@@ -230,12 +238,12 @@ serve(async (req) => {
                 const res3 = await fetchWithRetry(`https://api.spotify.com/v1/search?q=${titleQ}&type=track&limit=10`, {
                   headers: { Authorization: `Bearer ${token}` },
                 });
-                if (res3.ok) {
+                if (res3 && res3.ok) {
                   const data3 = await res3.json();
                   tracks = data3?.tracks?.items || [];
                   console.log(`  [Spotify] Title-only search returned ${tracks.length} results`);
-                } else {
-                  await res3.text();
+                } else if (res3) {
+                  try { await res3.text(); } catch {}
                 }
               }
                 

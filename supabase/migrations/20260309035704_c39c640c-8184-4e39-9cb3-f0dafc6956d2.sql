@@ -1,0 +1,1 @@
+DELETE FROM song_image_cache WHERE spotify_url IS NULL AND spotify_track_id IS NULL;
