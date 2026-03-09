@@ -183,6 +183,8 @@ serve(async (req) => {
         const token = await getSpotifyToken();
 
         const fetches = uncached.slice(0, 15).map(async (s) => {
+          console.log(`🔍 [Spotify] Querying "${s.title}" by ${s.artist}`);
+          
           try {
             let track: any = null;
 
@@ -193,19 +195,44 @@ serve(async (req) => {
               });
               if (res.ok) {
                 track = await res.json();
-                console.log(`[Spotify] "${s.title}" resolved via track ID ${s.spotify_id}`);
+                console.log(`✅ [Spotify] "${s.title}" verified via track ID ${s.spotify_id}`);
+              } else {
+                console.log(`⚠️ [Spotify] Track ID ${s.spotify_id} failed with status ${res.status}`);
               }
             }
 
-            // Fallback to search
+            // Fallback to search with strict matching
             if (!track) {
               const q = encodeURIComponent(`track:"${s.title}" artist:"${s.artist}"`);
-              const res = await fetch(`https://api.spotify.com/v1/search?q=${q}&type=track&limit=1`, {
+              const res = await fetch(`https://api.spotify.com/v1/search?q=${q}&type=track&limit=5`, {
                 headers: { Authorization: `Bearer ${token}` },
               });
+              
               if (res.ok) {
                 const data = await res.json();
-                track = data?.tracks?.items?.[0];
+                const tracks = data?.tracks?.items || [];
+                
+                if (tracks.length === 0) {
+                  console.log(`❌ [Spotify] No results for "${s.title}" by ${s.artist}`);
+                  return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null, spotifyTrackId: null, verified: false };
+                }
+
+                // Strict artist matching: normalize and compare
+                const normalizedArtist = s.artist.toLowerCase().trim();
+                track = tracks.find((t: any) => {
+                  const trackArtists = t.artists?.map((a: any) => a.name.toLowerCase().trim()) || [];
+                  return trackArtists.some((a: string) => a === normalizedArtist || a.includes(normalizedArtist) || normalizedArtist.includes(a));
+                });
+
+                if (!track) {
+                  console.log(`❌ [Spotify] DISCARDED "${s.title}" by ${s.artist} — Found ${tracks.length} tracks but none matched artist. Found artists: ${tracks.map((t: any) => t.artists.map((a: any) => a.name).join(", ")).join(" | ")}`);
+                  return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null, spotifyTrackId: null, verified: false };
+                }
+
+                console.log(`✅ [Spotify] "${s.title}" verified with artist match: ${track.artists.map((a: any) => a.name).join(", ")}`);
+              } else {
+                console.log(`⚠️ [Spotify] Search failed with status ${res.status}`);
+                return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null, spotifyTrackId: null, verified: false };
               }
             }
 
@@ -213,10 +240,12 @@ serve(async (req) => {
             const previewUrl = track?.preview_url || null;
             const spotifyUrl = track?.external_urls?.spotify || null;
             const spotifyTrackId = track?.id || s.spotify_id || null;
-            console.log(`[Spotify] "${s.title}" by ${s.artist}: artwork=${imageUrl ? "found" : "missing"}, id=${spotifyTrackId || "none"}`);
-            return { song: s, imageUrl, previewUrl, spotifyUrl, spotifyTrackId };
-          } catch {
-            return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null, spotifyTrackId: null };
+            
+            console.log(`✅ [Spotify] VERIFIED "${s.title}" by ${s.artist}: artwork=${imageUrl ? "yes" : "no"}, preview=${previewUrl ? "yes" : "no"}, id=${spotifyTrackId}`);
+            return { song: s, imageUrl, previewUrl, spotifyUrl, spotifyTrackId, verified: true };
+          } catch (err) {
+            console.log(`❌ [Spotify] Error for "${s.title}" by ${s.artist}: ${err instanceof Error ? err.message : "unknown"}`);
+            return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null, spotifyTrackId: null, verified: false };
           }
         });
 
