@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Search, Loader2, AlertCircle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import SegmentedSelector, { type SearchMode } from "../components/SegmentedSelector";
-import SearchChip from "../components/SearchChip";
+import AlbumCarousel from "../components/AlbumCarousel";
 import SEOHead from "../components/SEOHead";
 import { supabase } from "@/integrations/supabase/client";
 import { clearDiscoveryPath } from "../hooks/useDiscoveryPath";
