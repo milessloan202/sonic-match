@@ -251,23 +251,27 @@ serve(async (req) => {
 
         const results = await Promise.all(fetches);
 
-        // For songs without Spotify artwork, try YouTube
-        const songsNeedingYt = results.filter((r) => !r.imageUrl);
-        console.log(`[YouTube] ${songsNeedingYt.length} songs need YouTube thumbnail fallback`);
+        // Only try YouTube for VERIFIED songs that lack artwork
+        const verifiedNeedingYt = results.filter((r) => r.verified && !r.imageUrl);
+        console.log(`[YouTube] ${verifiedNeedingYt.length} verified songs need YouTube thumbnail fallback`);
 
-        const youtubePromises = songsNeedingYt.map(async (r) => {
+        const youtubePromises = verifiedNeedingYt.map(async (r) => {
+          console.log(`🎥 [YouTube] Fetching fallback thumbnail for "${r.song.title}" by ${r.song.artist}`);
           const ytThumb = await fetchYouTubeThumbnail(r.song.title, r.song.artist);
+          if (ytThumb) {
+            console.log(`✅ [YouTube] Found fallback thumbnail for "${r.song.title}"`);
+          } else {
+            console.log(`⚠️ [YouTube] No fallback thumbnail for "${r.song.title}"`);
+          }
           return { key: `${r.song.title}|||${r.song.artist}`, ytThumb };
         });
 
         const ytResults = await Promise.all(youtubePromises);
         const ytMap = new Map(ytResults.map((r) => [r.key, r.ytThumb]));
 
+        // Only cache and return VERIFIED songs
         const toInsert = results
-          .filter((r) => {
-            // Only cache if we have at least one valid piece of metadata
-            return r.imageUrl || r.previewUrl || r.spotifyUrl || ytMap.get(`${r.song.title}|||${r.song.artist}`);
-          })
+          .filter((r) => r.verified)
           .map((r) => {
             const key = `${r.song.title}|||${r.song.artist}`;
             return {
@@ -282,17 +286,23 @@ serve(async (req) => {
           });
 
         if (toInsert.length > 0) {
+          console.log(`💾 [Cache] Saving ${toInsert.length} verified songs`);
           await supabase.from("song_image_cache").upsert(toInsert, { onConflict: "name,artist" });
         }
 
+        // Only add verified songs to results
         for (const r of results) {
-          const key = `${r.song.title}|||${r.song.artist}`;
-          songResults[key] = {
-            image_url: r.imageUrl,
-            preview_url: r.previewUrl,
-            spotify_url: r.spotifyUrl,
-            youtube_thumbnail_url: ytMap.get(key) || null,
-          };
+          if (r.verified) {
+            const key = `${r.song.title}|||${r.song.artist}`;
+            songResults[key] = {
+              image_url: r.imageUrl,
+              preview_url: r.previewUrl,
+              spotify_url: r.spotifyUrl,
+              youtube_thumbnail_url: ytMap.get(key) || null,
+            };
+          } else {
+            console.log(`⚠️ [DISCARDED] "${r.song.title}" by ${r.song.artist} — Not verified by Spotify`);
+          }
         }
       }
 
