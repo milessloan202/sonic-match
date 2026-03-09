@@ -206,13 +206,15 @@ serve(async (req) => {
               });
               
               let tracks: any[] = [];
-              if (res1.ok) {
+              if (res1 && res1.ok) {
                 const data = await res1.json();
                 tracks = data?.tracks?.items || [];
                 console.log(`  [Spotify] Strict search returned ${tracks.length} results`);
-              } else {
-                await res1.text();
+              } else if (res1) {
+                try { await res1.text(); } catch {}
                 console.log(`  [Spotify] Strict search returned status ${res1.status}`);
+              } else {
+                console.log(`  [Spotify] Strict search skipped (rate limited)`);
               }
 
               if (tracks.length === 0) {
@@ -221,12 +223,12 @@ serve(async (req) => {
                 const res2 = await fetchWithRetry(`https://api.spotify.com/v1/search?q=${broadQ}&type=track&limit=10`, {
                   headers: { Authorization: `Bearer ${token}` },
                 });
-                if (res2.ok) {
+                if (res2 && res2.ok) {
                   const data2 = await res2.json();
                   tracks = data2?.tracks?.items || [];
                   console.log(`  [Spotify] Broad search returned ${tracks.length} results`);
-                } else {
-                  await res2.text();
+                } else if (res2) {
+                  try { await res2.text(); } catch {}
                 }
               }
 
@@ -236,12 +238,12 @@ serve(async (req) => {
                 const res3 = await fetchWithRetry(`https://api.spotify.com/v1/search?q=${titleQ}&type=track&limit=10`, {
                   headers: { Authorization: `Bearer ${token}` },
                 });
-                if (res3.ok) {
+                if (res3 && res3.ok) {
                   const data3 = await res3.json();
                   tracks = data3?.tracks?.items || [];
                   console.log(`  [Spotify] Title-only search returned ${tracks.length} results`);
-                } else {
-                  await res3.text();
+                } else if (res3) {
+                  try { await res3.text(); } catch {}
                 }
               }
                 
