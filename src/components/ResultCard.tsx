@@ -244,7 +244,7 @@ const ResultCard = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05, duration: 0.3 }}
-      className={`group surface-glass rounded-lg p-5 transition-all duration-300 ${
+      className={`group surface-glass rounded-lg p-5 min-h-[60px] transition-all duration-300 ${
         linkPrefix
           ? "hover:border-primary/30 hover:glow-primary hover:scale-[1.02] cursor-pointer"
           : "hover:border-primary/30 hover:glow-primary cursor-default"
@@ -254,7 +254,7 @@ const ResultCard = ({
         {showImage && <Thumbnail url={imageUrl} type={imageType} alt={title} songMeta={songMeta} />}
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <h3 className="font-medium text-foreground truncate">{title}</h3>
               {subtitle && imageType === "song" && artist ? (
                 <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
@@ -271,9 +271,11 @@ const ResultCard = ({
                 <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{subtitle}</p>
               ) : null}
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              {showPlay && <PlayButton title={title} subtitle={subtitle} meta={songMeta} />}
-            </div>
+            {showPlay && (
+              <div className="shrink-0">
+                <PlayButton title={title} subtitle={subtitle} meta={songMeta} />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -309,7 +311,11 @@ const ResultCard = ({
       linkPrefix === "/songs-like" && artist
         ? `${toSlug(title)}-${toSlug(artist)}`
         : toSlug(title);
-    return <Link to={`${linkPrefix}/${linkSlug}`}>{wrappedContent}</Link>;
+    return (
+      <Link to={`${linkPrefix}/${linkSlug}`} className="block">
+        {wrappedContent}
+      </Link>
+    );
   }
 
   return wrappedContent;
