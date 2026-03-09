@@ -462,6 +462,7 @@ summary: A 2-3 sentence description of what makes this track sonically distincti
     const artistPrompt = `You are a world-class music curator — part crate-digger, part musicologist, part the best record store clerk alive. You think in terms of artistic DNA: how an artist's sonic identity, production choices, and creative evolution connect them to the broader musical landscape.
 
 User is looking for artists similar to: "${displayName}"
+${antiRepetitionBlock}
 
 Your mission: map the musical universe surrounding this artist. Not "related artists" from a streaming algorithm — genuine sonic and artistic kinship.
 
