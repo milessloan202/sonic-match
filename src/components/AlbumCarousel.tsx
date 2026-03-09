@@ -98,7 +98,7 @@ const AlbumCarousel = () => {
               to={`/artists-like/${artist.slug}`}
               className="shrink-0 group"
             >
-              <div className="w-20 h-20 rounded-md overflow-hidden border border-border/50 hover:border-primary/50 transition-all duration-300 hover:scale-105 hover:glow-primary">
+              <div className="w-25 h-25 rounded-md overflow-hidden border border-border/50 hover:border-primary/50 transition-all duration-300 hover:scale-105 hover:glow-primary">
                 <img
                   src={artist.imageUrl}
                   alt={artist.name}
