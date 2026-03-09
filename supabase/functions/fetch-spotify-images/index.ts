@@ -339,10 +339,18 @@ serve(async (req) => {
             console.log(`❌ [Spotify] Error for "${s.title}" by ${s.artist}: ${err instanceof Error ? err.message : "unknown"}`);
             return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null, spotifyTrackId: null, verified: false };
           }
-        });
+        };
 
-        const results = await Promise.all(fetches);
-
+        // Process sequentially with 150ms delay between songs to avoid 429
+        const results = [];
+        for (const s of uncached.slice(0, 15)) {
+          const result = await processOneSong(s);
+          results.push(result);
+          // Small delay between songs to stay under Spotify rate limit
+          if (uncached.indexOf(s) < uncached.length - 1) {
+            await delay(150);
+          }
+        }
         // Fetch YouTube thumbnails for ALL songs that lack artwork (verified or not)
         const needingArtwork = results.filter((r) => !r.imageUrl);
         console.log(`[YouTube] ${needingArtwork.length} songs need YouTube thumbnail fallback`);
