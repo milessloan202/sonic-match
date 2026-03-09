@@ -280,7 +280,7 @@ serve(async (req) => {
               if (tracks.length === 0) {
                 console.log(`🔄 [Spotify] Trying broad search for "${s.title}" by ${sanitizedArtist}`);
                 const broadQ = encodeURIComponent(`${s.title} ${sanitizedArtist}`);
-                const res2 = await fetch(`https://api.spotify.com/v1/search?q=${broadQ}&type=track&limit=10`, {
+                const res2 = await fetchWithRetry(`https://api.spotify.com/v1/search?q=${broadQ}&type=track&limit=10`, {
                   headers: { Authorization: `Bearer ${token}` },
                 });
                 if (res2.ok) {
