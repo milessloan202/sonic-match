@@ -7,11 +7,14 @@ interface SongItem {
   spotify_id?: string | null;
 }
 
+export type ResolverStatus = "resolved" | "not_found" | "temporary_failure" | "error";
+
 export interface SongMeta {
   image_url: string | null;
   preview_url: string | null;
   spotify_url: string | null;
   youtube_thumbnail_url: string | null;
+  status?: ResolverStatus;
 }
 
 export interface ImageMap {
@@ -69,14 +72,33 @@ export function useSpotifyImages(songs: SongItem[], artistItems: SongItem[]) {
       })
       .then(({ data, error }) => {
         if (error || !data) {
+          // Edge function failed entirely — mark all songs as error
+          const errorMeta: SongMetaMap = {};
+          for (const s of songQueries) {
+            const key = `${s.title}|||${s.artist}`;
+            errorMeta[key] = {
+              image_url: null,
+              preview_url: null,
+              spotify_url: null,
+              youtube_thumbnail_url: null,
+              status: "error",
+            };
+          }
+          setSongMeta(errorMeta);
           setMetaLoaded(true);
           return;
         }
 
         if (data.songs) {
           const mapped: SongMetaMap = {};
-          for (const [key, meta] of Object.entries(data.songs as Record<string, SongMeta>)) {
-            mapped[key] = meta;
+          for (const [key, meta] of Object.entries(data.songs as Record<string, any>)) {
+            mapped[key] = {
+              image_url: meta.image_url ?? null,
+              preview_url: meta.preview_url ?? null,
+              spotify_url: meta.spotify_url ?? null,
+              youtube_thumbnail_url: meta.youtube_thumbnail_url ?? null,
+              status: meta.status ?? (meta.spotify_url ? "resolved" : "not_found"),
+            };
           }
           setSongMeta(mapped);
         }
