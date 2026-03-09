@@ -133,15 +133,20 @@ serve(async (req) => {
     if (songs?.length) {
       const { data: cached } = await supabase
         .from("song_image_cache")
-        .select("name, artist, image_url, preview_url, spotify_url, youtube_thumbnail_url");
+        .select("name, artist, image_url, preview_url, spotify_url, youtube_thumbnail_url, spotify_track_id");
 
-      const cachedMap = new Map<string, { image_url: string | null; preview_url: string | null; spotify_url: string | null; youtube_thumbnail_url: string | null }>();
-      (cached || []).forEach((r: any) => cachedMap.set(`${r.name}|||${r.artist}`, {
-        image_url: r.image_url,
-        preview_url: r.preview_url,
-        spotify_url: r.spotify_url,
-        youtube_thumbnail_url: r.youtube_thumbnail_url,
-      }));
+      const cachedMap = new Map<string, { image_url: string | null; preview_url: string | null; spotify_url: string | null; youtube_thumbnail_url: string | null; verified: boolean }>();
+      (cached || []).forEach((r: any) => {
+        // Only use cache entries that have been verified by Spotify
+        const verified = !!(r.spotify_url || r.spotify_track_id);
+        cachedMap.set(`${r.name}|||${r.artist}`, {
+          image_url: r.image_url,
+          preview_url: r.preview_url,
+          spotify_url: r.spotify_url,
+          youtube_thumbnail_url: r.youtube_thumbnail_url,
+          verified,
+        });
+      });
 
       const uncached: SongQuery[] = [];
       const needsYoutube: { key: string; song: SongQuery }[] = [];
@@ -150,11 +155,23 @@ serve(async (req) => {
         const key = `${s.title}|||${s.artist}`;
         if (cachedMap.has(key)) {
           const c = cachedMap.get(key)!;
-          songResults[key] = c;
-          console.log(`[Cache] Hit for "${s.title}" by ${s.artist} — Spotify: ${c.image_url ? "yes" : "no"}, YouTube: ${c.youtube_thumbnail_url ? "yes" : "no"}`);
-          // If no Spotify image AND no YouTube thumbnail yet, queue for YouTube lookup
-          if (!c.image_url && !c.youtube_thumbnail_url) {
-            needsYoutube.push({ key, song: s });
+          
+          // Only return verified songs (those with Spotify confirmation)
+          if (c.verified) {
+            songResults[key] = {
+              image_url: c.image_url,
+              preview_url: c.preview_url,
+              spotify_url: c.spotify_url,
+              youtube_thumbnail_url: c.youtube_thumbnail_url,
+            };
+            console.log(`✅ [Cache] VERIFIED "${s.title}" by ${s.artist} — Spotify: ${c.image_url ? "yes" : "no"}, YouTube: ${c.youtube_thumbnail_url ? "yes" : "no"}`);
+            
+            // If verified but no image, queue for YouTube thumbnail fallback
+            if (!c.image_url && !c.youtube_thumbnail_url) {
+              needsYoutube.push({ key, song: s });
+            }
+          } else {
+            console.log(`⚠️ [Cache] DISCARDED "${s.title}" by ${s.artist} — Not verified by Spotify (cached as unverified)`);
           }
         } else {
           uncached.push(s);
