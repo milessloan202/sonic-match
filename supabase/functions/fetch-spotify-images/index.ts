@@ -293,7 +293,7 @@ serve(async (req) => {
             return { song: s, imageUrl, previewUrl, spotifyUrl, spotifyTrackId, verified: true };
           } catch (err) {
             console.log(`❌ [Spotify] Error for "${s.title}" by ${s.artist}: ${err instanceof Error ? err.message : "unknown"}`);
-            return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null, spotifyTrackId: null, verified: false };
+            return { song: s, imageUrl: null, previewUrl: null, spotifyUrl: null, spotifyTrackId: null, verified: false, rateLimited: false };
           }
         };
 
@@ -306,8 +306,8 @@ serve(async (req) => {
           }
         }
 
-        // Cache all songs
-        const toInsert = results.map((r) => ({
+        // Cache only non-rate-limited songs (don't poison cache with 429 failures)
+        const toInsert = results.filter((r) => !r.rateLimited).map((r) => ({
           name: r.song.title,
           artist: r.song.artist,
           image_url: r.imageUrl || null,
