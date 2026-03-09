@@ -37,6 +37,7 @@ const ResultSection = ({ title, items, linkPrefix, imageType, images, songMetaMa
               imageType={variant === "explanation" ? undefined : imageType}
               imageUrl={images?.[key] ?? undefined}
               songMeta={songMetaMap?.[key]}
+              metaLoaded={metaLoaded}
             />
           );
         })}

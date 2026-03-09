@@ -33,6 +33,7 @@ interface ResultCardProps {
   imageUrl?: string | null;
   imageType?: "song" | "artist";
   songMeta?: SongMeta;
+  metaLoaded?: boolean;
 }
 
 const toSlug = (text: string) =>
