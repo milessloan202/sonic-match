@@ -237,7 +237,68 @@ FACTUAL ACCURACY RULES (CRITICAL — STRICTLY ENFORCED):
   }
 }
 
-// ============= END VERIFIED METADATA LAYER =============
+// ============= ANTI-REPETITION LAYER =============
+
+async function getFrequentlyRecommendedSongs(supabase: any, pageType: string): Promise<string[]> {
+  try {
+    // Fetch the 100 most recent pages of this type
+    const { data: recentPages } = await supabase
+      .from("seo_pages")
+      .select("closest_matches, same_energy")
+      .eq("page_type", pageType)
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    if (!recentPages || recentPages.length === 0) return [];
+
+    // Count song occurrences across all recommendations
+    const songCounts = new Map<string, number>();
+    for (const page of recentPages) {
+      const allSongs = [
+        ...((page.closest_matches as any[]) || []),
+        ...((page.same_energy as any[]) || []),
+      ];
+      for (const song of allSongs) {
+        const key = song.title?.toLowerCase()?.trim();
+        if (key) {
+          songCounts.set(key, (songCounts.get(key) || 0) + 1);
+        }
+      }
+    }
+
+    // Songs appearing in 10%+ of recent pages are "overused"
+    const threshold = Math.max(5, Math.floor(recentPages.length * 0.1));
+    const overused: string[] = [];
+    for (const [title, count] of songCounts.entries()) {
+      if (count >= threshold) {
+        overused.push(`"${title}" (appeared ${count} times)`);
+      }
+    }
+
+    return overused.slice(0, 15); // Cap at 15 to keep prompt manageable
+  } catch (e) {
+    console.log("[AntiRepetition] Failed to fetch frequency data:", e);
+    return [];
+  }
+}
+
+function buildAntiRepetitionBlock(overusedSongs: string[]): string {
+  if (overusedSongs.length === 0) return "";
+
+  return `
+
+=== ANTI-REPETITION GUIDANCE ===
+The following songs have been recommended very frequently across recent searches. They are NOT banned, but you should ONLY include them if they are genuinely one of the strongest possible matches for this specific query. If equally strong alternatives exist, prefer the alternative.
+
+Overused songs to deprioritize:
+${overusedSongs.map(s => `- ${s}`).join("\n")}
+
+Instead of defaulting to these, dig deeper: find tracks that are equally valid sonic matches but less obvious. Think like a record store clerk who notices they've been recommending the same album all week and consciously reaches for something different but equally fitting.
+=== END ANTI-REPETITION GUIDANCE ===
+`;
+}
+
+// ============= END ANTI-REPETITION LAYER =============
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -314,7 +375,11 @@ serve(async (req) => {
     const metadataBlock = buildMetadataBlock(verifiedMetadata);
     const factualInstructions = getFactualInstructions(verifiedMetadata.metadata_confidence);
 
-    // --- Spotify seed track lookup for producer pages ---
+    // --- Fetch overused songs for anti-repetition ---
+    const overusedSongs = await getFrequentlyRecommendedSongs(supabase, page_type);
+    const antiRepetitionBlock = buildAntiRepetitionBlock(overusedSongs);
+    console.log(`[AntiRepetition] Found ${overusedSongs.length} overused songs for page_type="${page_type}"`);
+
     let seedTracks: { title: string; artist: string; year: string }[] = [];
     if (page_type === "producer" && spotifyToken) {
       try {
@@ -365,6 +430,7 @@ serve(async (req) => {
 User is looking for songs similar to: "${displayName}"
 ${metadataBlock}
 ${factualInstructions}
+${antiRepetitionBlock}
 
 Your mission: find songs that live in the SAME MUSICAL UNIVERSE. Not the same Spotify playlist — the same sonic bloodline.
 
@@ -396,6 +462,7 @@ summary: A 2-3 sentence description of what makes this track sonically distincti
     const artistPrompt = `You are a world-class music curator — part crate-digger, part musicologist, part the best record store clerk alive. You think in terms of artistic DNA: how an artist's sonic identity, production choices, and creative evolution connect them to the broader musical landscape.
 
 User is looking for artists similar to: "${displayName}"
+${antiRepetitionBlock}
 
 Your mission: map the musical universe surrounding this artist. Not "related artists" from a streaming algorithm — genuine sonic and artistic kinship.
 
@@ -427,6 +494,7 @@ summary: A 2-3 sentence description of ${displayName}'s sonic identity — their
     const vibePrompt = `You are a world-class music curator who understands that a "vibe" is a precise sonic atmosphere — a complete sensory environment encoded in sound.
 
 User is searching for music that matches: "${displayName}"
+${antiRepetitionBlock}
 
 Your mission: curate the definitive sonic palette for this atmosphere. Not a generic mood playlist — a carefully selected set of tracks that ARE this feeling in its most potent form.
 
@@ -463,6 +531,7 @@ summary: A 2-3 sentence evocation of this vibe as a musical atmosphere — what 
 
 User is looking for producers similar to: "${displayName}"
 ${seedTrackBlock}
+${antiRepetitionBlock}
 
 Your mission: map the production universe surrounding this producer. Not "related producers" from a streaming algorithm — genuine sonic and technical kinship based on production approach.
 
