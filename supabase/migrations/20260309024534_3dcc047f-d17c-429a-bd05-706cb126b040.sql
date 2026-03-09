@@ -1,0 +1,1 @@
+TRUNCATE TABLE public.song_image_cache;
