@@ -321,7 +321,7 @@ const DESCRIPTORS: Descriptor[] = [
     description: "Music for inward thinking during transit between places" },
 ];
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
