@@ -1,3 +1,4 @@
+// deno-lint-ignore-file
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -6,12 +7,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 //
 // Creates a structured Sonic DNA profile for a song using Claude.
 // Cache-first: returns existing profile if found, generates only if missing.
+// v2: adds conflict resolution + canonical_descriptors payload.
 //
 // POST body:
 //   { spotify_track_id, song_title, artist_name }
 //
 // Returns:
-//   { profile, source: "cache" | "generated" }
+//   { profile, canonical_descriptors, source: "cache" | "generated" }
 // =============================================================================
 
 const corsHeaders = {
@@ -20,8 +22,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// The full descriptor vocabulary Claude must choose from.
-// This is embedded in the prompt to prevent hallucination.
 const DESCRIPTOR_VOCABULARY = {
   tempo_feel: ["slow-burn","laid-back","midtempo","driving","urgent","propulsive","floating","steady"],
   groove: ["straight","swung","syncopated","shuffling","pulsing","hypnotic","bouncy","stuttering","gliding","marching","rolling","locked-in"],
@@ -40,6 +40,113 @@ const DESCRIPTOR_VOCABULARY = {
 
 const INTENSITY_LEVELS = ["very-low","low","medium-low","medium","medium-high","high","very-high"];
 const DANCEABILITY_FEELS = ["not-danceable","minimal","moderate","danceable","highly-danceable","made-for-dancefloor"];
+
+// Categories included in canonical display_descriptors
+const CANONICAL_CATEGORIES = new Set([
+  "tempo_feel", "texture", "emotional_tone", "era_lineage",
+  "environment_imagery", "listener_use_case", "groove", "harmonic_color", "vocal_character",
+]);
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+interface RegistryRow {
+  slug: string;
+  label: string;
+  category: string;
+  is_clickable: boolean;
+  conflicts_with: string[];
+}
+
+interface CanonicalDescriptor {
+  slug: string;
+  label: string;
+  category: string;
+  is_clickable: boolean;
+  search_url: string;
+  dna_url: string;
+}
+
+interface CanonicalDescriptorPayload {
+  display_descriptors: CanonicalDescriptor[];
+  descriptor_search_url: string;
+  all_slugs: string[];
+}
+
+// ── Conflict resolution ───────────────────────────────────────────────────────
+
+function resolveConflicts(
+  profile: Record<string, unknown>,
+  registry: Map<string, RegistryRow>,
+): string[] {
+  const arrayFields = [
+    "tempo_feel","groove","drum_character","bass_character","harmonic_color",
+    "melodic_character","vocal_character","texture","arrangement_energy_arc",
+    "emotional_tone","era_lineage","environment_imagery","listener_use_case",
+  ];
+
+  const allSlugs: string[] = [];
+  for (const field of arrayFields) {
+    const val = profile[field];
+    if (Array.isArray(val)) allSlugs.push(...val);
+  }
+
+  const accepted: string[] = [];
+  const blocked = new Set<string>();
+
+  for (const slug of allSlugs) {
+    if (blocked.has(slug)) continue;
+    accepted.push(slug);
+    const meta = registry.get(slug);
+    for (const conflict of (meta?.conflicts_with ?? [])) {
+      blocked.add(conflict);
+    }
+  }
+
+  return accepted;
+}
+
+// ── Canonical descriptor builder ──────────────────────────────────────────────
+
+function buildCanonicalDescriptors(
+  resolvedSlugs: string[],
+  registry: Map<string, RegistryRow>,
+): CanonicalDescriptorPayload {
+  const display_descriptors: CanonicalDescriptor[] = resolvedSlugs
+    .filter((slug) => {
+      const meta = registry.get(slug);
+      return meta && CANONICAL_CATEGORIES.has(meta.category);
+    })
+    .map((slug) => {
+      const meta = registry.get(slug)!;
+      return {
+        slug,
+        label: meta.label,
+        category: meta.category,
+        is_clickable: meta.is_clickable,
+        search_url: `/search?descriptors=${slug}`,
+        dna_url: `/dna/${slug}`,
+      };
+    });
+
+  const slugList = display_descriptors.map((d) => d.slug).join(",");
+
+  return {
+    display_descriptors,
+    descriptor_search_url: slugList ? `/search?descriptors=${slugList}` : "/search",
+    all_slugs: resolvedSlugs,
+  };
+}
+
+// ── Load registry ─────────────────────────────────────────────────────────────
+
+async function loadRegistry(supabase: ReturnType<typeof createClient>): Promise<Map<string, RegistryRow>> {
+  const { data } = await supabase
+    .from("descriptor_registry")
+    .select("slug, label, category, is_clickable, conflicts_with");
+  return new Map((data || []).map((r: RegistryRow) => [r.slug, r]));
+}
+
+// ── Claude prompts ────────────────────────────────────────────────────────────
 
 function buildSystemPrompt(): string {
   return `You are a music analyst with the precision of a record producer and the language of a music critic.
@@ -99,7 +206,7 @@ Write your analysis as a producer or critic would think about the track's sonic 
 Return only the JSON profile.`;
 }
 
-function extractDescriptorSlugs(profile: Record<string, any>): string[] {
+function extractDescriptorSlugs(profile: Record<string, unknown>): string[] {
   const slugs: string[] = [];
   const arrayFields = [
     "tempo_feel","groove","drum_character","bass_character","harmonic_color",
@@ -107,43 +214,43 @@ function extractDescriptorSlugs(profile: Record<string, any>): string[] {
     "emotional_tone","era_lineage","environment_imagery","listener_use_case",
   ];
   for (const field of arrayFields) {
-    if (Array.isArray(profile[field])) {
-      slugs.push(...profile[field]);
-    }
+    const val = profile[field];
+    if (Array.isArray(val)) slugs.push(...val);
   }
-  return [...new Set(slugs)]; // dedupe
+  return [...new Set(slugs)];
 }
 
-function validateProfile(profile: any): { valid: boolean; errors: string[] } {
+function validateProfile(profile: Record<string, unknown>): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
-
   const arrayFields = Object.keys(DESCRIPTOR_VOCABULARY) as Array<keyof typeof DESCRIPTOR_VOCABULARY>;
   for (const field of arrayFields) {
-    if (!Array.isArray(profile[field])) {
+    const val = profile[field];
+    if (!Array.isArray(val)) {
       errors.push(`Missing or non-array field: ${field}`);
       continue;
     }
     const allowed = DESCRIPTOR_VOCABULARY[field];
-    for (const slug of profile[field]) {
-      if (!allowed.includes(slug)) {
-        errors.push(`Invalid slug "${slug}" in ${field}`);
-      }
+    for (const slug of val as string[]) {
+      if (!allowed.includes(slug)) errors.push(`Invalid slug "${slug}" in ${field}`);
     }
   }
-
-  if (!INTENSITY_LEVELS.includes(profile.intensity_level)) {
+  if (!INTENSITY_LEVELS.includes(profile.intensity_level as string)) {
     errors.push(`Invalid intensity_level: ${profile.intensity_level}`);
   }
-  if (!DANCEABILITY_FEELS.includes(profile.danceability_feel)) {
+  if (!DANCEABILITY_FEELS.includes(profile.danceability_feel as string)) {
     errors.push(`Invalid danceability_feel: ${profile.danceability_feel}`);
   }
-  if (typeof profile.confidence_score !== "number" ||
-      profile.confidence_score < 0 || profile.confidence_score > 1) {
+  if (
+    typeof profile.confidence_score !== "number" ||
+    (profile.confidence_score as number) < 0 ||
+    (profile.confidence_score as number) > 1
+  ) {
     errors.push(`Invalid confidence_score: ${profile.confidence_score}`);
   }
-
   return { valid: errors.length === 0, errors };
 }
+
+// ── Handler ───────────────────────────────────────────────────────────────────
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -154,13 +261,14 @@ serve(async (req) => {
     if (!spotify_track_id || !song_title || !artist_name) {
       return new Response(
         JSON.stringify({ error: "Missing required fields: spotify_track_id, song_title, artist_name" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase    = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
 
     // ── Cache check ───────────────────────────────────────────────────────────
     const { data: existing } = await supabase
@@ -170,15 +278,45 @@ serve(async (req) => {
       .single();
 
     if (existing) {
-      console.log(`[sonic-profile] Cache HIT: ${song_title} by ${artist_name}`);
+      // v2 cache: canonical_descriptors already present — return immediately
+      if (existing.profile_json?.canonical_descriptors) {
+        console.log(`[sonic-profile] Cache HIT (v2): ${song_title} by ${artist_name}`);
+        return new Response(
+          JSON.stringify({
+            profile: existing.profile_json,
+            canonical_descriptors: existing.profile_json.canonical_descriptors,
+            source: "cache",
+            id: existing.id,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      // v1 cache: upgrade in place by adding canonical_descriptors
+      console.log(`[sonic-profile] Upgrading v1 cache: ${song_title} by ${artist_name}`);
+      const registry = await loadRegistry(supabase);
+      const resolvedSlugs = resolveConflicts(existing.profile_json, registry);
+      const canonical = buildCanonicalDescriptors(resolvedSlugs, registry);
+      const upgradedProfile = { ...existing.profile_json, canonical_descriptors: canonical };
+
+      await supabase
+        .from("song_sonic_profiles")
+        .update({ profile_json: upgradedProfile })
+        .eq("id", existing.id);
+
       return new Response(
-        JSON.stringify({ profile: existing.profile_json, source: "cache", id: existing.id }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({
+          profile: upgradedProfile,
+          canonical_descriptors: canonical,
+          source: "cache",
+          id: existing.id,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
     // ── Generate via Claude ───────────────────────────────────────────────────
-    console.log(`[sonic-profile] Generating for: "${song_title}" by ${artist_name}`);
+    console.log(`[sonic-profile] Generating: "${song_title}" by ${artist_name}`);
 
     const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY")!;
 
@@ -203,30 +341,32 @@ serve(async (req) => {
     }
 
     const aiData = await aiRes.json();
-    const rawText = aiData.content?.[0]?.text || "";
-
-    // Strip markdown fences if present
+    const rawText = (aiData.content?.[0]?.text as string) || "";
     const jsonText = rawText.replace(/^```json\s*/i, "").replace(/```\s*$/, "").trim();
 
-    let profile: Record<string, any>;
+    let profile: Record<string, unknown>;
     try {
       profile = JSON.parse(jsonText);
     } catch {
       throw new Error(`Failed to parse Claude JSON response: ${jsonText.slice(0, 300)}`);
     }
 
-    // Validate against vocabulary
     const { valid, errors } = validateProfile(profile);
     if (!valid) {
       console.warn(`[sonic-profile] Validation warnings for "${song_title}":`, errors);
-      // Don't throw — still cache what we got, just log the issues
     }
 
     const confidenceScore = typeof profile.confidence_score === "number"
-      ? Math.min(Math.max(profile.confidence_score, 0), 1)
+      ? Math.min(Math.max(profile.confidence_score as number, 0), 1)
       : 0.75;
 
     const descriptorSlugs = extractDescriptorSlugs(profile);
+
+    // ── Conflict resolution + canonical ──────────────────────────────────────
+    const registry = await loadRegistry(supabase);
+    const resolvedSlugs = resolveConflicts(profile, registry);
+    const canonical = buildCanonicalDescriptors(resolvedSlugs, registry);
+    const enrichedProfile = { ...profile, canonical_descriptors: canonical };
 
     // ── Write to cache ────────────────────────────────────────────────────────
     const { data: inserted, error: insertError } = await supabase
@@ -235,7 +375,7 @@ serve(async (req) => {
         spotify_track_id,
         song_title,
         artist_name,
-        profile_json:     profile,
+        profile_json:     enrichedProfile,
         confidence_score: confidenceScore,
         descriptor_slugs: descriptorSlugs,
       }, { onConflict: "spotify_track_id" })
@@ -244,21 +384,26 @@ serve(async (req) => {
 
     if (insertError) {
       console.error("[sonic-profile] Cache write error:", insertError.message);
-      // Still return the profile even if we couldn't cache it
     }
 
-    console.log(`[sonic-profile] Generated and cached "${song_title}" (confidence=${confidenceScore}, descriptors=${descriptorSlugs.length})`);
-
-    return new Response(
-      JSON.stringify({ profile, source: "generated", id: inserted?.id || null }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    console.log(
+      `[sonic-profile] Generated "${song_title}" (confidence=${confidenceScore}, descriptors=${descriptorSlugs.length}, canonical=${canonical.display_descriptors.length})`,
     );
 
+    return new Response(
+      JSON.stringify({
+        profile: enrichedProfile,
+        canonical_descriptors: canonical,
+        source: "generated",
+        id: inserted?.id || null,
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   } catch (e) {
     console.error("[sonic-profile] Error:", e);
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });

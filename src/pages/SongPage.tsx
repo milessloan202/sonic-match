@@ -19,6 +19,7 @@ import { useSongComparison } from "@/hooks/useSongComparison";
 import SampleInfo from "@/components/SampleInfo";
 import LinkedSummary from "../components/LinkedSummary";
 import { MatchDNA } from "@/components/MatchDNA";
+import { ExploreDNA } from "@/components/ExploreDNA";
 
 const SongPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -54,7 +55,7 @@ const SongPage = () => {
   const topMatchMeta = songMeta[topMatchKey];
   const topMatchTrackId = topMatchMeta?.spotify_url?.match(/track\/([a-zA-Z0-9]+)/)?.[1] ?? undefined;
 
-  const { profile: sonicProfile, loading: profileLoading } = useSonicProfile({
+  const { profile: sonicProfile, canonical: canonicalDescriptors, loading: profileLoading } = useSonicProfile({
     spotifyTrackId: centerTrackId,
     songTitle: songTitleForSample || "",
     artistName: artistForSample || "",
@@ -154,6 +155,15 @@ const SongPage = () => {
                 loading={profileLoading || comparisonLoading}
               />
             </div>
+          )}
+
+          {/* Explore DNA — descriptor search CTA */}
+          {canonicalDescriptors && canonicalDescriptors.display_descriptors.length > 0 && (
+            <ExploreDNA
+              descriptors={canonicalDescriptors.display_descriptors}
+              searchUrl={canonicalDescriptors.descriptor_search_url}
+              songTitle={songTitleForSample}
+            />
           )}
         </>
       )}

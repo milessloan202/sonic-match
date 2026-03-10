@@ -1,11 +1,11 @@
 import { useNavigate } from "react-router-dom";
+import { CanonicalDescriptor } from "@/hooks/useSonicProfile";
 
 // =============================================================================
 // DescriptorTag
 //
 // Renders a single sonic descriptor as a styled pill.
-// Tier 1 (clickable) descriptors navigate to /dna/{slug}.
-// Tier 2/3 render as display-only tags.
+// Clickable tags navigate to /search?descriptors={slug}.
 //
 // Usage:
 //   <DescriptorTag slug="nocturnal" label="Nocturnal" clickable />
@@ -38,6 +38,7 @@ interface DescriptorTagProps {
   clickable?: boolean;
   size?: "sm" | "md";
   className?: string;
+  onClick?: () => void;
 }
 
 export function DescriptorTag({
@@ -47,6 +48,7 @@ export function DescriptorTag({
   clickable = false,
   size = "sm",
   className = "",
+  onClick,
 }: DescriptorTagProps) {
   const navigate = useNavigate();
 
@@ -62,9 +64,9 @@ export function DescriptorTag({
   if (clickable) {
     return (
       <button
-        onClick={() => navigate(`/dna/${slug}`)}
+        onClick={() => onClick ? onClick() : navigate(`/search?descriptors=${slug}`)}
         className={`${baseClass} cursor-pointer hover:brightness-125 hover:scale-105 active:scale-95`}
-        title={`Explore ${displayLabel} →`}
+        title={`Find songs with ${displayLabel} →`}
       >
         {displayLabel}
       </button>
@@ -111,6 +113,37 @@ export function DescriptorTagGroup({
           category={category}
           clickable={clickable}
           size={size}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ── CanonicalDescriptorTags ───────────────────────────────────────────────────
+// Renders canonical descriptors from a CanonicalDescriptorPayload — all clickable.
+
+interface CanonicalDescriptorTagsProps {
+  descriptors: CanonicalDescriptor[];
+  size?: "sm" | "md";
+  onClick?: (descriptor: CanonicalDescriptor) => void;
+}
+
+export function CanonicalDescriptorTags({
+  descriptors,
+  size = "sm",
+  onClick,
+}: CanonicalDescriptorTagsProps) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {descriptors.map((d) => (
+        <DescriptorTag
+          key={d.slug}
+          slug={d.slug}
+          label={d.label}
+          category={d.category}
+          clickable
+          size={size}
+          onClick={onClick ? () => onClick(d) : undefined}
         />
       ))}
     </div>

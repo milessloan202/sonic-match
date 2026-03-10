@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 // then calls generate-sonic-profile edge function if missing.
 //
 // Usage:
-//   const { profile, loading, error } = useSonicProfile({
+//   const { profile, canonical, loading, error } = useSonicProfile({
 //     spotifyTrackId: "4uLU6hMCjMI75M1A2tKUQC",
 //     songTitle: "Blinding Lights",
 //     artistName: "The Weeknd",
@@ -32,6 +32,22 @@ export interface SonicProfile {
   intensity_level: string;
   danceability_feel: string;
   confidence_score?: number;
+  canonical_descriptors?: CanonicalDescriptorPayload;
+}
+
+export interface CanonicalDescriptor {
+  slug: string;
+  label: string;
+  category: string;
+  is_clickable: boolean;
+  search_url: string;
+  dna_url: string;
+}
+
+export interface CanonicalDescriptorPayload {
+  display_descriptors: CanonicalDescriptor[];
+  descriptor_search_url: string;
+  all_slugs: string[];
 }
 
 interface UseSonicProfileArgs {
@@ -44,6 +60,7 @@ interface UseSonicProfileArgs {
 
 interface UseSonicProfileResult {
   profile: SonicProfile | null;
+  canonical: CanonicalDescriptorPayload | null;
   loading: boolean;
   error: string | null;
   source: "cache" | "generated" | null;
@@ -55,10 +72,11 @@ export function useSonicProfile({
   artistName,
   autoGenerate = true,
 }: UseSonicProfileArgs): UseSonicProfileResult {
-  const [profile, setProfile]   = useState<SonicProfile | null>(null);
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState<string | null>(null);
-  const [source, setSource]     = useState<"cache" | "generated" | null>(null);
+  const [profile, setProfile]     = useState<SonicProfile | null>(null);
+  const [canonical, setCanonical] = useState<CanonicalDescriptorPayload | null>(null);
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState<string | null>(null);
+  const [source, setSource]       = useState<"cache" | "generated" | null>(null);
 
   useEffect(() => {
     if (!spotifyTrackId || !songTitle || !artistName) return;
@@ -79,18 +97,30 @@ export function useSonicProfile({
         if (cancelled) return;
 
         if (cached?.profile_json) {
-          setProfile(cached.profile_json as unknown as SonicProfile);
+          const profileJson = cached.profile_json as SonicProfile;
+          setProfile(profileJson);
           setSource("cache");
+
+          // If the cached profile has canonical_descriptors, use them immediately
+          if (profileJson.canonical_descriptors) {
+            setCanonical(profileJson.canonical_descriptors);
+            setLoading(false);
+            return;
+          }
+
+          // v1 cache — fall through to edge function to upgrade it
+          if (!autoGenerate) {
+            setLoading(false);
+            return;
+          }
+        }
+
+        if (!autoGenerate && !cached?.profile_json) {
           setLoading(false);
           return;
         }
 
-        if (!autoGenerate) {
-          setLoading(false);
-          return;
-        }
-
-        // Generate via edge function
+        // Generate (or upgrade) via edge function
         const { data, error: fnError } = await supabase.functions.invoke(
           "generate-sonic-profile",
           {
@@ -109,6 +139,9 @@ export function useSonicProfile({
 
         setProfile(data.profile as SonicProfile);
         setSource(data.source || "generated");
+        if (data.canonical_descriptors) {
+          setCanonical(data.canonical_descriptors as CanonicalDescriptorPayload);
+        }
 
       } catch (e) {
         if (!cancelled) {
@@ -124,7 +157,7 @@ export function useSonicProfile({
     return () => { cancelled = true; };
   }, [spotifyTrackId, songTitle, artistName, autoGenerate]);
 
-  return { profile, loading, error, source };
+  return { profile, canonical, loading, error, source };
 }
 
 // ── Utility: get top N descriptors from a profile for compact display ─────────

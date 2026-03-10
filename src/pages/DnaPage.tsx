@@ -174,6 +174,14 @@ export default function DnaPage() {
               </p>
             )}
 
+            {/* Search CTA */}
+            <button
+              onClick={() => navigate(`/search?descriptors=${slugs.join(",")}`)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary/10 border border-primary/30 text-primary text-xs font-semibold hover:bg-primary/20 transition-all"
+            >
+              Find songs with this DNA →
+            </button>
+
             {/* Multi-descriptor navigation suggestion */}
             {slugs.length === 1 && (
               <p className="text-xs text-muted-foreground/60">
