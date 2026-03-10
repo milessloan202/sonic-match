@@ -43,14 +43,14 @@ const PROFILE_DISPLAY_CATEGORIES: Array<{
   { key: "era_lineage",            label: "Era Lineage",       category: "era_lineage",            clickable: true  },
   { key: "environment_imagery",    label: "Environment",       category: "environment_imagery",    clickable: true  },
   { key: "listener_use_case",      label: "Best For",          category: "listener_use_case",      clickable: true  },
-  { key: "tempo_feel",             label: "Tempo Feel",        category: "tempo_feel",             clickable: false },
-  { key: "groove",                 label: "Groove",            category: "groove",                 clickable: false },
-  { key: "drum_character",         label: "Drums",             category: "drum_character",         clickable: false },
-  { key: "bass_character",         label: "Bass",              category: "bass_character",         clickable: false },
-  { key: "harmonic_color",         label: "Harmony",           category: "harmonic_color",         clickable: false },
-  { key: "melodic_character",      label: "Melody",            category: "melodic_character",      clickable: false },
-  { key: "vocal_character",        label: "Vocals",            category: "vocal_character",        clickable: false },
-  { key: "arrangement_energy_arc", label: "Energy Arc",        category: "arrangement_energy_arc", clickable: false },
+  { key: "tempo_feel",             label: "Tempo Feel",        category: "tempo_feel",             clickable: true  },
+  { key: "groove",                 label: "Groove",            category: "groove",                 clickable: true  },
+  { key: "drum_character",         label: "Drums",             category: "drum_character",         clickable: true  },
+  { key: "bass_character",         label: "Bass",              category: "bass_character",         clickable: true  },
+  { key: "harmonic_color",         label: "Harmony",           category: "harmonic_color",         clickable: true  },
+  { key: "melodic_character",      label: "Melody",            category: "melodic_character",      clickable: true  },
+  { key: "vocal_character",        label: "Vocals",            category: "vocal_character",        clickable: true  },
+  { key: "arrangement_energy_arc", label: "Energy Arc",        category: "arrangement_energy_arc", clickable: true  },
 ];
 
 function MatchStrengthBar({ strength }: { strength: number }) {

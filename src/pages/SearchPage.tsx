@@ -75,6 +75,9 @@ export default function SearchPage() {
     .map((s) => s.trim())
     .filter(Boolean);
 
+  const mode    = searchParams.get("mode") || "";
+  const songParam = searchParams.get("song") || "";
+
   const [results, setResults]           = useState<SearchResult[]>([]);
   const [total, setTotal]               = useState(0);
   const [loading, setLoading]           = useState(false);
@@ -156,14 +159,26 @@ export default function SearchPage() {
     || POPULAR_DESCRIPTORS.find((d) => d.slug === primarySlug)?.label
     || primarySlug?.replace(/-/g, " ");
 
+  // ── Mode-aware page heading ────────────────────────────────────────────────
+  function getDescriptorLabel(slug: string) {
+    return registry.find((d) => d.slug === slug)?.label
+      || POPULAR_DESCRIPTORS.find((d) => d.slug === slug)?.label
+      || slug.replace(/-/g, " ");
+  }
+
+  const pageHeading =
+    mode === "similarity" && songParam
+      ? `Songs With Similar DNA to ${decodeURIComponent(songParam)}`
+      : mode === "lineage"
+      ? "Explore This DNA"
+      : mode === "descriptor" && activeDescriptors.length > 0
+      ? `Explore DNA: ${activeDescriptors.map(getDescriptorLabel).join(" + ")}`
+      : "Search by DNA";
+
   return (
     <>
       <SEOHead
-        title={
-          activeDescriptors.length > 0
-            ? `Songs with ${activeDescriptors.slice(0, 2).map((s) => s.replace(/-/g, " ")).join(" + ")} sound`
-            : "Search by Sonic DNA"
-        }
+        title={pageHeading}
         description="Find songs that match your sonic taste using descriptor-based search."
         path="/search"
       />
@@ -179,7 +194,7 @@ export default function SearchPage() {
             >
               ← Back
             </button>
-            <h1 className="text-2xl font-bold text-foreground">Search by DNA</h1>
+            <h1 className="text-2xl font-bold text-foreground">{pageHeading}</h1>
           </div>
 
           {/* Active descriptor pills + add button */}
@@ -337,8 +352,8 @@ export default function SearchPage() {
                         <p className="text-xs text-muted-foreground">{song.artist_name}</p>
                       </div>
 
-                      {/* Matched descriptor tags */}
-                      <div className="flex flex-wrap gap-1">
+                      {/* Matched descriptor tags — clicking adds to active filters */}
+                      <div className="flex flex-wrap gap-1" onClick={(e) => e.stopPropagation()}>
                         {song.matched_slugs.map((slug) => {
                           const meta = registry.find((d) => d.slug === slug);
                           return (
@@ -348,6 +363,8 @@ export default function SearchPage() {
                               label={meta?.label}
                               category={meta?.category}
                               size="sm"
+                              clickable
+                              onClick={() => addDescriptor(slug)}
                             />
                           );
                         })}

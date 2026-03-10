@@ -64,7 +64,7 @@ export function DescriptorTag({
   if (clickable) {
     return (
       <button
-        onClick={() => onClick ? onClick() : navigate(`/search?descriptors=${slug}`)}
+        onClick={() => onClick ? onClick() : navigate(`/search?descriptors=${slug}&mode=descriptor`)}
         className={`${baseClass} cursor-pointer hover:brightness-125 hover:scale-105 active:scale-95`}
         title={`Find songs with ${displayLabel} →`}
       >

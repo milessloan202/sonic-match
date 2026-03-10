@@ -154,6 +154,7 @@ export default function DnaPage() {
                     label={d?.label}
                     category={d?.category}
                     size="md"
+                    clickable
                   />
                 );
               })}
@@ -176,7 +177,7 @@ export default function DnaPage() {
 
             {/* Search CTA */}
             <button
-              onClick={() => navigate(`/search?descriptors=${slugs.join(",")}`)}
+              onClick={() => navigate(`/search?descriptors=${slugs.join(",")}&mode=descriptor`)}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary/10 border border-primary/30 text-primary text-xs font-semibold hover:bg-primary/20 transition-all"
             >
               Find songs with this DNA →
@@ -289,8 +290,8 @@ function DnaSongRow({ song, index, activeDescriptors, descriptorMeta }: DnaSongR
           <p className="text-xs text-muted-foreground">{song.artist_name}</p>
         </div>
 
-        {/* Descriptor tags */}
-        <div className="flex flex-wrap gap-1">
+        {/* Descriptor tags — stop propagation so tag clicks don't navigate to song page */}
+        <div className="flex flex-wrap gap-1" onClick={(e) => e.stopPropagation()}>
           {activeDescriptors.map(s => {
             const meta = descriptorMeta.find(d => d.slug === s);
             return (
@@ -300,11 +301,12 @@ function DnaSongRow({ song, index, activeDescriptors, descriptorMeta }: DnaSongR
                 label={meta?.label}
                 category={meta?.category}
                 size="sm"
+                clickable
               />
             );
           })}
           {otherSlugs.map(s => (
-            <DescriptorTag key={s} slug={s} size="sm" />
+            <DescriptorTag key={s} slug={s} size="sm" clickable />
           ))}
         </div>
       </div>

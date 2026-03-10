@@ -21,10 +21,16 @@ export function ExploreDNA({ descriptors, searchUrl, songTitle }: ExploreDNAProp
 
   if (descriptors.length === 0) return null;
 
+  // Append mode=lineage so SearchPage shows "Explore This DNA" heading
+  const withLineageMode = (url: string) =>
+    url.includes("?") ? `${url}&mode=lineage` : `${url}?mode=lineage`;
+
+  const fullSearchUrl = withLineageMode(searchUrl);
+
   // Build 2 pair suggestions: first descriptor combined with each of the next 2
   const pairSuggestions = descriptors.slice(1, 3).map((d) => ({
     label: `${descriptors[0].label} + ${d.label}`,
-    url: `/search?descriptors=${descriptors[0].slug},${d.slug}`,
+    url: withLineageMode(`/search?descriptors=${descriptors[0].slug},${d.slug}`),
   }));
 
   return (
@@ -46,7 +52,7 @@ export function ExploreDNA({ descriptors, searchUrl, songTitle }: ExploreDNAProp
 
       {/* Primary CTA */}
       <button
-        onClick={() => navigate(searchUrl)}
+        onClick={() => navigate(fullSearchUrl)}
         className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:brightness-110 transition-all active:scale-[0.98]"
       >
         Find songs with this exact mix →
@@ -61,7 +67,7 @@ export function ExploreDNA({ descriptors, searchUrl, songTitle }: ExploreDNAProp
           <div className="flex flex-wrap gap-2">
             {pairSuggestions.map((pair) => (
               <button
-                key={pair.url}
+                key={pair.label}
                 onClick={() => navigate(pair.url)}
                 className="text-xs text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
               >

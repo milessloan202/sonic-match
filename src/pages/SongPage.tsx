@@ -20,6 +20,8 @@ import SampleInfo from "@/components/SampleInfo";
 import LinkedSummary from "../components/LinkedSummary";
 import { MatchDNA } from "@/components/MatchDNA";
 import { ExploreDNA } from "@/components/ExploreDNA";
+import { useSimilarByDNA } from "@/hooks/useSimilarByDNA";
+import { DescriptorTag } from "@/components/DescriptorTag";
 
 const SongPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -66,6 +68,14 @@ const SongPage = () => {
     songAId: centerTrackId,
     songBId: topMatchTrackId,
     autoGenerate: !!centerTrackId && !!topMatchTrackId && metaLoaded,
+  });
+
+  const { results: similarSongs, loading: similarLoading } = useSimilarByDNA({
+    profile: sonicProfile,
+    canonical: canonicalDescriptors,
+    centerTrackId,
+    centerArtist: artistForSample || "",
+    enabled: !!centerTrackId && metaLoaded,
   });
 
   if (loading) return <PageSkeleton generating={generating} />;
@@ -141,29 +151,72 @@ const SongPage = () => {
             <ResultSection title="Why These Work" items={data.why_these_work} variant="explanation" />
           )}
 
-          {/* Sonic DNA — only shown once Spotify metadata has loaded */}
-          {metaLoaded && (sonicProfile || profileLoading) && (
-            <div className="space-y-2">
-              <h2 className="text-lg font-semibold text-foreground">Sonic DNA</h2>
-              <MatchDNA
-                centerTitle={songTitleForSample || displayName}
-                centerArtist={artistForSample || ""}
-                comparedTitle={data.closest_matches?.[0]?.title}
-                comparedArtist={data.closest_matches?.[0]?.subtitle?.replace(/\s*\(\d{4}\)\s*$/, "").trim()}
-                comparison={comparison}
-                centerProfile={sonicProfile}
-                loading={profileLoading || comparisonLoading}
-              />
-            </div>
+          {/* Songs With Similar DNA — descriptor-driven similarity */}
+          {(similarSongs.length > 0 || similarLoading) && (
+            <section className="space-y-4">
+              <h2 className="text-lg font-semibold text-foreground">Songs With Similar DNA</h2>
+              {similarLoading ? (
+                <div className="flex items-center gap-3 text-muted-foreground text-sm">
+                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  Finding matches...
+                </div>
+              ) : (
+                <div className="grid gap-2">
+                  {similarSongs.map((song) => (
+                    <div
+                      key={song.spotify_track_id}
+                      className="group flex items-start gap-4 p-4 rounded-xl border border-border bg-card/50 hover:bg-card transition-colors cursor-pointer"
+                      onClick={() => window.location.href = `/songs-like/${song.slug}`}
+                    >
+                      <div className="flex-1 min-w-0 space-y-1.5">
+                        <div>
+                          <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
+                            {song.song_title}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{song.artist_name}</p>
+                        </div>
+                        <div
+                          className="flex flex-wrap gap-1"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {song.sharedDescriptors.slice(0, 5).map((slug) => (
+                            <DescriptorTag key={slug} slug={slug} size="sm" clickable />
+                          ))}
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-semibold text-primary tabular-nums shrink-0 pt-0.5">
+                        {Math.round(song.score * 100)}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
           )}
 
-          {/* Explore DNA — descriptor search CTA */}
-          {canonicalDescriptors && canonicalDescriptors.display_descriptors.length > 0 && (
-            <ExploreDNA
-              descriptors={canonicalDescriptors.display_descriptors}
-              searchUrl={canonicalDescriptors.descriptor_search_url}
-              songTitle={songTitleForSample}
-            />
+          {/* Explore This DNA — merged: Match DNA comparison + descriptor discovery hub */}
+          {metaLoaded && (sonicProfile || profileLoading || canonicalDescriptors?.display_descriptors.length) && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-foreground">Explore This DNA</h2>
+              {(sonicProfile || profileLoading) && (
+                <MatchDNA
+                  centerTitle={songTitleForSample || displayName}
+                  centerArtist={artistForSample || ""}
+                  comparedTitle={data.closest_matches?.[0]?.title}
+                  comparedArtist={data.closest_matches?.[0]?.subtitle?.replace(/\s*\(\d{4}\)\s*$/, "").trim()}
+                  comparison={comparison}
+                  centerProfile={sonicProfile}
+                  loading={profileLoading || comparisonLoading}
+                />
+              )}
+              {canonicalDescriptors && canonicalDescriptors.display_descriptors.length > 0 && (
+                <ExploreDNA
+                  descriptors={canonicalDescriptors.display_descriptors}
+                  searchUrl={canonicalDescriptors.descriptor_search_url}
+                  songTitle={songTitleForSample}
+                />
+              )}
+            </div>
           )}
         </>
       )}
