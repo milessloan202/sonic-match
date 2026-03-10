@@ -7,9 +7,17 @@ import { DescriptorTag } from "@/components/DescriptorTag";
 import SEOHead from "@/components/SEOHead";
 
 // =============================================================================
-// SearchPage  /search?descriptors=slug1,slug2
+// SearchPage  /search?descriptors=slug1,slug2[&mode=descriptor|lineage|similarity][&song=Title]
 //
-// Multi-descriptor song search powered by the search-by-descriptors edge fn.
+// Multi-descriptor song search. Search mode is DERIVED from URL content so the
+// page always shows correct context even when navigated to without an explicit
+// mode param.
+//
+// Mode detection (in priority order):
+//   songSimilarity  — song param present (or explicit mode=similarity)
+//   descriptorSearch — descriptors param present, or mode=descriptor|lineage
+//   textSearch       — q param present
+//   idle             — none of the above (empty state)
 // =============================================================================
 
 // Category display order and labels for the picker
@@ -32,18 +40,18 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 // Popular seed descriptors for the empty state
 const POPULAR_DESCRIPTORS = [
-  { slug: "nocturnal",     label: "Nocturnal",     category: "emotional_tone" },
-  { slug: "wistful",       label: "Wistful",        category: "emotional_tone" },
-  { slug: "driving",       label: "Driving",        category: "tempo_feel" },
-  { slug: "laid-back",     label: "Laid Back",      category: "tempo_feel" },
-  { slug: "glossy",        label: "Glossy",         category: "texture" },
-  { slug: "lo-fi",         label: "Lo-Fi",          category: "texture" },
-  { slug: "neo-soul",      label: "Neo Soul",       category: "era_lineage" },
-  { slug: "trap-soul",     label: "Trap Soul",      category: "era_lineage" },
-  { slug: "night-drive",   label: "Night Drive",    category: "environment_imagery" },
-  { slug: "seductive",     label: "Seductive",      category: "emotional_tone" },
-  { slug: "swaggering",    label: "Swaggering",     category: "emotional_tone" },
-  { slug: "late-night-walk", label: "Late Night Walk", category: "listener_use_case" },
+  { slug: "nocturnal",       label: "Nocturnal",       category: "emotional_tone" },
+  { slug: "wistful",         label: "Wistful",          category: "emotional_tone" },
+  { slug: "driving",         label: "Driving",          category: "tempo_feel" },
+  { slug: "laid-back",       label: "Laid Back",        category: "tempo_feel" },
+  { slug: "glossy",          label: "Glossy",           category: "texture" },
+  { slug: "lo-fi",           label: "Lo-Fi",            category: "texture" },
+  { slug: "neo-soul",        label: "Neo Soul",         category: "era_lineage" },
+  { slug: "trap-soul",       label: "Trap Soul",        category: "era_lineage" },
+  { slug: "night-drive",     label: "Night Drive",      category: "environment_imagery" },
+  { slug: "seductive",       label: "Seductive",        category: "emotional_tone" },
+  { slug: "swaggering",      label: "Swaggering",       category: "emotional_tone" },
+  { slug: "late-night-walk", label: "Late Night Walk",  category: "listener_use_case" },
 ];
 
 interface RegistryDescriptor {
@@ -70,20 +78,38 @@ export default function SearchPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
+  // ── Parse URL params ──────────────────────────────────────────────────────
   const activeDescriptors = (searchParams.get("descriptors") || "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
+    .split(",").map((s) => s.trim()).filter(Boolean);
 
-  const mode    = searchParams.get("mode") || "";
-  const songParam = searchParams.get("song") || "";
+  const explicitMode = searchParams.get("mode") || "";
+  const songParam    = searchParams.get("song") || "";
+  const q            = searchParams.get("q") || "";
 
-  const [results, setResults]           = useState<SearchResult[]>([]);
-  const [total, setTotal]               = useState(0);
-  const [loading, setLoading]           = useState(false);
-  const [error, setError]               = useState<string | null>(null);
-  const [pickerOpen, setPickerOpen]     = useState(false);
-  const [registry, setRegistry]         = useState<RegistryDescriptor[]>([]);
+  // ── Derive search mode from URL content ───────────────────────────────────
+  // Priority: song > descriptors > q > idle
+  // The explicit `mode` param is used as a tiebreaker for ambiguous cases and
+  // for backwards-compat with existing links that set mode=lineage/descriptor.
+  type SearchMode = "songSimilarity" | "descriptorSearch" | "textSearch" | "idle";
+
+  const searchMode: SearchMode =
+    songParam || explicitMode === "similarity"
+      ? "songSimilarity"
+      : activeDescriptors.length > 0 ||
+        explicitMode === "descriptor" ||
+        explicitMode === "lineage"
+      ? "descriptorSearch"
+      : q
+      ? "textSearch"
+      : "idle";
+
+  // ── Local state ───────────────────────────────────────────────────────────
+  const [results, setResults]               = useState<SearchResult[]>([]);
+  const [total, setTotal]                   = useState(0);
+  const [loading, setLoading]               = useState(false);
+  const [error, setError]                   = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen]         = useState(false);
+  const [registry, setRegistry]             = useState<RegistryDescriptor[]>([]);
   const [registryLoaded, setRegistryLoaded] = useState(false);
 
   // ── Fetch registry when picker opens ─────────────────────────────────────
@@ -129,22 +155,45 @@ export default function SearchPage() {
     runSearch(activeDescriptors);
   }, [searchParams]); // re-run whenever URL changes
 
-  // ── Descriptor management ─────────────────────────────────────────────────
+  // ── Descriptor management — preserves all existing URL params ─────────────
   function addDescriptor(slug: string) {
     if (activeDescriptors.includes(slug)) return;
     const next = [...activeDescriptors, slug];
-    setSearchParams({ descriptors: next.join(",") });
+    const params = new URLSearchParams(searchParams);
+    params.set("descriptors", next.join(","));
+    setSearchParams(params);
     setPickerOpen(false);
   }
 
   function removeDescriptor(slug: string) {
     const next = activeDescriptors.filter((d) => d !== slug);
+    const params = new URLSearchParams(searchParams);
     if (next.length === 0) {
-      setSearchParams({});
+      params.delete("descriptors");
     } else {
-      setSearchParams({ descriptors: next.join(",") });
+      params.set("descriptors", next.join(","));
     }
+    setSearchParams(params);
   }
+
+  // ── Label helpers ─────────────────────────────────────────────────────────
+  function getDescriptorLabel(slug: string) {
+    return registry.find((d) => d.slug === slug)?.label
+      || POPULAR_DESCRIPTORS.find((d) => d.slug === slug)?.label
+      || slug.replace(/-/g, " ");
+  }
+
+  const primarySlug = activeDescriptors[0];
+
+  // ── Mode-aware page heading ────────────────────────────────────────────────
+  const pageHeading =
+    searchMode === "songSimilarity" && songParam
+      ? `Songs With Similar DNA to ${decodeURIComponent(songParam)}`
+      : searchMode === "descriptorSearch"
+      ? "Explore DNA"
+      : searchMode === "textSearch"
+      ? "Search results"
+      : "Search by Sonic DNA";
 
   // ── Grouped registry for picker ───────────────────────────────────────────
   const grouped: Record<string, RegistryDescriptor[]> = {};
@@ -152,28 +201,6 @@ export default function SearchPage() {
     if (!grouped[d.category]) grouped[d.category] = [];
     grouped[d.category].push(d);
   }
-
-  // ── Primary descriptor label for single-descriptor hint ──────────────────
-  const primarySlug = activeDescriptors[0];
-  const primaryLabel = registry.find((d) => d.slug === primarySlug)?.label
-    || POPULAR_DESCRIPTORS.find((d) => d.slug === primarySlug)?.label
-    || primarySlug?.replace(/-/g, " ");
-
-  // ── Mode-aware page heading ────────────────────────────────────────────────
-  function getDescriptorLabel(slug: string) {
-    return registry.find((d) => d.slug === slug)?.label
-      || POPULAR_DESCRIPTORS.find((d) => d.slug === slug)?.label
-      || slug.replace(/-/g, " ");
-  }
-
-  const pageHeading =
-    mode === "similarity" && songParam
-      ? `Songs With Similar DNA to ${decodeURIComponent(songParam)}`
-      : mode === "lineage"
-      ? "Explore This DNA"
-      : mode === "descriptor" && activeDescriptors.length > 0
-      ? `Explore DNA: ${activeDescriptors.map(getDescriptorLabel).join(" + ")}`
-      : "Search by DNA";
 
   return (
     <>
@@ -184,9 +211,9 @@ export default function SearchPage() {
       />
 
       <div className="min-h-screen bg-background">
-        <div className="max-w-3xl mx-auto px-4 py-12 space-y-8">
+        <div className="max-w-3xl mx-auto px-4 py-12 space-y-6">
 
-          {/* Header */}
+          {/* Back + heading */}
           <div className="space-y-1">
             <button
               onClick={() => navigate(-1)}
@@ -197,53 +224,80 @@ export default function SearchPage() {
             <h1 className="text-2xl font-bold text-foreground">{pageHeading}</h1>
           </div>
 
-          {/* Active descriptor pills + add button */}
-          <div className="space-y-3">
-            <div className="flex flex-wrap gap-2 items-center">
-              {activeDescriptors.map((slug) => {
-                const meta = registry.find((d) => d.slug === slug)
-                  || POPULAR_DESCRIPTORS.find((d) => d.slug === slug);
-                return (
-                  <span
-                    key={slug}
-                    className="inline-flex items-center gap-1.5 pl-3 pr-2 py-1 rounded-full border border-primary/40 bg-primary/10 text-primary text-xs font-medium"
-                  >
-                    {meta?.label || slug.replace(/-/g, " ")}
-                    <button
-                      onClick={() => removeDescriptor(slug)}
-                      className="rounded-full hover:bg-primary/20 p-0.5 transition-colors"
-                      aria-label={`Remove ${slug}`}
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                );
-              })}
+          {/* ── Discovery context bar ─────────────────────────────────────── */}
 
-              <button
-                onClick={() => setPickerOpen((o) => !o)}
-                className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-dashed border-border text-xs text-muted-foreground hover:border-primary/50 hover:text-foreground transition-all"
-              >
-                + Add descriptor
-                {pickerOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-              </button>
-            </div>
-
-            {/* Single-descriptor DNA page hint */}
-            {activeDescriptors.length === 1 && (
-              <p className="text-xs text-muted-foreground">
-                About the{" "}
-                <button
-                  onClick={() => navigate(`/dna/${primarySlug}`)}
-                  className="text-primary hover:underline"
-                >
-                  {primaryLabel} DNA page →
-                </button>
+          {/* Song similarity — seed song card */}
+          {searchMode === "songSimilarity" && songParam && (
+            <div className="rounded-xl border border-border bg-card/50 px-4 py-3 space-y-0.5">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                Seed song
               </p>
-            )}
-          </div>
+              <p className="text-sm font-medium text-foreground">
+                {decodeURIComponent(songParam)}
+              </p>
+            </div>
+          )}
 
-          {/* Picker panel */}
+          {/* Descriptor exploration — active chips + add button */}
+          {searchMode === "descriptorSearch" && (
+            <div className="space-y-3">
+              <div className="flex flex-wrap gap-2 items-center">
+                {activeDescriptors.map((slug) => {
+                  const meta =
+                    registry.find((d) => d.slug === slug) ||
+                    POPULAR_DESCRIPTORS.find((d) => d.slug === slug);
+                  return (
+                    <span
+                      key={slug}
+                      className="inline-flex items-center gap-1.5 pl-3 pr-2 py-1 rounded-full border border-primary/40 bg-primary/10 text-primary text-xs font-medium"
+                    >
+                      {meta?.label || slug.replace(/-/g, " ")}
+                      <button
+                        onClick={() => removeDescriptor(slug)}
+                        className="rounded-full hover:bg-primary/20 p-0.5 transition-colors"
+                        aria-label={`Remove ${slug}`}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  );
+                })}
+
+                <button
+                  onClick={() => setPickerOpen((o) => !o)}
+                  className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-dashed border-border text-xs text-muted-foreground hover:border-primary/50 hover:text-foreground transition-all"
+                >
+                  + Add descriptor
+                  {pickerOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                </button>
+              </div>
+
+              {/* Single-descriptor DNA page hint */}
+              {activeDescriptors.length === 1 && (
+                <p className="text-xs text-muted-foreground">
+                  About the{" "}
+                  <button
+                    onClick={() => navigate(`/dna/${primarySlug}`)}
+                    className="text-primary hover:underline"
+                  >
+                    {getDescriptorLabel(primarySlug)} DNA page →
+                  </button>
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Text search — query display */}
+          {searchMode === "textSearch" && q && (
+            <div className="rounded-xl border border-border bg-card/50 px-4 py-3 space-y-0.5">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                Query
+              </p>
+              <p className="text-sm text-foreground">"{q}"</p>
+            </div>
+          )}
+
+          {/* ── Picker panel ──────────────────────────────────────────────── */}
           <AnimatePresence>
             {pickerOpen && (
               <motion.div
@@ -284,11 +338,11 @@ export default function SearchPage() {
             )}
           </AnimatePresence>
 
-          {/* Results / empty state */}
-          {activeDescriptors.length === 0 ? (
+          {/* ── Results / empty state ─────────────────────────────────────── */}
+          {searchMode === "idle" ? (
             <div className="space-y-5">
               <p className="text-sm text-muted-foreground">
-                Pick a descriptor above, or start with one of these:
+                Pick a descriptor, or start with one of these:
               </p>
               <div className="flex flex-wrap gap-2">
                 {POPULAR_DESCRIPTORS.map((d) => (
@@ -343,7 +397,7 @@ export default function SearchPage() {
                       {i + 1}
                     </span>
 
-                    {/* Info */}
+                    {/* Song info */}
                     <div className="flex-1 min-w-0 space-y-2">
                       <div>
                         <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
