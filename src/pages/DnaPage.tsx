@@ -52,21 +52,21 @@ export default function DnaPage() {
     async function load() {
       try {
         // Load descriptor metadata
-        const { data: descData } = await supabase
-          .from("descriptor_registry")
+        const { data: descData } = await (supabase
+          .from("descriptor_registry" as any)
           .select("slug, label, category, description, is_seo_enabled")
-          .in("slug", slugs);
+          .in("slug", slugs) as any);
 
         if (cancelled) return;
-        setDescriptors((descData || []) as DescriptorRow[]);
+        setDescriptors((descData || []) as unknown as DescriptorRow[]);
 
         // Query songs that contain ALL specified slugs
         // Uses the GIN index on descriptor_slugs array
         let query = supabase
-          .from("song_sonic_profiles")
+          .from("song_sonic_profiles" as any)
           .select("spotify_track_id, song_title, artist_name, profile_json, descriptor_slugs")
           .order("song_title", { ascending: true })
-          .limit(50);
+          .limit(50) as any;
 
         // Each slug must be contained in descriptor_slugs
         for (const s of slugs) {
@@ -77,7 +77,7 @@ export default function DnaPage() {
         if (cancelled) return;
 
         if (songError) throw songError;
-        setSongs((songData || []) as ProfileRow[]);
+        setSongs((songData || []) as unknown as ProfileRow[]);
 
       } catch (e) {
         if (!cancelled) {

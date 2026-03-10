@@ -176,6 +176,45 @@ export type Database = {
         }
         Relationships: []
       }
+      song_comparisons: {
+        Row: {
+          created_at: string
+          differences: string[]
+          id: string
+          long_reason: string
+          match_strength: number
+          shared_traits: string[]
+          short_reason: string
+          song_a_id: string
+          song_b_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          differences?: string[]
+          id?: string
+          long_reason?: string
+          match_strength?: number
+          shared_traits?: string[]
+          short_reason?: string
+          song_a_id: string
+          song_b_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          differences?: string[]
+          id?: string
+          long_reason?: string
+          match_strength?: number
+          shared_traits?: string[]
+          short_reason?: string
+          song_a_id?: string
+          song_b_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       song_image_cache: {
         Row: {
           artist: string
