@@ -14,12 +14,19 @@ import { useDiscoveryPath } from "../hooks/useDiscoveryPath";
 import { useSpotifyImages } from "../hooks/useSpotifyImages";
 import { useIsMobile } from "@/hooks/use-mobile";
 import LinkedSummary from "../components/LinkedSummary";
+import { possessive, slugToName } from "@/lib/possessive";
 
 const ArtistPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
   const { data, loading, generating, error } = useSeoPage(slug, "artist");
-  const displayName = data?.heading?.replace(/^(Songs Similar to|Artists Like)\s*/i, "") || slug || "";
+
+  // Derive artist name from slug (never from data.heading which may contain a
+  // matched song title instead of the actual artist name).
+  const artistName = slugToName(slug || "");
+  const displayName = artistName;
+  const artistHeading = artistName ? `Songs like ${possessive(artistName)}` : "Songs like this artist's";
+
   const discoverySteps = useDiscoveryPath(displayName, location.pathname);
   const [view, setView] = useState<"list" | "map">("list");
   const isMobile = useIsMobile();
@@ -53,7 +60,7 @@ const ArtistPage = () => {
           </Link>
           <ViewToggle view={view} onChange={setView} />
         </div>
-        <h1 className="text-3xl sm:text-4xl font-bold text-foreground">{data.heading}</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold text-foreground">{artistHeading}</h1>
         {data.summary && (
           <LinkedSummary
             text={data.summary}

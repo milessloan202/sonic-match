@@ -1,26 +1,23 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronDown, ChevronUp } from "lucide-react";
+import { X, ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DescriptorTag } from "@/components/DescriptorTag";
 import SEOHead from "@/components/SEOHead";
 
 // =============================================================================
-// SearchPage  /search?descriptors=slug1,slug2[&mode=descriptor|lineage|similarity][&song=Title]
+// SearchPage  /search?descriptors=slug1,slug2[&mode=...][&song=Title]
 //
-// Multi-descriptor song search. Search mode is DERIVED from URL content so the
-// page always shows correct context even when navigated to without an explicit
-// mode param.
+// Search mode is DERIVED from URL content (not solely from explicit mode=).
 //
-// Mode detection (in priority order):
+// Priority:
 //   songSimilarity  — song param present (or explicit mode=similarity)
-//   descriptorSearch — descriptors param present, or mode=descriptor|lineage
+//   descriptorSearch — descriptors present, or mode=descriptor|lineage
 //   textSearch       — q param present
-//   idle             — none of the above (empty state)
+//   idle             — none of the above (empty / landing state)
 // =============================================================================
 
-// Category display order and labels for the picker
 const CATEGORY_ORDER = [
   "emotional_tone", "texture", "era_lineage", "tempo_feel",
   "groove", "harmonic_color", "vocal_character",
@@ -38,7 +35,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   listener_use_case:   "Listener Use Case",
 };
 
-// Popular seed descriptors for the empty state
+// Seed descriptors for the empty state and for trait suggestions
 const POPULAR_DESCRIPTORS = [
   { slug: "nocturnal",       label: "Nocturnal",       category: "emotional_tone" },
   { slug: "wistful",         label: "Wistful",          category: "emotional_tone" },
@@ -87,9 +84,6 @@ export default function SearchPage() {
   const q            = searchParams.get("q") || "";
 
   // ── Derive search mode from URL content ───────────────────────────────────
-  // Priority: song > descriptors > q > idle
-  // The explicit `mode` param is used as a tiebreaker for ambiguous cases and
-  // for backwards-compat with existing links that set mode=lineage/descriptor.
   type SearchMode = "songSimilarity" | "descriptorSearch" | "textSearch" | "idle";
 
   const searchMode: SearchMode =
@@ -153,7 +147,7 @@ export default function SearchPage() {
 
   useEffect(() => {
     runSearch(activeDescriptors);
-  }, [searchParams]); // re-run whenever URL changes
+  }, [searchParams]);
 
   // ── Descriptor management — preserves all existing URL params ─────────────
   function addDescriptor(slug: string) {
@@ -161,6 +155,10 @@ export default function SearchPage() {
     const next = [...activeDescriptors, slug];
     const params = new URLSearchParams(searchParams);
     params.set("descriptors", next.join(","));
+    // Ensure mode reflects descriptor exploration
+    if (!params.get("mode") || params.get("mode") === "descriptor") {
+      params.set("mode", "descriptor");
+    }
     setSearchParams(params);
     setPickerOpen(false);
   }
@@ -177,13 +175,41 @@ export default function SearchPage() {
   }
 
   // ── Label helpers ─────────────────────────────────────────────────────────
-  function getDescriptorLabel(slug: string) {
+  function getDescriptorLabel(slug: string): string {
     return registry.find((d) => d.slug === slug)?.label
       || POPULAR_DESCRIPTORS.find((d) => d.slug === slug)?.label
       || slug.replace(/-/g, " ");
   }
 
+  function getDescriptorCategory(slug: string): string | undefined {
+    return registry.find((d) => d.slug === slug)?.category
+      || POPULAR_DESCRIPTORS.find((d) => d.slug === slug)?.category;
+  }
+
   const primarySlug = activeDescriptors[0];
+
+  // ── Trait suggestions ("Add another DNA trait") ───────────────────────────
+  // Suggest popular descriptors from the same categories as active ones.
+  // Falls back to any unused popular descriptor if no category match found.
+  const traitSuggestions = (() => {
+    if (searchMode !== "descriptorSearch" || activeDescriptors.length === 0) return [];
+    const activeSet = new Set(activeDescriptors);
+    const activeCategories = new Set(
+      activeDescriptors.map((s) => getDescriptorCategory(s)).filter(Boolean) as string[]
+    );
+
+    // Prefer same-category suggestions; take from registry if loaded, else POPULAR_DESCRIPTORS
+    const pool: RegistryDescriptor[] = registryLoaded
+      ? registry
+      : POPULAR_DESCRIPTORS;
+
+    const sameCategory = pool.filter(
+      (d) => !activeSet.has(d.slug) && activeCategories.has(d.category)
+    );
+    const fallback = POPULAR_DESCRIPTORS.filter((d) => !activeSet.has(d.slug));
+
+    return (sameCategory.length >= 2 ? sameCategory : fallback).slice(0, 5);
+  })();
 
   // ── Mode-aware page heading ────────────────────────────────────────────────
   const pageHeading =
@@ -224,9 +250,9 @@ export default function SearchPage() {
             <h1 className="text-2xl font-bold text-foreground">{pageHeading}</h1>
           </div>
 
-          {/* ── Discovery context bar ─────────────────────────────────────── */}
+          {/* ── Discovery context ─────────────────────────────────────────── */}
 
-          {/* Song similarity — seed song card */}
+          {/* Song similarity — seed song */}
           {searchMode === "songSimilarity" && songParam && (
             <div className="rounded-xl border border-border bg-card/50 px-4 py-3 space-y-0.5">
               <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
@@ -238,9 +264,15 @@ export default function SearchPage() {
             </div>
           )}
 
-          {/* Descriptor exploration — active chips + add button */}
+          {/* DNA Mix — active chips + add button + trait suggestions */}
           {searchMode === "descriptorSearch" && (
             <div className="space-y-3">
+              {/* Section label */}
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                DNA Mix
+              </p>
+
+              {/* Active descriptor chips */}
               <div className="flex flex-wrap gap-2 items-center">
                 {activeDescriptors.map((slug) => {
                   const meta =
@@ -267,10 +299,31 @@ export default function SearchPage() {
                   onClick={() => setPickerOpen((o) => !o)}
                   className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-dashed border-border text-xs text-muted-foreground hover:border-primary/50 hover:text-foreground transition-all"
                 >
-                  + Add descriptor
+                  + Add trait
                   {pickerOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                 </button>
               </div>
+
+              {/* Trait suggestions */}
+              {traitSuggestions.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] text-muted-foreground/50 uppercase tracking-wider">
+                    Add another DNA trait
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {traitSuggestions.map((d) => (
+                      <button
+                        key={d.slug}
+                        onClick={() => addDescriptor(d.slug)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-dashed border-border text-[10px] text-muted-foreground hover:border-primary/40 hover:text-foreground transition-all"
+                      >
+                        <Plus className="w-2.5 h-2.5" />
+                        {d.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Single-descriptor DNA page hint */}
               {activeDescriptors.length === 1 && (
@@ -370,7 +423,7 @@ export default function SearchPage() {
               <p className="text-4xl">🎵</p>
               <p className="text-foreground font-medium">No songs found with this DNA</p>
               <p className="text-muted-foreground text-sm max-w-sm mx-auto">
-                Songs are added as people discover them. Try removing a descriptor to broaden the search.
+                Songs are added as people discover them. Try removing a trait to broaden the mix.
               </p>
             </div>
           ) : (
@@ -406,7 +459,7 @@ export default function SearchPage() {
                         <p className="text-xs text-muted-foreground">{song.artist_name}</p>
                       </div>
 
-                      {/* Matched descriptor tags — clicking adds to active filters */}
+                      {/* Matched descriptor tags — clicking adds to active mix */}
                       <div className="flex flex-wrap gap-1" onClick={(e) => e.stopPropagation()}>
                         {song.matched_slugs.map((slug) => {
                           const meta = registry.find((d) => d.slug === slug);
@@ -425,12 +478,23 @@ export default function SearchPage() {
                       </div>
                     </div>
 
-                    {/* Match % */}
+                    {/* Trait coverage — "X of Y traits" */}
                     <div className="text-right shrink-0">
-                      <span className="text-xs font-semibold text-primary tabular-nums">
-                        {Math.round(song.match_ratio * 100)}%
-                      </span>
-                      <p className="text-[10px] text-muted-foreground/50">match</p>
+                      {activeDescriptors.length > 1 ? (
+                        <>
+                          <span className="text-xs font-semibold text-primary tabular-nums">
+                            {song.matched_count} of {activeDescriptors.length}
+                          </span>
+                          <p className="text-[10px] text-muted-foreground/50">traits</p>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-xs font-semibold text-primary tabular-nums">
+                            {Math.round(song.match_ratio * 100)}%
+                          </span>
+                          <p className="text-[10px] text-muted-foreground/50">match</p>
+                        </>
+                      )}
                     </div>
                   </motion.div>
                 ))}
