@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.compare-songs]
 verify_jwt = false
+
+[functions.process-resolution-jobs]
+verify_jwt = false
