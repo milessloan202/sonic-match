@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useAudio } from "@/contexts/AudioContext";
 import type { SongMeta } from "@/hooks/useSpotifyImages";
+import { MatchDNACompact } from "@/components/MatchDNA";
 
 const SpotifyIcon = ({ className }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
@@ -28,6 +29,7 @@ interface ResultCardProps {
   imageType?: "song" | "artist";
   songMeta?: SongMeta;
   metaLoaded?: boolean;
+  sonicDescriptors?: string[];
 }
 
 const toSlug = (text: string) =>
@@ -207,6 +209,7 @@ const ResultCard = ({
   imageType,
   songMeta,
   metaLoaded = true,
+  sonicDescriptors,
 }: ResultCardProps) => {
   const { artist, year } = parseSubtitle(subtitle);
   const showImage = imageType === "song" || imageType === "artist";
@@ -255,6 +258,11 @@ const ResultCard = ({
               ) : subtitle ? (
                 <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{subtitle}</p>
               ) : null}
+              {sonicDescriptors && sonicDescriptors.length > 0 && (
+                <div className="mt-2">
+                  <MatchDNACompact topDescriptors={sonicDescriptors} />
+                </div>
+              )}
             </div>
             {showPlay && (
               <div className="shrink-0">

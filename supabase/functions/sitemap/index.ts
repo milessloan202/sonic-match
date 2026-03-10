@@ -4,10 +4,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const SITE_URL = "https://sonic-match-six.vercel.app";
 
 const prefixes: Record<string, string> = {
-  song: "/songs-like",
-  artist: "/artists-like",
+  song:     "/songs-like",
+  artist:   "/artists-like",
   producer: "/producers-like",
-  vibe: "/vibes",
+  vibe:     "/vibes",
 };
 
 serve(async () => {
@@ -17,6 +17,7 @@ serve(async () => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // SEO pages (songs, artists, producers, vibes)
     const { data: pages, error } = await supabase
       .from("seo_pages")
       .select("slug, page_type, updated_at")
@@ -24,20 +25,34 @@ serve(async () => {
 
     if (error) throw error;
 
-    const urls = (pages || [])
+    const pageUrls = (pages || [])
       .filter((p) => prefixes[p.page_type])
       .map((p) => {
-        const loc = `${SITE_URL}${prefixes[p.page_type]}/${p.slug}`;
+        const loc     = `${SITE_URL}${prefixes[p.page_type]}/${p.slug}`;
         const lastmod = p.updated_at?.split("T")[0] || new Date().toISOString().split("T")[0];
         return `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod}</lastmod>\n  </url>`;
       });
+
+    // Tier 1 (SEO-enabled) descriptor pages
+    const { data: descriptors } = await supabase
+      .from("descriptor_registry")
+      .select("slug, created_at")
+      .eq("is_seo_enabled", true);
+
+    const dnaUrls = (descriptors || []).map((d) => {
+      const loc     = `${SITE_URL}/dna/${d.slug}`;
+      const lastmod = d.created_at?.split("T")[0] || new Date().toISOString().split("T")[0];
+      return `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod}</lastmod>\n  </url>`;
+    });
+
+    const allUrls = [...pageUrls, ...dnaUrls];
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>${SITE_URL}/</loc>
   </url>
-${urls.join("\n")}
+${allUrls.join("\n")}
 </urlset>`;
 
     return new Response(xml, {

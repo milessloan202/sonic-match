@@ -10,6 +10,7 @@ import SongPage from "./pages/SongPage";
 import ArtistPage from "./pages/ArtistPage";
 import ProducerPage from "./pages/ProducerPage";
 import VibePage from "./pages/VibePage";
+import DnaPage from "./pages/DnaPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,8 @@ const App = () => (
               <Route path="/artists-like/:slug" element={<ArtistPage />} />
               <Route path="/producers-like/:slug" element={<ProducerPage />} />
               <Route path="/vibes/:slug" element={<VibePage />} />
+              <Route path="/dna/:slug" element={<DnaPage />} />
+              <Route path="/dna/:slug/:slug2" element={<DnaPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AudioProvider>

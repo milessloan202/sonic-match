@@ -14,8 +14,11 @@ import { useDiscoveryPath } from "../hooks/useDiscoveryPath";
 import { useSpotifyImages } from "../hooks/useSpotifyImages";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSampleData } from "@/hooks/useSampleData";
+import { useSonicProfile } from "@/hooks/useSonicProfile";
+import { useSongComparison } from "@/hooks/useSongComparison";
 import SampleInfo from "@/components/SampleInfo";
 import LinkedSummary from "../components/LinkedSummary";
+import { MatchDNA } from "@/components/MatchDNA";
 
 const SongPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -32,6 +35,29 @@ const SongPage = () => {
   const songTitleForSample = songParts[0] || undefined;
   const artistForSample = songParts[1] || data?.closest_matches?.[0]?.subtitle?.replace(/^by\s+/i, "") || undefined;
   const { sample } = useSampleData(songTitleForSample, artistForSample);
+
+  // Sonic DNA — profile for the center song, comparison to top recommendation
+  const centerTrackId = data?.closest_matches?.[0] ? songMeta[
+    Object.keys(songMeta).find(k => k.startsWith(data.closest_matches[0].title + "|||")) || ""
+  ]?.spotify_track_id : undefined;
+
+  const topMatchMeta = data?.closest_matches?.[0]
+    ? songMeta[Object.keys(songMeta).find(k => k.startsWith(data.closest_matches[0].title + "|||")) || ""]
+    : undefined;
+
+  const { profile: sonicProfile, loading: profileLoading } = useSonicProfile({
+    spotifyTrackId: centerTrackId,
+    songTitle: songTitleForSample || "",
+    artistName: artistForSample || "",
+    autoGenerate: !!centerTrackId && metaLoaded,
+  });
+
+  const topMatchTrackId = topMatchMeta?.spotify_track_id;
+  const { comparison, loading: comparisonLoading } = useSongComparison({
+    songAId: centerTrackId,
+    songBId: topMatchTrackId,
+    autoGenerate: !!centerTrackId && !!topMatchTrackId && metaLoaded,
+  });
 
   const allSongs = [...(data?.closest_matches || []), ...(data?.same_energy || [])];
   const { songImages, songMeta, artistImages, metaLoaded } = useSpotifyImages(allSongs, data?.related_artists || []);
@@ -107,6 +133,22 @@ const SongPage = () => {
           )}
           {data.why_these_work.length > 0 && (
             <ResultSection title="Why These Work" items={data.why_these_work} variant="explanation" />
+          )}
+
+          {/* Sonic DNA — only shown once Spotify metadata has loaded */}
+          {metaLoaded && (sonicProfile || profileLoading) && (
+            <div className="space-y-2">
+              <h2 className="text-lg font-semibold text-foreground">Sonic DNA</h2>
+              <MatchDNA
+                centerTitle={songTitleForSample || displayName}
+                centerArtist={artistForSample || ""}
+                comparedTitle={data.closest_matches?.[0]?.title}
+                comparedArtist={data.closest_matches?.[0]?.subtitle?.replace(/\s*\(\d{4}\)\s*$/, "").trim()}
+                comparison={comparison}
+                centerProfile={sonicProfile}
+                loading={profileLoading || comparisonLoading}
+              />
+            </div>
           )}
         </>
       )}
