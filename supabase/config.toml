@@ -17,3 +17,12 @@ verify_jwt = false
 
 [functions.resolve-song]
 verify_jwt = false
+
+[functions.seed-descriptors]
+verify_jwt = false
+
+[functions.generate-sonic-profile]
+verify_jwt = false
+
+[functions.compare-songs]
+verify_jwt = false
