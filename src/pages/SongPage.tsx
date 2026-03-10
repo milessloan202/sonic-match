@@ -30,20 +30,29 @@ const SongPage = () => {
   const isMobile = useIsMobile();
 
   // Extract song title and artist for sample lookup
-  // The displayName may contain "Song — Artist" or just the title
   const songParts = displayName.split(/\s[–—-]\s/);
   const songTitleForSample = songParts[0] || undefined;
   const artistForSample = songParts[1] || data?.closest_matches?.[0]?.subtitle?.replace(/^by\s+/i, "") || undefined;
   const { sample } = useSampleData(songTitleForSample, artistForSample);
 
-  // Sonic DNA — profile for the center song, comparison to top recommendation
-  const centerTrackId = data?.closest_matches?.[0] ? songMeta[
-    Object.keys(songMeta).find(k => k.startsWith(data.closest_matches[0].title + "|||")) || ""
-  ]?.spotify_track_id : undefined;
+  // Spotify images — must be declared before sonic profile hooks that depend on it
+  const allSongs = [...(data?.closest_matches || []), ...(data?.same_energy || [])];
+  const { songImages, songMeta, artistImages, metaLoaded } = useSpotifyImages(allSongs, data?.related_artists || []);
 
-  const topMatchMeta = data?.closest_matches?.[0]
-    ? songMeta[Object.keys(songMeta).find(k => k.startsWith(data.closest_matches[0].title + "|||")) || ""]
-    : undefined;
+  // Sonic DNA — profile for the center song, comparison to top recommendation
+  // Use spotify_url to extract track ID since SongMeta doesn't have spotify_track_id
+  const centerKey = allSongs[0]
+    ? `${allSongs[0].title}|||${(allSongs[0].subtitle || "").replace(/\s*\(\d{4}\)\s*$/, "").trim()}`
+    : "";
+  const centerMeta = songMeta[centerKey];
+  const centerTrackId = centerMeta?.spotify_url?.match(/track\/([a-zA-Z0-9]+)/)?.[1] ?? undefined;
+
+  const topMatch = data?.closest_matches?.[0];
+  const topMatchKey = topMatch
+    ? `${topMatch.title}|||${(topMatch.subtitle || "").replace(/\s*\(\d{4}\)\s*$/, "").trim()}`
+    : "";
+  const topMatchMeta = songMeta[topMatchKey];
+  const topMatchTrackId = topMatchMeta?.spotify_url?.match(/track\/([a-zA-Z0-9]+)/)?.[1] ?? undefined;
 
   const { profile: sonicProfile, loading: profileLoading } = useSonicProfile({
     spotifyTrackId: centerTrackId,
@@ -52,15 +61,11 @@ const SongPage = () => {
     autoGenerate: !!centerTrackId && metaLoaded,
   });
 
-  const topMatchTrackId = topMatchMeta?.spotify_track_id;
   const { comparison, loading: comparisonLoading } = useSongComparison({
     songAId: centerTrackId,
     songBId: topMatchTrackId,
     autoGenerate: !!centerTrackId && !!topMatchTrackId && metaLoaded,
   });
-
-  const allSongs = [...(data?.closest_matches || []), ...(data?.same_energy || [])];
-  const { songImages, songMeta, artistImages, metaLoaded } = useSpotifyImages(allSongs, data?.related_artists || []);
 
   if (loading) return <PageSkeleton generating={generating} />;
   if (error) {
