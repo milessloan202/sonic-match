@@ -151,11 +151,14 @@ const SongPage = () => {
             <ResultSection title="Why These Work" items={data.why_these_work} variant="explanation" />
           )}
 
-          {/* Songs With Similar DNA — descriptor-driven similarity */}
-          {(similarSongs.length > 0 || similarLoading) && (
+          {/* Songs With Similar DNA — descriptor-driven similarity
+              Show as soon as we know the track ID and Spotify meta has loaded.
+              Spinner covers both the profile-loading phase and the search phase
+              so the section is visible from the start rather than popping in late. */}
+          {!!centerTrackId && metaLoaded && (profileLoading || similarLoading || similarSongs.length > 0) && (
             <section className="space-y-4">
               <h2 className="text-lg font-semibold text-foreground">Songs With Similar DNA</h2>
-              {similarLoading ? (
+              {profileLoading || similarLoading ? (
                 <div className="flex items-center gap-3 text-muted-foreground text-sm">
                   <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                   Finding matches...
