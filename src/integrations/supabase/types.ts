@@ -35,6 +35,45 @@ export type Database = {
         }
         Relationships: []
       }
+      descriptor_registry: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          id: string
+          is_clickable: boolean
+          is_public: boolean
+          is_seo_enabled: boolean
+          label: string
+          slug: string
+          tier: number
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description: string
+          id?: string
+          is_clickable?: boolean
+          is_public?: boolean
+          is_seo_enabled?: boolean
+          label: string
+          slug: string
+          tier?: number
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          is_clickable?: boolean
+          is_public?: boolean
+          is_seo_enabled?: boolean
+          label?: string
+          slug?: string
+          tier?: number
+        }
+        Relationships: []
+      }
       sample_cache: {
         Row: {
           artist_name: string
