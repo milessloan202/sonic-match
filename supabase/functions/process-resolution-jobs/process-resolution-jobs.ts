@@ -309,7 +309,7 @@ serve(async (req) => {
       .update({ status: "processing", updated_at: now })
       .eq("status", "pending")
       .lte("available_at", now)
-      .lt("attempt_count", supabase.rpc ? undefined : 999) // handled by max_attempts check below
+      // max_attempts check is handled after claim
       .order("available_at", { ascending: true })
       .limit(batchSize)
       .select("id, job_type, payload, attempt_count, max_attempts, last_error");

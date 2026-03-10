@@ -594,7 +594,7 @@ serve(async (req) => {
           console.log(`Created: ${seed.page_type}/${seed.slug} (${i + 1}/${toGenerate.length})`);
         }
       } catch (e) {
-        errors.push({ ...seed, error: e.message });
+        errors.push({ ...seed, error: (e as Error).message });
         failed++;
       }
 
