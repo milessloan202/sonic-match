@@ -35,6 +35,45 @@ export type Database = {
         }
         Relationships: []
       }
+      descriptor_registry: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          id: string
+          is_clickable: boolean
+          is_public: boolean
+          is_seo_enabled: boolean
+          label: string
+          slug: string
+          tier: number
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description: string
+          id?: string
+          is_clickable?: boolean
+          is_public?: boolean
+          is_seo_enabled?: boolean
+          label: string
+          slug: string
+          tier?: number
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          is_clickable?: boolean
+          is_public?: boolean
+          is_seo_enabled?: boolean
+          label?: string
+          slug?: string
+          tier?: number
+        }
+        Relationships: []
+      }
       sample_cache: {
         Row: {
           artist_name: string
@@ -137,6 +176,45 @@ export type Database = {
         }
         Relationships: []
       }
+      song_comparisons: {
+        Row: {
+          created_at: string
+          differences: string[]
+          id: string
+          long_reason: string
+          match_strength: number
+          shared_traits: string[]
+          short_reason: string
+          song_a_id: string
+          song_b_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          differences?: string[]
+          id?: string
+          long_reason?: string
+          match_strength?: number
+          shared_traits?: string[]
+          short_reason?: string
+          song_a_id: string
+          song_b_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          differences?: string[]
+          id?: string
+          long_reason?: string
+          match_strength?: number
+          shared_traits?: string[]
+          short_reason?: string
+          song_a_id?: string
+          song_b_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       song_image_cache: {
         Row: {
           artist: string
@@ -182,6 +260,42 @@ export type Database = {
           spotify_track_id?: string | null
           spotify_url?: string | null
           youtube_thumbnail_url?: string | null
+        }
+        Relationships: []
+      }
+      song_sonic_profiles: {
+        Row: {
+          artist_name: string
+          confidence_score: number
+          created_at: string
+          descriptor_slugs: string[]
+          id: string
+          profile_json: Json
+          song_title: string
+          spotify_track_id: string
+          updated_at: string
+        }
+        Insert: {
+          artist_name: string
+          confidence_score?: number
+          created_at?: string
+          descriptor_slugs?: string[]
+          id?: string
+          profile_json?: Json
+          song_title: string
+          spotify_track_id: string
+          updated_at?: string
+        }
+        Update: {
+          artist_name?: string
+          confidence_score?: number
+          created_at?: string
+          descriptor_slugs?: string[]
+          id?: string
+          profile_json?: Json
+          song_title?: string
+          spotify_track_id?: string
+          updated_at?: string
         }
         Relationships: []
       }

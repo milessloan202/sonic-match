@@ -70,16 +70,16 @@ export function useSonicProfile({
     async function load() {
       try {
         // Fast cache check directly from DB first (avoids edge function cold start)
-        const { data: cached } = await supabase
-          .from("song_sonic_profiles")
+        const { data: cached } = await (supabase
+          .from("song_sonic_profiles" as any)
           .select("profile_json")
           .eq("spotify_track_id", spotifyTrackId)
-          .single();
+          .single() as any);
 
         if (cancelled) return;
 
         if (cached?.profile_json) {
-          setProfile(cached.profile_json as SonicProfile);
+          setProfile(cached.profile_json as unknown as SonicProfile);
           setSource("cache");
           setLoading(false);
           return;

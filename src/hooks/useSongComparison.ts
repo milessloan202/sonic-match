@@ -67,17 +67,17 @@ export function useSongComparison({
     async function load() {
       try {
         // Fast DB cache check
-        const { data: cached } = await supabase
-          .from("song_comparisons")
+        const { data: cached } = await (supabase
+          .from("song_comparisons" as any)
           .select("*")
           .eq("song_a_id", ordA)
           .eq("song_b_id", ordB)
-          .single();
+          .single() as any);
 
         if (cancelled) return;
 
         if (cached) {
-          setComparison(cached as SongComparison);
+          setComparison(cached as unknown as SongComparison);
           setSource("cache");
           setLoading(false);
           return;
