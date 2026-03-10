@@ -139,7 +139,7 @@ function buildCanonicalDescriptors(
 
 // ── Load registry ─────────────────────────────────────────────────────────────
 
-async function loadRegistry(supabase: ReturnType<typeof createClient>): Promise<Map<string, RegistryRow>> {
+async function loadRegistry(supabase: any): Promise<Map<string, RegistryRow>> {
   const { data } = await supabase
     .from("descriptor_registry")
     .select("slug, label, category, is_clickable, conflicts_with");

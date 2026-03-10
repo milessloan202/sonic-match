@@ -38,6 +38,7 @@ export type Database = {
       descriptor_registry: {
         Row: {
           category: string
+          conflicts_with: string[]
           created_at: string
           description: string
           id: string
@@ -50,6 +51,7 @@ export type Database = {
         }
         Insert: {
           category: string
+          conflicts_with?: string[]
           created_at?: string
           description: string
           id?: string
@@ -62,6 +64,7 @@ export type Database = {
         }
         Update: {
           category?: string
+          conflicts_with?: string[]
           created_at?: string
           description?: string
           id?: string
