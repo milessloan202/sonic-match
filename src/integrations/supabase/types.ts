@@ -224,6 +224,42 @@ export type Database = {
         }
         Relationships: []
       }
+      song_sonic_profiles: {
+        Row: {
+          artist_name: string
+          confidence_score: number
+          created_at: string
+          descriptor_slugs: string[]
+          id: string
+          profile_json: Json
+          song_title: string
+          spotify_track_id: string
+          updated_at: string
+        }
+        Insert: {
+          artist_name: string
+          confidence_score?: number
+          created_at?: string
+          descriptor_slugs?: string[]
+          id?: string
+          profile_json?: Json
+          song_title: string
+          spotify_track_id: string
+          updated_at?: string
+        }
+        Update: {
+          artist_name?: string
+          confidence_score?: number
+          created_at?: string
+          descriptor_slugs?: string[]
+          id?: string
+          profile_json?: Json
+          song_title?: string
+          spotify_track_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
