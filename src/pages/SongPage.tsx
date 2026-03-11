@@ -17,6 +17,7 @@ import { useSonicProfile } from "@/hooks/useSonicProfile";
 import SampleInfo from "@/components/SampleInfo";
 import LinkedSummary from "../components/LinkedSummary";
 import { ExploreDNA } from "@/components/ExploreDNA";
+import { DescriptorTag } from "@/components/DescriptorTag";
 
 const SongPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -96,6 +97,25 @@ const SongPage = () => {
             ]}
             vibeNames={(data.related_vibes || []).map((v: any) => v.title)}
           />
+        )}
+
+        {/* Sonic DNA — this song's descriptor chips, shown directly under the prose */}
+        {metaLoaded && !!centerTrackId && (profileLoading || (canonicalDescriptors?.display_descriptors.length ?? 0) > 0) && (
+          <div className="space-y-2 pt-1">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">Sonic DNA</p>
+            {profileLoading ? (
+              <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                Loading...
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {canonicalDescriptors!.display_descriptors.map((d) => (
+                  <DescriptorTag key={d.slug} slug={d.slug} label={d.label} category={d.category} clickable size="sm" />
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </motion.div>
 
