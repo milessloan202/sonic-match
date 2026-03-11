@@ -237,6 +237,108 @@ FACTUAL ACCURACY RULES (CRITICAL — STRICTLY ENFORCED):
   }
 }
 
+// ============= SONIC DNA PROFILE LAYER =============
+// Fetches (or generates) the sonic descriptor profile for the center song,
+// then injects it into the prose prompt so the summary is anchored to
+// verified descriptors rather than Claude's general music knowledge alone.
+
+interface CanonicalDescriptor {
+  slug: string;
+  label: string;
+  category: string;
+}
+
+const SONIC_CATEGORY_LABELS: Record<string, string> = {
+  emotional_tone:      "Mood",
+  texture:             "Texture",
+  era_lineage:         "Era",
+  tempo_feel:          "Feel",
+  groove:              "Groove",
+  harmonic_color:      "Harmony",
+  vocal_character:     "Vocals",
+  environment_imagery: "Environment",
+  listener_use_case:   "Best For",
+};
+
+const SONIC_CATEGORY_ORDER = [
+  "emotional_tone", "texture", "era_lineage", "tempo_feel",
+  "groove", "harmonic_color", "vocal_character",
+  "environment_imagery", "listener_use_case",
+];
+
+async function fetchSonicDescriptors(
+  spotifyTrackId: string,
+  songTitle: string,
+  artistName: string,
+  supabase: any,
+): Promise<CanonicalDescriptor[] | null> {
+  try {
+    // Cache-first: check DB before calling the edge function
+    const { data: cached } = await (supabase
+      .from("song_sonic_profiles")
+      .select("profile_json")
+      .eq("spotify_track_id", spotifyTrackId)
+      .single() as any);
+
+    if (cached?.profile_json?.canonical_descriptors?.display_descriptors?.length) {
+      console.log("[SonicDNA] Cache hit for prose anchoring");
+      return cached.profile_json.canonical_descriptors.display_descriptors as CanonicalDescriptor[];
+    }
+
+    // Generate via the sonic-profile edge function
+    console.log("[SonicDNA] Generating profile for prose anchoring...");
+    const { data } = await supabase.functions.invoke("generate-sonic-profile", {
+      body: {
+        spotify_track_id: spotifyTrackId,
+        song_title: songTitle,
+        artist_name: artistName,
+      },
+    });
+
+    const descriptors = data?.canonical_descriptors?.display_descriptors;
+    if (Array.isArray(descriptors) && descriptors.length > 0) {
+      console.log(`[SonicDNA] Generated ${descriptors.length} descriptors`);
+      return descriptors as CanonicalDescriptor[];
+    }
+
+    return null;
+  } catch (e) {
+    console.log("[SonicDNA] Profile fetch failed (non-fatal):", e);
+    return null;
+  }
+}
+
+function buildSonicDnaBlock(descriptors: CanonicalDescriptor[]): string {
+  if (descriptors.length === 0) return "";
+
+  // Group by category
+  const grouped: Record<string, string[]> = {};
+  for (const d of descriptors) {
+    if (!grouped[d.category]) grouped[d.category] = [];
+    grouped[d.category].push(d.label);
+  }
+
+  const lines: string[] = [
+    "",
+    "=== SONIC DNA PROFILE (VERIFIED — ANCHOR YOUR SUMMARY TO THESE) ===",
+    "These descriptors reflect the actual sonic character of this track.",
+    "Your summary MUST stay within this lane. Do not describe qualities that contradict these.",
+    "",
+  ];
+
+  for (const cat of SONIC_CATEGORY_ORDER) {
+    const labels = grouped[cat];
+    if (!labels || labels.length === 0) continue;
+    const catLabel = (SONIC_CATEGORY_LABELS[cat] || cat).padEnd(12);
+    lines.push(`${catLabel}: ${labels.join(", ")}`);
+  }
+
+  lines.push("=== END SONIC DNA PROFILE ===");
+  lines.push("");
+
+  return lines.join("\n");
+}
+
 // ============= ANTI-REPETITION LAYER =============
 
 async function getFrequentlyRecommendedSongs(supabase: any, pageType: string): Promise<string[]> {
@@ -375,6 +477,23 @@ serve(async (req) => {
     const metadataBlock = buildMetadataBlock(verifiedMetadata);
     const factualInstructions = getFactualInstructions(verifiedMetadata.metadata_confidence);
 
+    // --- Fetch/generate Sonic DNA profile to anchor prose to real descriptors ---
+    let sonicDnaBlock = "";
+    if (
+      page_type === "song" &&
+      verifiedMetadata.spotify_track_id &&
+      verifiedMetadata.song_title &&
+      verifiedMetadata.artist_name
+    ) {
+      const descriptors = await fetchSonicDescriptors(
+        verifiedMetadata.spotify_track_id,
+        verifiedMetadata.song_title,
+        verifiedMetadata.artist_name,
+        supabase,
+      );
+      if (descriptors) sonicDnaBlock = buildSonicDnaBlock(descriptors);
+    }
+
     // --- Fetch overused songs for anti-repetition ---
     const overusedSongs = await getFrequentlyRecommendedSongs(supabase, page_type);
     const antiRepetitionBlock = buildAntiRepetitionBlock(overusedSongs);
@@ -429,6 +548,7 @@ serve(async (req) => {
 
 User is looking for songs similar to: "${displayName}"
 ${metadataBlock}
+${sonicDnaBlock}
 ${factualInstructions}
 ${antiRepetitionBlock}
 
@@ -457,7 +577,7 @@ relatedArtists: 3 artists whose broader catalog overlaps most with the sonic wor
 
 whyTheseWork: 2-3 sentences explaining the SPECIFIC sonic thread connecting these recommendations. Reference concrete musical details: name the synth texture, the drum pattern, the harmonic movement, the production technique. Never use phrases like "similar vibe," "same feel," "fans of X will enjoy," or "same energy." Write like a music journalist who respects the reader's intelligence.
 
-summary: A 2-3 sentence description of what makes this track sonically distinctive — its production fingerprint, its emotional architecture, and the specific type of listener it rewards. CRITICAL: The first sentence MUST begin with "{Artist Name}'s \"{Song Title}\"" to clearly identify the song. Example: "Joe Budden's \"Pump It Up\" is an early-2000s soul-sample hip-hop track built around a driving piano loop and crisp drum programming."`;
+summary: A 2-3 sentence description of what makes this track sonically distinctive — its production fingerprint, its emotional architecture, and the specific type of listener it rewards. CRITICAL: The first sentence MUST begin with "{Artist Name}'s \"{Song Title}\"" to clearly identify the song. Example: "Joe Budden's \"Pump It Up\" is an early-2000s soul-sample hip-hop track built around a driving piano loop and crisp drum programming."${sonicDnaBlock ? ' CRITICAL: You MUST ground this description in the Sonic DNA Profile above. Every quality you name — mood, texture, rhythm, atmosphere — must reflect those verified descriptors. Do not describe sonic qualities that contradict the profile.' : ''}`;
 
     const artistPrompt = `You are a world-class music curator — part crate-digger, part musicologist, part the best record store clerk alive. You think in terms of artistic DNA: how an artist's sonic identity, production choices, and creative evolution connect them to the broader musical landscape.
 
