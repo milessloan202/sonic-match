@@ -3,7 +3,6 @@ import { useParams, Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import ResultSection from "../components/ResultSection";
-import RelatedPages from "../components/RelatedPages";
 import SEOHead from "../components/SEOHead";
 import PageSkeleton from "../components/PageSkeleton";
 import DiscoveryPath from "../components/DiscoveryPath";
@@ -15,13 +14,9 @@ import { useSpotifyImages } from "../hooks/useSpotifyImages";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSampleData } from "@/hooks/useSampleData";
 import { useSonicProfile } from "@/hooks/useSonicProfile";
-import { useSongComparison } from "@/hooks/useSongComparison";
 import SampleInfo from "@/components/SampleInfo";
 import LinkedSummary from "../components/LinkedSummary";
-import { MatchDNA } from "@/components/MatchDNA";
 import { ExploreDNA } from "@/components/ExploreDNA";
-import { useSimilarByDNA } from "@/hooks/useSimilarByDNA";
-import { DescriptorTag } from "@/components/DescriptorTag";
 
 const SongPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -50,32 +45,11 @@ const SongPage = () => {
   const centerMeta = songMeta[centerKey];
   const centerTrackId = centerMeta?.spotify_url?.match(/track\/([a-zA-Z0-9]+)/)?.[1] ?? undefined;
 
-  const topMatch = data?.closest_matches?.[0];
-  const topMatchKey = topMatch
-    ? `${topMatch.title}|||${(topMatch.subtitle || "").replace(/\s*\(\d{4}\)\s*$/, "").trim()}`
-    : "";
-  const topMatchMeta = songMeta[topMatchKey];
-  const topMatchTrackId = topMatchMeta?.spotify_url?.match(/track\/([a-zA-Z0-9]+)/)?.[1] ?? undefined;
-
-  const { profile: sonicProfile, canonical: canonicalDescriptors, loading: profileLoading } = useSonicProfile({
+  const { canonical: canonicalDescriptors, loading: profileLoading } = useSonicProfile({
     spotifyTrackId: centerTrackId,
     songTitle: songTitleForSample || "",
     artistName: artistForSample || "",
     autoGenerate: !!centerTrackId && metaLoaded,
-  });
-
-  const { comparison, loading: comparisonLoading } = useSongComparison({
-    songAId: centerTrackId,
-    songBId: topMatchTrackId,
-    autoGenerate: !!centerTrackId && !!topMatchTrackId && metaLoaded,
-  });
-
-  const { results: similarSongs, loading: similarLoading } = useSimilarByDNA({
-    profile: sonicProfile,
-    canonical: canonicalDescriptors,
-    centerTrackId,
-    centerArtist: artistForSample || "",
-    enabled: !!centerTrackId && metaLoaded,
   });
 
   if (loading) return <PageSkeleton generating={generating} />;
@@ -138,93 +112,42 @@ const SongPage = () => {
         />
       ) : (
         <>
-          {data.closest_matches.length > 0 && (
-            <ResultSection title="Closest Matches" items={data.closest_matches} linkPrefix="/songs-like" imageType="song" images={songImages} songMetaMap={songMeta} metaLoaded={metaLoaded} />
+          {/* 1. Songs With Similar DNA — closest matches + same energy combined */}
+          {allSongs.length > 0 && (
+            <ResultSection title="Songs With Similar DNA" items={allSongs} linkPrefix="/songs-like" imageType="song" images={songImages} songMetaMap={songMeta} metaLoaded={metaLoaded} />
           )}
-          {data.same_energy.length > 0 && (
-            <ResultSection title="Similar Vibe" items={data.same_energy} linkPrefix="/songs-like" imageType="song" images={songImages} songMetaMap={songMeta} metaLoaded={metaLoaded} />
-          )}
-          {data.related_artists.length > 0 && (
-            <ResultSection title="Related Artists" items={data.related_artists} linkPrefix="/artists-like" imageType="artist" images={artistImages} />
-          )}
+
+          {/* 2. Why These Work */}
           {data.why_these_work.length > 0 && (
             <ResultSection title="Why These Work" items={data.why_these_work} variant="explanation" />
           )}
 
-          {/* Songs With Similar DNA — descriptor-driven similarity
-              Show as soon as we know the track ID and Spotify meta has loaded.
-              Spinner covers both the profile-loading phase and the search phase
-              so the section is visible from the start rather than popping in late. */}
-          {!!centerTrackId && metaLoaded && (profileLoading || similarLoading || similarSongs.length > 0) && (
-            <section className="space-y-4">
-              <h2 className="text-lg font-semibold text-foreground">Songs With Similar DNA</h2>
-              {profileLoading || similarLoading ? (
-                <div className="flex items-center gap-3 text-muted-foreground text-sm">
-                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  Finding matches...
-                </div>
-              ) : (
-                <div className="grid gap-2">
-                  {similarSongs.map((song) => (
-                    <div
-                      key={song.spotify_track_id}
-                      className="group flex items-start gap-4 p-4 rounded-xl border border-border bg-card/50 hover:bg-card transition-colors cursor-pointer"
-                      onClick={() => window.location.href = `/songs-like/${song.slug}`}
-                    >
-                      <div className="flex-1 min-w-0 space-y-1.5">
-                        <div>
-                          <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
-                            {song.song_title}
-                          </p>
-                          <p className="text-xs text-muted-foreground">{song.artist_name}</p>
-                        </div>
-                        <div
-                          className="flex flex-wrap gap-1"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {song.sharedDescriptors.slice(0, 5).map((slug) => (
-                            <DescriptorTag key={slug} slug={slug} size="sm" clickable />
-                          ))}
-                        </div>
-                      </div>
-                      <span className="text-[10px] font-semibold text-primary tabular-nums shrink-0 pt-0.5">
-                        {Math.round(song.score * 100)}%
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </section>
-          )}
-
-          {/* Explore This DNA — merged: Match DNA comparison + descriptor discovery hub */}
-          {metaLoaded && (sonicProfile || profileLoading || canonicalDescriptors?.display_descriptors.length) && (
+          {/* 3. Explore This DNA — descriptor chips */}
+          {metaLoaded && !!centerTrackId && (profileLoading || (canonicalDescriptors && canonicalDescriptors.display_descriptors.length > 0)) && (
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-foreground">Explore This DNA</h2>
-              {(sonicProfile || profileLoading) && (
-                <MatchDNA
-                  centerTitle={songTitleForSample || displayName}
-                  centerArtist={artistForSample || ""}
-                  comparedTitle={data.closest_matches?.[0]?.title}
-                  comparedArtist={data.closest_matches?.[0]?.subtitle?.replace(/\s*\(\d{4}\)\s*$/, "").trim()}
-                  comparison={comparison}
-                  centerProfile={sonicProfile}
-                  loading={profileLoading || comparisonLoading}
-                />
-              )}
-              {canonicalDescriptors && canonicalDescriptors.display_descriptors.length > 0 && (
+              {profileLoading ? (
+                <div className="flex items-center gap-3 text-muted-foreground text-sm">
+                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  Loading DNA...
+                </div>
+              ) : (
                 <ExploreDNA
-                  descriptors={canonicalDescriptors.display_descriptors}
-                  searchUrl={canonicalDescriptors.descriptor_search_url}
+                  descriptors={canonicalDescriptors!.display_descriptors}
+                  searchUrl={canonicalDescriptors!.descriptor_search_url}
                   songTitle={songTitleForSample}
                 />
               )}
             </div>
           )}
+
+          {/* 4. Related Artists */}
+          {data.related_artists.length > 0 && (
+            <ResultSection title="Related Artists" items={data.related_artists} linkPrefix="/artists-like" imageType="artist" images={artistImages} />
+          )}
         </>
       )}
 
-      <RelatedPages relatedSongs={data.related_songs} relatedArtists={data.related_artist_links} relatedVibes={data.related_vibes} />
     </div>
   );
 };
