@@ -22,6 +22,19 @@ import { MatchDNA } from "@/components/MatchDNA";
 import { ExploreDNA } from "@/components/ExploreDNA";
 import { DescriptorTag } from "@/components/DescriptorTag";
 
+// Canonical category groups for the grouped Sonic DNA display under prose
+const SONIC_DNA_GROUPS: { key: string; label: string }[] = [
+  { key: "emotional_tone",      label: "Mood"        },
+  { key: "texture",             label: "Texture"     },
+  { key: "era_lineage",         label: "Era"         },
+  { key: "tempo_feel",          label: "Feel"        },
+  { key: "groove",              label: "Groove"      },
+  { key: "harmonic_color",      label: "Harmony"     },
+  { key: "vocal_character",     label: "Vocals"      },
+  { key: "environment_imagery", label: "Environment" },
+  { key: "listener_use_case",   label: "Best For"    },
+];
+
 const SongPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
@@ -133,7 +146,7 @@ const SongPage = () => {
           />
         )}
 
-        {/* Sonic DNA — this song's descriptor chips, shown directly under the prose */}
+        {/* Sonic DNA — grouped descriptor profile, shown directly under the prose */}
         {(profileLoading || (canonicalDescriptors?.display_descriptors.length ?? 0) > 0) && (
           <div className="space-y-2 pt-1">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">Sonic DNA</p>
@@ -143,10 +156,23 @@ const SongPage = () => {
                 Loading...
               </div>
             ) : (
-              <div className="flex flex-wrap gap-1.5">
-                {canonicalDescriptors!.display_descriptors.map((d) => (
-                  <DescriptorTag key={d.slug} slug={d.slug} label={d.label} category={d.category} clickable size="sm" />
-                ))}
+              <div className="grid gap-2">
+                {SONIC_DNA_GROUPS.map(({ key, label }) => {
+                  const chips = canonicalDescriptors!.display_descriptors.filter(d => d.category === key);
+                  if (chips.length === 0) return null;
+                  return (
+                    <div key={key} className="flex items-start gap-3">
+                      <span className="text-[10px] text-muted-foreground/50 uppercase tracking-wider pt-0.5 w-20 shrink-0 text-right leading-5">
+                        {label}
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {chips.map(d => (
+                          <DescriptorTag key={d.slug} slug={d.slug} label={d.label} category={d.category} clickable size="sm" />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
