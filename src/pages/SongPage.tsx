@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
@@ -8,6 +8,7 @@ import PageSkeleton from "../components/PageSkeleton";
 import DiscoveryPath from "../components/DiscoveryPath";
 import ViewToggle from "../components/ViewToggle";
 import MusicMap from "../components/MusicMap";
+import { supabase } from "@/integrations/supabase/client";
 import { useSeoPage } from "../hooks/useSeoPage";
 import { useDiscoveryPath } from "../hooks/useDiscoveryPath";
 import { useSpotifyImages } from "../hooks/useSpotifyImages";
@@ -38,20 +39,36 @@ const SongPage = () => {
   const allSongs = [...(data?.closest_matches || []), ...(data?.same_energy || [])];
   const { songImages, songMeta, artistImages, metaLoaded } = useSpotifyImages(allSongs, data?.related_artists || []);
 
-  // Resolve center track ID: prefer seo_pages.spotify_track_id (available immediately),
-  // fall back to extracting it from Spotify image metadata (requires metaLoaded).
-  const centerKey = allSongs[0]
-    ? `${allSongs[0].title}|||${(allSongs[0].subtitle || "").replace(/\s*\(\d{4}\)\s*$/, "").trim()}`
-    : "";
-  const centerMeta = songMeta[centerKey];
-  const derivedTrackId = centerMeta?.spotify_url?.match(/track\/([a-zA-Z0-9]+)/)?.[1] ?? undefined;
-  const centerTrackId = data?.spotify_track_id || derivedTrackId;
+  // Resolve the center song's Spotify identity via resolve-song.
+  // seo_pages.spotify_track_id is null for all existing pages, and deriving the
+  // track ID from useSpotifyImages returns the first *recommended* song's ID, not
+  // the center song's. resolve-song gives us the correct track ID + clean title/artist.
+  const [resolvedTrack, setResolvedTrack] = useState<{
+    spotify_track_id: string;
+    song_title: string;
+    artist_name: string;
+  } | null>(null);
+
+  useEffect(() => {
+    // Wait until page data is loaded (before that, displayName === slug with hyphens)
+    if (!displayName || displayName === slug) return;
+    // Skip if the page record already has the track ID
+    if (data?.spotify_track_id) return;
+    supabase.functions.invoke("resolve-song", { body: { query: displayName } })
+      .then(({ data: r }) => {
+        if (r?.spotify_track_id) setResolvedTrack(r);
+      });
+  }, [displayName]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const centerTrackId = data?.spotify_track_id || resolvedTrack?.spotify_track_id;
+  const profileSongTitle = resolvedTrack?.song_title || songTitleForSample || "";
+  const profileArtistName = resolvedTrack?.artist_name || (artistForSample?.replace(/\s*\(\d{4}\)\s*$/, "") || "");
 
   const { canonical: canonicalDescriptors, loading: profileLoading } = useSonicProfile({
     spotifyTrackId: centerTrackId,
-    songTitle: songTitleForSample || "",
-    artistName: artistForSample || "",
-    autoGenerate: !!centerTrackId && !!(songTitleForSample) && !!(artistForSample),
+    songTitle: profileSongTitle,
+    artistName: profileArtistName,
+    autoGenerate: !!centerTrackId && !!profileSongTitle && !!profileArtistName,
   });
 
   if (loading) return <PageSkeleton generating={generating} />;
@@ -156,7 +173,7 @@ const SongPage = () => {
                 <ExploreDNA
                   descriptors={canonicalDescriptors!.display_descriptors}
                   searchUrl={canonicalDescriptors!.descriptor_search_url}
-                  songTitle={songTitleForSample}
+                  songTitle={profileSongTitle || songTitleForSample}
                 />
               )}
             </div>
