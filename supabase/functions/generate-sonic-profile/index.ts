@@ -188,6 +188,7 @@ const CONTRADICTION_RULES: Array<{
   target: string;
   blockers: string[];
   reason: string;
+  era?: boolean;  // if true, uses era-specific log format
 }> = [
   {
     target: "laid-back",
@@ -230,6 +231,45 @@ const CONTRADICTION_RULES: Array<{
     target: "playful",
     blockers: ["cold", "swaggering", "simmering", "tension-release"],
     reason: "playful requires lightness; cold, dominant, or high-tension energy contradicts levity",
+  },
+
+  // ── Era contradictions ────────────────────────────────────────────────────
+  // Keep the more specific / more modern descriptor; remove the generic one.
+  {
+    target: "blog-era-rap",
+    blockers: ["industrial-rap", "rage-rap"],
+    reason: "industrial-rap and rage-rap postdate and contradict the blog-era aesthetic",
+    era: true,
+  },
+  {
+    target: "boom-bap-era",
+    blockers: ["industrial-rap", "rage-rap"],
+    reason: "industrial-rap and rage-rap are structurally opposed to boom-bap production values",
+    era: true,
+  },
+  {
+    target: "golden-age-hiphop",
+    blockers: ["rage-rap"],
+    reason: "rage-rap's detached maximalism is the antithesis of golden-age MC-first culture",
+    era: true,
+  },
+  {
+    target: "cloud-rap-era",
+    blockers: ["chicago-drill"],
+    reason: "chicago-drill's hard street realism contradicts cloud-rap's weightless atmosphere",
+    era: true,
+  },
+  {
+    target: "jazz-rap-era",
+    blockers: ["brooklyn-drill"],
+    reason: "brooklyn-drill's grim sonics and sparse menace oppose jazz-rap's intellectual warmth",
+    era: true,
+  },
+  {
+    target: "chipmunk-soul-era",
+    blockers: ["uk-drill"],
+    reason: "uk-drill's dark British street sensibility is incompatible with chipmunk-soul's warmth and nostalgia",
+    era: true,
   },
 ];
 
@@ -291,11 +331,15 @@ function flagDescriptorConflicts(
   const toRemove = new Set<string>();
 
   // Apply contradiction rules
-  for (const { target, blockers, reason } of CONTRADICTION_RULES) {
+  for (const { target, blockers, reason, era } of CONTRADICTION_RULES) {
     if (!allSlugs.has(target)) continue;
     for (const blocker of blockers) {
       if (allSlugs.has(blocker)) {
-        console.warn(`[sonic-profile] Contradiction: "${blocker}" → removing "${target}" (${reason})`);
+        if (era) {
+          console.warn(`[sonic-profile] Era conflict: removing "${target}" because "${blocker}" present`);
+        } else {
+          console.warn(`[sonic-profile] Contradiction: "${blocker}" → removing "${target}" (${reason})`);
+        }
         toRemove.add(target);
         break;
       }
