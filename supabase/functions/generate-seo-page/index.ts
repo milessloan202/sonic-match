@@ -90,9 +90,15 @@ async function fetchVerifiedMetadata(
   // 1. Fetch from Spotify for enriched metadata
   if (spotifyToken) {
     try {
-      const query = artistName 
+      // When artistName is known, use strict field-qualified search.
+      // When not (slug format has no dash separator), use a plain unquoted
+      // query so Spotify fuzzy-matches across title + artist — same approach
+      // used by resolve-song, which correctly maps "stronger kanye west" to
+      // "Stronger" by Kanye West. Strict track:"..." on an unsplit slug would
+      // match arbitrary titles (e.g. "Stronger - 1950s Kanye West").
+      const query = artistName
         ? `track:"${songTitle}" artist:"${artistName}"`
-        : `track:"${songTitle}"`;
+        : displayName;
       const res = await fetch(
         `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=1`,
         { headers: { Authorization: `Bearer ${spotifyToken}` } }
