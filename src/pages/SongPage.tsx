@@ -15,8 +15,10 @@ import { useSpotifyImages } from "../hooks/useSpotifyImages";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSampleData } from "@/hooks/useSampleData";
 import { useSonicProfile } from "@/hooks/useSonicProfile";
+import { useSongComparison } from "@/hooks/useSongComparison";
 import SampleInfo from "@/components/SampleInfo";
 import LinkedSummary from "../components/LinkedSummary";
+import { MatchDNA } from "@/components/MatchDNA";
 import { ExploreDNA } from "@/components/ExploreDNA";
 import { DescriptorTag } from "@/components/DescriptorTag";
 
@@ -24,7 +26,7 @@ const SongPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
   const { data, loading, generating, error } = useSeoPage(slug, "song");
-  const displayName = data?.heading?.replace(/^Songs Like\s*/i, "") || slug || "";
+  const displayName = data?.heading?.replace(/^(?:Songs Like|Songs Similar to)\s*/i, "") || slug || "";
   const discoverySteps = useDiscoveryPath(displayName, location.pathname);
   const [view, setView] = useState<"list" | "map">("list");
   const isMobile = useIsMobile();
@@ -50,25 +52,39 @@ const SongPage = () => {
   } | null>(null);
 
   useEffect(() => {
-    // Wait until page data is loaded (before that, displayName === slug with hyphens)
-    if (!displayName || displayName === slug) return;
-    // Skip if the page record already has the track ID
-    if (data?.spotify_track_id) return;
-    supabase.functions.invoke("resolve-song", { body: { query: displayName } })
+    // Wait for page data, skip if we already have a track ID
+    if (!data || data.spotify_track_id) return;
+    // Use the slug as the query (e.g. "stronger kanye west") — more reliable than
+    // the heading which may contain "Songs Like" / "Songs Similar to" prefixes.
+    const query = (slug || "").replace(/-/g, " ");
+    if (!query) return;
+    supabase.functions.invoke("resolve-song", { body: { query } })
       .then(({ data: r }) => {
         if (r?.spotify_track_id) setResolvedTrack(r);
       });
-  }, [displayName]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data?.heading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const centerTrackId = data?.spotify_track_id || resolvedTrack?.spotify_track_id;
   const profileSongTitle = resolvedTrack?.song_title || songTitleForSample || "";
   const profileArtistName = resolvedTrack?.artist_name || (artistForSample?.replace(/\s*\(\d{4}\)\s*$/, "") || "");
 
-  const { canonical: canonicalDescriptors, loading: profileLoading } = useSonicProfile({
+  const { profile: sonicProfile, canonical: canonicalDescriptors, loading: profileLoading } = useSonicProfile({
     spotifyTrackId: centerTrackId,
     songTitle: profileSongTitle,
     artistName: profileArtistName,
     autoGenerate: !!centerTrackId && !!profileSongTitle && !!profileArtistName,
+  });
+
+  // Top recommended song for MatchDNA comparison
+  const topMatchSong = data?.closest_matches?.[0] || data?.same_energy?.[0];
+  const topMatchTrackId = topMatchSong?.spotify_id || null;
+  const topMatchTitle = topMatchSong?.title || "";
+  const topMatchArtist = topMatchSong?.subtitle?.replace(/\s*\(\d{4}\)\s*$/, "") || "";
+
+  const { comparison, loading: comparisonLoading } = useSongComparison({
+    songAId: centerTrackId,
+    songBId: topMatchTrackId,
+    autoGenerate: !!centerTrackId && !!topMatchTrackId,
   });
 
   if (loading) return <PageSkeleton generating={generating} />;
@@ -160,7 +176,7 @@ const SongPage = () => {
             <ResultSection title="Why These Work" items={data.why_these_work} variant="explanation" />
           )}
 
-          {/* 3. Explore This DNA — descriptor chips */}
+          {/* 3. Explore This DNA — descriptor chips + sonic lineage */}
           {(profileLoading || (canonicalDescriptors && canonicalDescriptors.display_descriptors.length > 0)) && (
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-foreground">Explore This DNA</h2>
@@ -170,11 +186,22 @@ const SongPage = () => {
                   Loading DNA...
                 </div>
               ) : (
-                <ExploreDNA
-                  descriptors={canonicalDescriptors!.display_descriptors}
-                  searchUrl={canonicalDescriptors!.descriptor_search_url}
-                  songTitle={profileSongTitle || songTitleForSample}
-                />
+                <>
+                  <MatchDNA
+                    centerTitle={profileSongTitle}
+                    centerArtist={profileArtistName}
+                    comparedTitle={topMatchTitle || undefined}
+                    comparedArtist={topMatchArtist || undefined}
+                    comparison={comparison}
+                    centerProfile={sonicProfile}
+                    loading={comparisonLoading && !sonicProfile && !comparison}
+                  />
+                  <ExploreDNA
+                    descriptors={canonicalDescriptors!.display_descriptors}
+                    searchUrl={canonicalDescriptors!.descriptor_search_url}
+                    songTitle={profileSongTitle || songTitleForSample}
+                  />
+                </>
               )}
             </div>
           )}

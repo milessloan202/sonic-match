@@ -47,8 +47,12 @@ export function ExploreDNA({ descriptors, searchUrl, songTitle }: ExploreDNAProp
         )}
       </div>
 
-      {/* Canonical descriptor tags */}
-      <CanonicalDescriptorTags descriptors={descriptors} size="md" />
+      {/* Canonical descriptor tags — each chip stacks into a lineage search */}
+      <CanonicalDescriptorTags
+        descriptors={descriptors}
+        size="md"
+        onClick={(d) => navigate(withLineageMode(`/search?descriptors=${d.slug}`))}
+      />
 
       {/* Primary CTA */}
       <button
