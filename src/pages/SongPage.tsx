@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
-import { ArrowLeft } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowLeft, X, ExternalLink } from "lucide-react";
 import ResultSection from "../components/ResultSection";
 import SEOHead from "../components/SEOHead";
 import PageSkeleton from "../components/PageSkeleton";
@@ -21,6 +21,8 @@ import LinkedSummary from "../components/LinkedSummary";
 import { MatchDNA } from "@/components/MatchDNA";
 import { ExploreDNA } from "@/components/ExploreDNA";
 import { DescriptorTag } from "@/components/DescriptorTag";
+import ResultCard from "../components/ResultCard";
+import type { CanonicalDescriptor } from "@/hooks/useSonicProfile";
 
 // Canonical category groups for the grouped Sonic DNA display under prose
 const SONIC_DNA_GROUPS: { key: string; label: string }[] = [
@@ -35,6 +37,8 @@ const SONIC_DNA_GROUPS: { key: string; label: string }[] = [
   { key: "listener_use_case",   label: "Best For"    },
 ];
 
+type SongItem = { title: string; subtitle?: string; tag?: string; spotify_id?: string | null };
+
 const SongPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
@@ -44,20 +48,32 @@ const SongPage = () => {
   const [view, setView] = useState<"list" | "map">("list");
   const isMobile = useIsMobile();
 
-  // Extract song title and artist for sample lookup
+  // ── Descriptor stacking state ──────────────────────────────────────────────
+  const [activeSlugs, setActiveSlugs] = useState(new Set<string>());
+  const [descriptorMap, setDescriptorMap] = useState<Record<string, CanonicalDescriptor>>({});
+  const [dnaFilteredSongs, setDnaFilteredSongs] = useState<SongItem[] | null>(null);
+  const [dnaSearching, setDnaSearching] = useState(false);
+
+  const toggleDescriptor = useCallback((slug: string) => {
+    setActiveSlugs(prev => {
+      const next = new Set(prev);
+      if (next.has(slug)) next.delete(slug);
+      else next.add(slug);
+      return next;
+    });
+  }, []);
+
+  // ── Extract song title and artist for sample lookup ────────────────────────
   const songParts = displayName.split(/\s[–—-]\s/);
   const songTitleForSample = songParts[0] || undefined;
   const artistForSample = songParts[1] || data?.closest_matches?.[0]?.subtitle?.replace(/^by\s+/i, "") || undefined;
   const { sample } = useSampleData(songTitleForSample, artistForSample);
 
-  // Spotify images — must be declared before sonic profile hooks that depend on it
+  // ── Spotify images ─────────────────────────────────────────────────────────
   const allSongs = [...(data?.closest_matches || []), ...(data?.same_energy || [])];
   const { songImages, songMeta, artistImages, metaLoaded } = useSpotifyImages(allSongs, data?.related_artists || []);
 
-  // Resolve the center song's Spotify identity via resolve-song.
-  // seo_pages.spotify_track_id is null for all existing pages, and deriving the
-  // track ID from useSpotifyImages returns the first *recommended* song's ID, not
-  // the center song's. resolve-song gives us the correct track ID + clean title/artist.
+  // ── Resolve center song Spotify identity ───────────────────────────────────
   const [resolvedTrack, setResolvedTrack] = useState<{
     spotify_track_id: string;
     song_title: string;
@@ -65,10 +81,7 @@ const SongPage = () => {
   } | null>(null);
 
   useEffect(() => {
-    // Wait for page data, skip if we already have a track ID
     if (!data || data.spotify_track_id) return;
-    // Use the slug as the query (e.g. "stronger kanye west") — more reliable than
-    // the heading which may contain "Songs Like" / "Songs Similar to" prefixes.
     const query = (slug || "").replace(/-/g, " ");
     if (!query) return;
     supabase.functions.invoke("resolve-song", { body: { query } })
@@ -88,7 +101,15 @@ const SongPage = () => {
     autoGenerate: !!centerTrackId && !!profileSongTitle && !!profileArtistName,
   });
 
-  // Top recommended song for MatchDNA comparison
+  // Build a slug→descriptor lookup once canonical descriptors arrive
+  useEffect(() => {
+    if (!canonicalDescriptors) return;
+    const map: Record<string, CanonicalDescriptor> = {};
+    for (const d of canonicalDescriptors.display_descriptors) map[d.slug] = d;
+    setDescriptorMap(map);
+  }, [canonicalDescriptors]);
+
+  // ── Top recommended song for MatchDNA comparison ──────────────────────────
   const topMatchSong = data?.closest_matches?.[0] || data?.same_energy?.[0];
   const topMatchTrackId = topMatchSong?.spotify_id || null;
   const topMatchTitle = topMatchSong?.title || "";
@@ -100,6 +121,30 @@ const SongPage = () => {
     autoGenerate: !!centerTrackId && !!topMatchTrackId,
   });
 
+  // ── Descriptor-filtered song search ───────────────────────────────────────
+  useEffect(() => {
+    if (activeSlugs.size === 0) {
+      setDnaFilteredSongs(null);
+      return;
+    }
+    setDnaSearching(true);
+    supabase.functions.invoke("search-by-descriptors", {
+      body: { descriptors: [...activeSlugs], limit: 12 },
+    }).then(({ data: r }) => {
+      if (r?.results) {
+        setDnaFilteredSongs(
+          (r.results as any[]).map((res) => ({
+            title: res.song_title,
+            subtitle: res.artist_name,
+            spotify_id: res.spotify_track_id,
+          }))
+        );
+      }
+      setDnaSearching(false);
+    });
+  }, [activeSlugs]);
+
+  // ── Early returns ──────────────────────────────────────────────────────────
   if (loading) return <PageSkeleton generating={generating} />;
   if (error) {
     return (
@@ -114,6 +159,7 @@ const SongPage = () => {
   if (!data) return null;
 
   const activeView = isMobile ? "list" : view;
+  const activeSlugList = [...activeSlugs];
 
   return (
     <div className="min-h-screen px-4 py-12 max-w-3xl mx-auto space-y-10">
@@ -146,7 +192,7 @@ const SongPage = () => {
           />
         )}
 
-        {/* Sonic DNA — grouped descriptor profile, shown directly under the prose */}
+        {/* Sonic DNA — grouped descriptor profile with in-page stacking */}
         {(profileLoading || (canonicalDescriptors?.display_descriptors.length ?? 0) > 0) && (
           <div className="space-y-2 pt-1">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">Sonic DNA</p>
@@ -167,7 +213,16 @@ const SongPage = () => {
                       </span>
                       <div className="flex flex-wrap gap-1.5">
                         {chips.map(d => (
-                          <DescriptorTag key={d.slug} slug={d.slug} label={d.label} category={d.category} clickable size="sm" />
+                          <DescriptorTag
+                            key={d.slug}
+                            slug={d.slug}
+                            label={d.label}
+                            category={d.category}
+                            clickable
+                            size="sm"
+                            className={activeSlugs.has(d.slug) ? "ring-1 ring-white/60 brightness-125" : ""}
+                            onClick={() => toggleDescriptor(d.slug)}
+                          />
                         ))}
                       </div>
                     </div>
@@ -177,6 +232,53 @@ const SongPage = () => {
             )}
           </div>
         )}
+
+        {/* Active DNA Mix — inline stacking panel */}
+        <AnimatePresence>
+          {activeSlugs.size > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.2 }}
+              className="rounded-xl border border-border bg-card/60 p-4 space-y-3"
+            >
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                  Active DNA Mix
+                </p>
+                <button
+                  onClick={() => setActiveSlugs(new Set())}
+                  className="text-[10px] text-muted-foreground hover:text-foreground transition-colors uppercase tracking-wider"
+                >
+                  Clear all
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {activeSlugList.map(slug => {
+                  const d = descriptorMap[slug];
+                  return (
+                    <button
+                      key={slug}
+                      onClick={() => toggleDescriptor(slug)}
+                      className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-medium tracking-wide transition-all hover:brightness-110 active:scale-95 bg-primary/20 text-primary border-primary/40"
+                    >
+                      {d?.label || slug.replace(/-/g, " ")}
+                      <X className="w-2.5 h-2.5 opacity-60" />
+                    </button>
+                  );
+                })}
+              </div>
+              <Link
+                to={`/search?descriptors=${activeSlugList.join(",")}&mode=lineage`}
+                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ExternalLink className="w-3 h-3" />
+                Open this mix in Search
+              </Link>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
 
       {sample && <SampleInfo sample={sample} />}
@@ -192,9 +294,53 @@ const SongPage = () => {
         />
       ) : (
         <>
-          {/* 1. Songs With Similar DNA — closest matches + same energy combined */}
-          {allSongs.length > 0 && (
-            <ResultSection title="Songs With Similar DNA" items={allSongs} linkPrefix="/songs-like" imageType="song" images={songImages} songMetaMap={songMeta} metaLoaded={metaLoaded} />
+          {/* 1. Songs With Similar DNA — shows descriptor-filtered results when mix is active */}
+          {activeSlugs.size > 0 ? (
+            <section className="space-y-4">
+              <div className="flex items-center justify-between">
+                <motion.h2
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="text-xl font-semibold text-foreground"
+                >
+                  Songs With Similar DNA
+                </motion.h2>
+                <span className="text-xs text-muted-foreground">filtered by mix</span>
+              </div>
+              {dnaSearching ? (
+                <div className="flex items-center gap-3 text-muted-foreground text-sm py-4">
+                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  Finding matches...
+                </div>
+              ) : dnaFilteredSongs && dnaFilteredSongs.length > 0 ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {dnaFilteredSongs.map((item, i) => (
+                    <ResultCard
+                      key={item.title + i}
+                      title={item.title}
+                      subtitle={item.subtitle}
+                      index={i}
+                      linkPrefix="/songs-like"
+                      imageType="song"
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground py-4">
+                  No songs found for this mix yet.{" "}
+                  <Link
+                    to={`/search?descriptors=${activeSlugList.join(",")}&mode=lineage`}
+                    className="underline underline-offset-2 hover:text-foreground"
+                  >
+                    Try in Search
+                  </Link>
+                </p>
+              )}
+            </section>
+          ) : (
+            allSongs.length > 0 && (
+              <ResultSection title="Songs With Similar DNA" items={allSongs} linkPrefix="/songs-like" imageType="song" images={songImages} songMetaMap={songMeta} metaLoaded={metaLoaded} />
+            )
           )}
 
           {/* 2. Why These Work */}
