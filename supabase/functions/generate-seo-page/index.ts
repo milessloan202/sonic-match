@@ -243,6 +243,84 @@ FACTUAL ACCURACY RULES (CRITICAL — STRICTLY ENFORCED):
   }
 }
 
+// ============= IDENTITY VALIDATION LAYER =============
+// Guards against caching or generating content for the wrong song.
+// Two entry points:
+//   validateResolvedIdentity — used after a fresh Spotify lookup
+//   validateCachedHeading    — used when a cached seo_pages row is found
+
+const IDENTITY_STOP = new Set([
+  "the","a","an","and","of","in","to","is","it","by","at","on","for",
+  "songs","similar","like","song",
+]);
+
+function identityWords(s: string): string[] {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter(w => w.length > 1 && !IDENTITY_STOP.has(w));
+}
+
+/**
+ * Checks whether the Spotify-resolved title + artist are consistent with
+ * the slug. Two rules must both pass:
+ *
+ * 1. At least 50 % of meaningful slug words appear in (title ∪ artist).
+ * 2. If the artist has meaningful words, at least one must appear in the
+ *    slug. This catches "Stronger - 1950s Kanye West / The Speakeasy
+ *    Rappers" — the title coincidentally matches all slug words but the
+ *    artist name has zero slug overlap, betraying the wrong identity.
+ */
+function validateResolvedIdentity(
+  slug: string,
+  resolvedTitle: string,
+  resolvedArtist: string,
+): { valid: boolean; ratio: number; reason: string } {
+  const slugWords = identityWords(slug.replace(/-/g, " "));
+  if (slugWords.length === 0) return { valid: true, ratio: 1, reason: "empty slug" };
+
+  const titleWords = identityWords(resolvedTitle);
+  const artistWords = identityWords(resolvedArtist);
+  const identitySet = new Set([...titleWords, ...artistWords]);
+  const slugSet = new Set(slugWords);
+
+  const matches = slugWords.filter(w => identitySet.has(w)).length;
+  const ratio = matches / slugWords.length;
+
+  // Rule 2: artist words must have at least one slug word hit
+  if (artistWords.length > 0) {
+    const artistInSlug = artistWords.filter(w => slugSet.has(w)).length;
+    if (artistInSlug === 0) {
+      return {
+        valid: false,
+        ratio,
+        reason: `artist "${resolvedArtist}" has no words in slug`,
+      };
+    }
+  }
+
+  // Rule 1: overall word coverage
+  if (ratio < 0.5) {
+    return { valid: false, ratio, reason: `low word overlap (${ratio.toFixed(2)})` };
+  }
+
+  return { valid: true, ratio, reason: "ok" };
+}
+
+/**
+ * Checks whether a cached seo_pages row's heading is consistent with
+ * the slug. Used to detect and evict stale/wrong cached rows.
+ */
+function validateCachedHeading(slug: string, heading: string | null): boolean {
+  if (!heading) return false;
+  const slugWords = identityWords(slug.replace(/-/g, " "));
+  if (slugWords.length === 0) return true;
+  const headingWords = new Set(identityWords(heading));
+  const matches = slugWords.filter(w => headingWords.has(w)).length;
+  return matches / slugWords.length >= 0.5;
+}
+
 // ============= SONIC DNA PROFILE LAYER =============
 // Fetches (or generates) the sonic descriptor profile for the center song,
 // then injects it into the prose prompt so the summary is anchored to
@@ -424,18 +502,36 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Check if page already exists
+    // Check if page already exists — for song pages also validate identity
     const { data: existing } = await supabase
       .from("seo_pages")
-      .select("id")
+      .select("id, spotify_track_id, heading")
       .eq("slug", slug)
       .eq("page_type", page_type)
       .maybeSingle();
 
     if (existing) {
-      return new Response(JSON.stringify({ status: "exists" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      if (page_type === "song") {
+        const headingOk = validateCachedHeading(slug, existing.heading);
+        if (!headingOk) {
+          console.log(
+            `[Identity] Cache MISMATCH slug="${slug}" heading="${existing.heading}" — evicting and regenerating`,
+          );
+          await supabase.from("seo_pages").delete().eq("id", existing.id);
+          // Fall through to regeneration
+        } else {
+          console.log(
+            `[Identity] Cache HIT slug="${slug}" heading="${existing.heading}" track_id="${existing.spotify_track_id ?? "none"}"`,
+          );
+          return new Response(JSON.stringify({ status: "exists" }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      } else {
+        return new Response(JSON.stringify({ status: "exists" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     // Rate limits only apply to new AI generations
@@ -480,6 +576,37 @@ serve(async (req) => {
 
     // --- Fetch verified metadata for song pages ---
     const verifiedMetadata = await fetchVerifiedMetadata(displayName, page_type, supabase, spotifyToken);
+
+    // --- Identity logging and validation (song pages only) ---
+    if (page_type === "song") {
+      console.log(
+        `[Identity] slug="${slug}"` +
+        ` resolved_title="${verifiedMetadata.song_title ?? "none"}"` +
+        ` resolved_artist="${verifiedMetadata.artist_name ?? "none"}"` +
+        ` spotify_track_id="${verifiedMetadata.spotify_track_id ?? "none"}"` +
+        ` confidence="${verifiedMetadata.metadata_confidence}"`,
+      );
+
+      // If Spotify resolved a track ID, validate the identity before generating.
+      // A mismatch means Spotify returned the wrong song for this slug — abort
+      // rather than cache bad content.
+      if (verifiedMetadata.spotify_track_id && verifiedMetadata.song_title && verifiedMetadata.artist_name) {
+        const check = validateResolvedIdentity(slug, verifiedMetadata.song_title, verifiedMetadata.artist_name);
+        if (!check.valid) {
+          console.error(
+            `[Identity] ABORT slug="${slug}" reason="${check.reason}"` +
+            ` resolved_title="${verifiedMetadata.song_title}"` +
+            ` resolved_artist="${verifiedMetadata.artist_name}"`,
+          );
+          return new Response(
+            JSON.stringify({ error: `Could not confidently resolve song identity for slug "${slug}". Reason: ${check.reason}` }),
+            { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+        console.log(`[Identity] Resolved identity OK slug="${slug}" ratio=${check.ratio.toFixed(2)}`);
+      }
+    }
+
     const metadataBlock = buildMetadataBlock(verifiedMetadata);
     const factualInstructions = getFactualInstructions(verifiedMetadata.metadata_confidence);
 
@@ -908,9 +1035,36 @@ SAMPLE INFORMATION RULE (CRITICAL):
       upsertData.spotify_track_id = seedSpotifyTrackId;
     }
 
-    const { error: insertError } = await supabase.from("seo_pages").upsert(upsertData);
+    // Store verified identity fields so future cache reads can validate
+    // without re-querying Spotify. Requires the columns to exist in seo_pages
+    // (see schema recommendation below). Harmless if columns are absent —
+    // PostgREST will reject the upsert in that case; we catch and continue.
+    if (page_type === "song" && verifiedMetadata.song_title) {
+      upsertData.resolved_song_title = verifiedMetadata.song_title;
+      upsertData.resolved_artist_name = verifiedMetadata.artist_name;
+    }
 
-    if (insertError) throw insertError;
+    let insertError: any = null;
+    try {
+      ({ error: insertError } = await supabase.from("seo_pages").upsert(upsertData));
+    } catch (e) {
+      insertError = e;
+    }
+
+    // If the upsert failed because resolved_song_title/resolved_artist_name
+    // columns don't exist yet, retry without those fields.
+    if (insertError) {
+      const msg = String(insertError?.message || insertError);
+      if (msg.includes("resolved_song_title") || msg.includes("resolved_artist_name")) {
+        console.log("[Identity] Schema missing resolved identity columns — writing without them");
+        delete upsertData.resolved_song_title;
+        delete upsertData.resolved_artist_name;
+        const { error: retryError } = await supabase.from("seo_pages").upsert(upsertData);
+        if (retryError) throw retryError;
+      } else {
+        throw insertError;
+      }
+    }
 
     return new Response(JSON.stringify({ status: "created" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
