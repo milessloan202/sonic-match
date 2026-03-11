@@ -505,23 +505,46 @@ serve(async (req) => {
     // Check if page already exists — for song pages also validate identity
     const { data: existing } = await supabase
       .from("seo_pages")
-      .select("id, spotify_track_id, heading")
+      .select("id, spotify_track_id, heading, resolved_song_title, resolved_artist_name")
       .eq("slug", slug)
       .eq("page_type", page_type)
       .maybeSingle();
 
     if (existing) {
       if (page_type === "song") {
-        const headingOk = validateCachedHeading(slug, existing.heading);
-        if (!headingOk) {
+        // Prefer exact resolved identity fields when available; fall back to
+        // heading-based word matching for rows written before the schema change.
+        let cacheOk: boolean;
+        let validationMethod: string;
+
+        if (existing.resolved_song_title && existing.resolved_artist_name) {
+          const check = validateResolvedIdentity(
+            slug,
+            existing.resolved_song_title,
+            existing.resolved_artist_name,
+          );
+          cacheOk = check.valid;
+          validationMethod = `exact fields ratio=${check.ratio.toFixed(2)}`;
+        } else {
+          cacheOk = validateCachedHeading(slug, existing.heading);
+          validationMethod = "heading fallback";
+        }
+
+        if (!cacheOk) {
           console.log(
-            `[Identity] Cache MISMATCH slug="${slug}" heading="${existing.heading}" — evicting and regenerating`,
+            `[Identity] Cache MISMATCH slug="${slug}"` +
+            ` resolved_title="${existing.resolved_song_title ?? "—"}"` +
+            ` resolved_artist="${existing.resolved_artist_name ?? "—"}"` +
+            ` heading="${existing.heading}" method="${validationMethod}" — evicting and regenerating`,
           );
           await supabase.from("seo_pages").delete().eq("id", existing.id);
           // Fall through to regeneration
         } else {
           console.log(
-            `[Identity] Cache HIT slug="${slug}" heading="${existing.heading}" track_id="${existing.spotify_track_id ?? "none"}"`,
+            `[Identity] Cache HIT slug="${slug}"` +
+            ` resolved_title="${existing.resolved_song_title ?? "—"}"` +
+            ` resolved_artist="${existing.resolved_artist_name ?? "—"}"` +
+            ` track_id="${existing.spotify_track_id ?? "none"}" method="${validationMethod}"`,
           );
           return new Response(JSON.stringify({ status: "exists" }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
