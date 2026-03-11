@@ -129,6 +129,8 @@ export type Database = {
           related_artists: Json | null
           related_songs: Json | null
           related_vibes: Json | null
+          resolved_artist_name: string | null
+          resolved_song_title: string | null
           same_energy: Json | null
           slug: string
           spotify_track_id: string | null
@@ -149,6 +151,8 @@ export type Database = {
           related_artists?: Json | null
           related_songs?: Json | null
           related_vibes?: Json | null
+          resolved_artist_name?: string | null
+          resolved_song_title?: string | null
           same_energy?: Json | null
           slug: string
           spotify_track_id?: string | null
@@ -169,6 +173,8 @@ export type Database = {
           related_artists?: Json | null
           related_songs?: Json | null
           related_vibes?: Json | null
+          resolved_artist_name?: string | null
+          resolved_song_title?: string | null
           same_energy?: Json | null
           slug?: string
           spotify_track_id?: string | null

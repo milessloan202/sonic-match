@@ -1,0 +1,1 @@
+ALTER TABLE seo_pages ADD COLUMN IF NOT EXISTS resolved_song_title TEXT, ADD COLUMN IF NOT EXISTS resolved_artist_name TEXT;
