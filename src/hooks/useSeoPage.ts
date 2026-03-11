@@ -11,6 +11,7 @@ interface SeoPageData {
   meta_description: string | null;
   heading: string;
   summary: string | null;
+  spotify_track_id: string | null;
   closest_matches: { title: string; subtitle?: string; tag?: string; spotify_id?: string | null }[];
   same_energy: { title: string; subtitle?: string; spotify_id?: string | null }[];
   related_artists: { title: string; subtitle?: string }[];
@@ -47,6 +48,7 @@ export function useSeoPage(slug: string | undefined, pageType: string) {
           meta_description: page.meta_description,
           heading: page.heading,
           summary: page.summary,
+          spotify_track_id: page.spotify_track_id ?? null,
           closest_matches: (page.closest_matches as any[]) || [],
           same_energy: (page.same_energy as any[]) || [],
           related_artists: (page.related_artists as any[]) || [],
@@ -90,6 +92,7 @@ export function useSeoPage(slug: string | undefined, pageType: string) {
             meta_description: newPage.meta_description,
             heading: newPage.heading,
             summary: newPage.summary,
+            spotify_track_id: newPage.spotify_track_id ?? null,
             closest_matches: (newPage.closest_matches as any[]) || [],
             same_energy: (newPage.same_energy as any[]) || [],
             related_artists: (newPage.related_artists as any[]) || [],

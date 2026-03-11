@@ -38,19 +38,20 @@ const SongPage = () => {
   const allSongs = [...(data?.closest_matches || []), ...(data?.same_energy || [])];
   const { songImages, songMeta, artistImages, metaLoaded } = useSpotifyImages(allSongs, data?.related_artists || []);
 
-  // Sonic DNA — profile for the center song, comparison to top recommendation
-  // Use spotify_url to extract track ID since SongMeta doesn't have spotify_track_id
+  // Resolve center track ID: prefer seo_pages.spotify_track_id (available immediately),
+  // fall back to extracting it from Spotify image metadata (requires metaLoaded).
   const centerKey = allSongs[0]
     ? `${allSongs[0].title}|||${(allSongs[0].subtitle || "").replace(/\s*\(\d{4}\)\s*$/, "").trim()}`
     : "";
   const centerMeta = songMeta[centerKey];
-  const centerTrackId = centerMeta?.spotify_url?.match(/track\/([a-zA-Z0-9]+)/)?.[1] ?? undefined;
+  const derivedTrackId = centerMeta?.spotify_url?.match(/track\/([a-zA-Z0-9]+)/)?.[1] ?? undefined;
+  const centerTrackId = data?.spotify_track_id || derivedTrackId;
 
   const { canonical: canonicalDescriptors, loading: profileLoading } = useSonicProfile({
     spotifyTrackId: centerTrackId,
     songTitle: songTitleForSample || "",
     artistName: artistForSample || "",
-    autoGenerate: !!centerTrackId && metaLoaded,
+    autoGenerate: !!centerTrackId && !!(songTitleForSample) && !!(artistForSample),
   });
 
   if (loading) return <PageSkeleton generating={generating} />;
@@ -100,7 +101,7 @@ const SongPage = () => {
         )}
 
         {/* Sonic DNA — this song's descriptor chips, shown directly under the prose */}
-        {metaLoaded && !!centerTrackId && (profileLoading || (canonicalDescriptors?.display_descriptors.length ?? 0) > 0) && (
+        {(profileLoading || (canonicalDescriptors?.display_descriptors.length ?? 0) > 0) && (
           <div className="space-y-2 pt-1">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">Sonic DNA</p>
             {profileLoading ? (
@@ -143,7 +144,7 @@ const SongPage = () => {
           )}
 
           {/* 3. Explore This DNA — descriptor chips */}
-          {metaLoaded && !!centerTrackId && (profileLoading || (canonicalDescriptors && canonicalDescriptors.display_descriptors.length > 0)) && (
+          {(profileLoading || (canonicalDescriptors && canonicalDescriptors.display_descriptors.length > 0)) && (
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-foreground">Explore This DNA</h2>
               {profileLoading ? (
