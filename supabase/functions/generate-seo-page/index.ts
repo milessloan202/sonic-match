@@ -379,11 +379,36 @@ async function fetchSonicDescriptors(
       .single() as any);
 
     if (cached?.profile_json?.canonical_descriptors?.display_descriptors?.length) {
-      console.log("[SonicDNA] Cache hit for prose anchoring");
+      console.log("[SonicDNA] Cache hit (v2) for prose anchoring");
       return {
         descriptors: cached.profile_json.canonical_descriptors.display_descriptors as CanonicalDescriptor[],
         confidenceScore: typeof cached.confidence_score === "number" ? cached.confidence_score : null,
       };
+    }
+
+    // v1 fallback: manually seeded profiles store raw slug arrays per category
+    // (e.g. profile_json.emotional_tone: ["cold","detached"]) with no canonical_descriptors.
+    // Extract them directly so we avoid the round-trip to generate-sonic-profile.
+    if (cached?.profile_json) {
+      const v1Descriptors: CanonicalDescriptor[] = [];
+      for (const cat of SONIC_CATEGORY_ORDER) {
+        const slugs = (cached.profile_json as Record<string, unknown>)[cat];
+        if (Array.isArray(slugs)) {
+          for (const slug of slugs) {
+            if (typeof slug === "string") {
+              const label = slug.replace(/-/g, " ");
+              v1Descriptors.push({ slug, label, category: cat });
+            }
+          }
+        }
+      }
+      if (v1Descriptors.length > 0) {
+        console.log(`[SonicDNA] Cache hit (v1 raw format) — ${v1Descriptors.length} descriptors extracted, no round-trip needed`);
+        return {
+          descriptors: v1Descriptors,
+          confidenceScore: typeof cached.confidence_score === "number" ? cached.confidence_score : null,
+        };
+      }
     }
 
     // Generate via the sonic-profile edge function
