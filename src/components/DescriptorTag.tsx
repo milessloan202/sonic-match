@@ -38,6 +38,7 @@ interface DescriptorTagProps {
   label?: string;
   category?: string;
   clickable?: boolean;
+  active?: boolean;
   size?: "sm" | "md";
   className?: string;
   onClick?: () => void;
@@ -48,6 +49,7 @@ export function DescriptorTag({
   label,
   category,
   clickable = false,
+  active = false,
   size = "sm",
   className = "",
   onClick,
@@ -61,14 +63,21 @@ export function DescriptorTag({
     ? "px-3 py-1.5 text-xs"
     : "px-2 py-0.5 text-[10px]";
 
-  const baseClass = `inline-flex items-center rounded-full border font-medium tracking-wide transition-all select-none ${sizeClass} ${colorClass} ${className}`;
+  const activeClass = active ? "ring-1 ring-white/50 brightness-125" : "";
+
+  const baseClass = `inline-flex items-center rounded-full border font-medium tracking-wide transition-all select-none ${sizeClass} ${colorClass} ${activeClass} ${className}`;
 
   if (clickable) {
+    const titleText = active
+      ? `Remove ${displayLabel} from mix`
+      : onClick
+        ? `Add ${displayLabel} to mix`
+        : `Find songs with ${displayLabel} →`;
     return (
       <button
         onClick={() => onClick ? onClick() : navigate(`/search?descriptors=${slug}&mode=descriptor`)}
         className={`${baseClass} cursor-pointer hover:brightness-125 hover:scale-105 active:scale-95`}
-        title={`Find songs with ${displayLabel} →`}
+        title={titleText}
       >
         {displayLabel}
       </button>
@@ -93,6 +102,8 @@ interface DescriptorTagGroupProps {
   limit?: number;
   // Lookup map from descriptor_registry for labels
   labelMap?: Record<string, string>;
+  activeSlugs?: Set<string>;
+  onToggle?: (slug: string) => void;
 }
 
 export function DescriptorTagGroup({
@@ -102,6 +113,8 @@ export function DescriptorTagGroup({
   size = "sm",
   limit,
   labelMap = {},
+  activeSlugs,
+  onToggle,
 }: DescriptorTagGroupProps) {
   const visible = limit ? slugs.slice(0, limit) : slugs;
 
@@ -113,8 +126,10 @@ export function DescriptorTagGroup({
           slug={slug}
           label={labelMap[slug]}
           category={category}
-          clickable={clickable}
+          clickable={clickable || !!onToggle}
+          active={activeSlugs?.has(slug)}
           size={size}
+          onClick={onToggle ? () => onToggle(slug) : undefined}
         />
       ))}
     </div>

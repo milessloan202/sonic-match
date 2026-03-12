@@ -29,15 +29,17 @@ const SONIC_DNA_GROUPS: { key: string; label: string }[] = [
   { key: "emotional_tone",      label: "Mood"        },
   { key: "energy_posture",      label: "Energy"      },
   { key: "texture",             label: "Texture"     },
-  { key: "spatial_feel",        label: "Space"       },
+  { key: "groove_character",    label: "Groove"      },
+  { key: "vocal_character",     label: "Vocals"      },
+  { key: "harmonic_color",      label: "Harmony"     },
   { key: "era_movement",        label: "Era"         },
   { key: "era_period",          label: "Period"      },
-  { key: "groove_character",    label: "Groove"      },
-  { key: "harmonic_color",      label: "Harmony"     },
-  { key: "vocal_character",     label: "Vocals"      },
+  { key: "spatial_feel",        label: "Space"       },
   { key: "environment_imagery", label: "Environment" },
   { key: "listener_use_case",   label: "Best For"    },
 ];
+
+const DNA_CATEGORY_LIMIT = 4;
 
 type SongItem = { title: string; subtitle?: string; tag?: string; spotify_id?: string | null };
 
@@ -204,9 +206,11 @@ const SongPage = () => {
                 Loading...
               </div>
             ) : (
-              <div className="grid gap-2">
+              <div className="grid gap-3">
                 {SONIC_DNA_GROUPS.map(({ key, label }) => {
-                  const chips = canonicalDescriptors!.display_descriptors.filter(d => d.category === key);
+                  const chips = canonicalDescriptors!.display_descriptors
+                    .filter(d => d.category === key)
+                    .slice(0, DNA_CATEGORY_LIMIT);
                   if (chips.length === 0) return null;
                   return (
                     <div key={key} className="flex items-start gap-3">
@@ -221,8 +225,8 @@ const SongPage = () => {
                             label={d.label}
                             category={d.category}
                             clickable
+                            active={activeSlugs.has(d.slug)}
                             size="sm"
-                            className={activeSlugs.has(d.slug) ? "ring-1 ring-white/60 brightness-125" : ""}
                             onClick={() => toggleDescriptor(d.slug)}
                           />
                         ))}
@@ -369,6 +373,8 @@ const SongPage = () => {
                     comparison={comparison}
                     centerProfile={sonicProfile}
                     loading={comparisonLoading && !sonicProfile && !comparison}
+                    activeSlugs={activeSlugs}
+                    onToggle={toggleDescriptor}
                   />
                   <ExploreDNA
                     descriptors={canonicalDescriptors!.display_descriptors}

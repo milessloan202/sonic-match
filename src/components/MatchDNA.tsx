@@ -29,6 +29,8 @@ interface MatchDNAProps {
   comparison: SongComparison | null;
   centerProfile: SonicProfile | null;
   loading?: boolean;
+  activeSlugs?: Set<string>;
+  onToggle?: (slug: string) => void;
 }
 
 // Categories shown in the full profile section, in display order
@@ -88,6 +90,8 @@ export function MatchDNA({
   comparison,
   centerProfile,
   loading = false,
+  activeSlugs,
+  onToggle,
 }: MatchDNAProps) {
 
   if (loading) {
@@ -211,6 +215,8 @@ export function MatchDNA({
                     category={category}
                     clickable={clickable}
                     size="sm"
+                    activeSlugs={activeSlugs}
+                    onToggle={onToggle}
                   />
                 </div>
               );
@@ -226,6 +232,9 @@ export function MatchDNA({
                   slug={centerProfile.intensity_level}
                   label={centerProfile.intensity_level.replace(/-/g, " ")}
                   size="sm"
+                  clickable={!!onToggle}
+                  active={activeSlugs?.has(centerProfile.intensity_level)}
+                  onClick={onToggle ? () => onToggle(centerProfile.intensity_level!) : undefined}
                 />
               </div>
             )}
@@ -236,6 +245,9 @@ export function MatchDNA({
                   slug={centerProfile.danceability_feel}
                   label={centerProfile.danceability_feel.replace(/-/g, " ")}
                   size="sm"
+                  clickable={!!onToggle}
+                  active={activeSlugs?.has(centerProfile.danceability_feel)}
+                  onClick={onToggle ? () => onToggle(centerProfile.danceability_feel!) : undefined}
                 />
               </div>
             )}
