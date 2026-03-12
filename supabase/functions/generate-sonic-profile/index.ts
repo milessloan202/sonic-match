@@ -390,6 +390,22 @@ const CONTRADICTION_RULES: Array<{
     reason: "floating implies weightlessness; stomping, heavy percussion, relentless drive, or suppressed tension grounds it",
   },
   {
+    target: "gliding",
+    blockers: [
+      "stomping", "marching", "galloping",  // groove — heavy or ground-driven movement
+      "explosive", "charging", "simmering", // posture — kinetic force or suppressed tension disrupts smooth flow
+      "808-heavy", "punchy",                // drums — hard-hitting contradicts frictionless momentum
+    ],
+    reason: "gliding implies smooth, frictionless momentum; heavy percussion, kinetic force, or suppressed tension disrupts this",
+  },
+  {
+    target: "coiled",
+    blockers: [
+      "relaxed", "gliding", "floating", "buoyant",  // ease or weightlessness — coiled carries compressed force
+    ],
+    reason: "coiled is compressed tension waiting to release; it cannot coexist with ease, smooth flow, or weightlessness",
+  },
+  {
     target: "buoyant",
     blockers: [
       "stalking", "coiled", "simmering",    // posture — predatory, loaded, or suppressed energy
@@ -672,13 +688,19 @@ STRICT RULES:
 VOCABULARY:
 ${JSON.stringify(DESCRIPTOR_VOCABULARY, null, 2)}
 
-EVALUATION ORDER — always assess these before choosing descriptors:
-1. EMOTIONAL POSTURE: Is the song dominant, vulnerable, cold, warm, playful, menacing, or tense?
-2. FORCE AND TENSION: Is there suppressed or overt force — even at slow tempos?
-3. GROOVE CHARACTER: Does the rhythm feel easy and loose, stomping, coiled, or galloping?
-4. VOCAL DELIVERY: Is it assertive, detached, expressive, or easygoing?
-5. SPATIAL SCALE: Does this feel intimate and close, cavernous, boxed-in, or panoramic?
-Surface cues (tempo, sparseness) come LAST. Never let sparse or midtempo override a cold or forceful emotional posture.
+EVALUATION ORDER — assess in this sequence before assigning any descriptor:
+1. EMOTIONAL POSTURE  : What is the core emotional register? (dominant / vulnerable / cold / warm / playful / menacing / tense)
+2. ENERGY POSTURE     : How does energy behave? (relaxed / coiled / charging / simmering / gliding / floating / explosive / buoyant)
+   ↳ energy_posture is NOT BPM, NOT intensity_level. A fast song can be gliding; a slow song can be coiled.
+   ↳ It describes how energy moves through the song — its behavior and disposition, not its speed or volume.
+3. GROOVE BEHAVIOR    : Does the rhythm feel locked-in, stomping, swung, hypnotic, or rolling? Is there forward pull?
+4. TEXTURE + SPATIAL  : What does the production feel like (grainy / glossy / lush / hazy)? What is the physical scale (intimate / widescreen / cavernous)?
+5. VOCAL DELIVERY     : Is the voice assertive, detached, expressive, breathy, commanding, or yearning?
+6. HARMONIC COLOR     : Minor / major, jazzy, gospel, static, lush? What is the emotional quality of the harmony?
+7. ERA MOVEMENT       : What production wave or stylistic school does this belong to — if any?
+8. ERA PERIOD         : What chronological decade does the sonic feel suggest — if any?
+9. ENVIRONMENT / USE  : Where would this be played? What activity or moment does it soundtrack?
+Surface cues (tempo, sparseness, release date) come LAST. Never let sparse or midtempo override a cold or forceful emotional posture.
 
 DO NOT CONFUSE:
 • sparse → relaxed (sparse can be cold, tense, or predatory)
@@ -690,6 +712,10 @@ DO NOT CONFUSE:
 • relaxed → laid-back (relaxed is broader; use laid-back only for songs with genuine hip-hop or genre-chill connotation)
 • intimate → quiet (intimate is physical scale, not volume or sparseness)
 • cavernous → powerful (reverb creates space, not force)
+• fast tempo → high energy_posture (a fast song can still be gliding or floating)
+• high intensity → explosive (intensity_level is volume/impact; energy_posture is behavioral character)
+• live instruments → warm (acoustic can be sparse, cold, or tense; warm is texture quality, not instrumentation)
+• electronic → cold (electronic music can be warm, euphoric, or gliding)
 
 DESCRIPTOR GLOSSARY:
 ${formatGlossaryForPrompt()}
