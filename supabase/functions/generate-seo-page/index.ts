@@ -846,7 +846,11 @@ serve(async (req) => {
     let sonicDnaBlock = "";
     let postureAnchorBlock = "";
     if (page_type === "song" && !verifiedMetadata.spotify_track_id) {
-      console.warn("[PostureAnchor] SKIP — no spotify_track_id for song page, postureAnchorBlock will be empty");
+      console.warn("[PostureAnchor] ABORT — no spotify_track_id for song page, cannot anchor prose — returning 202 for retry");
+      return new Response(
+        JSON.stringify({ status: "retry", reason: "spotify_lookup_failed" }),
+        { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
     if (
       page_type === "song" &&
