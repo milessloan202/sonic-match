@@ -775,7 +775,8 @@ summary: EXACTLY 3 sentences. Dense and specific beats long and vague.
 - CRITICAL: The Sonic DNA Profile is ground truth. Every adjective you use must be consistent with it. If the profile says "driving," do not write "sparse." If it says "cold," do not write "warm." If it says "swaggering," do not write "meditative."
 - Write like a music critic describing the track to someone who hasn't heard it — specific, grounded, energetic where the track is energetic.
 - AVOID generic filler phrases like "hard-hitting bars," "infectious hooks," or "undeniable bangers" unless the Sonic DNA Profile explicitly supports high energy and danceability.
-- If the Sonic DNA Profile is marked "Profile Confidence: LOW," do not make highly specific sonic claims. Write with appropriate uncertainty — prefer "suggests," "leans toward," "has the feel of" over definitive statements.`;
+- If the Sonic DNA Profile is marked "Profile Confidence: LOW," do not make highly specific sonic claims. Write with appropriate uncertainty — prefer "suggests," "leans toward," "has the feel of" over definitive statements.
+- EMOTIONAL POSTURE RULE: Describe what the song projects outward, not what a listener might feel inward. Prioritize texture → groove → energy → atmosphere → emotional posture, in that order. Do NOT infer loneliness, vulnerability, introspection, or tenderness unless the Sonic DNA Profile explicitly contains descriptors like "lonely," "tender," "wistful," or "yearning." Sparse production alone does not imply loneliness. Restrained vocals alone do not imply vulnerability. Cold, metallic, or industrial textures signal hardness, menace, or authority — not emotional exposure.`;
 
     const artistPrompt = `You are a world-class music curator — part crate-digger, part musicologist, part the best record store clerk alive. You think in terms of artistic DNA: how an artist's sonic identity, production choices, and creative evolution connect them to the broader musical landscape.
 
@@ -989,7 +990,17 @@ SONIC DNA PROFILE RULE (CRITICAL):
 - Every energy, mood, and texture claim in the summary MUST be consistent with those descriptors. Never use adjectives that contradict the profile.
 - Lead the summary with the dominant energy and mood reflected by the profile — do not lead with biographical or contextual information.
 - If the profile indicates low energy, calm, melancholic, or tender descriptors, do NOT describe the track as energetic, hard-hitting, or aggressive.
-- If no Sonic DNA Profile is present, describe the track broadly without making specific energy or mood claims.`,
+- If no Sonic DNA Profile is present, describe the track broadly without making specific energy or mood claims.
+
+EMOTIONAL POSTURE VS. EMOTIONAL VULNERABILITY (CRITICAL DISTINCTION):
+- There are two distinct types of darkness. Do NOT conflate them.
+  - OUTWARD COLDNESS: icy, detached, commanding, arrogant, confrontational, controlled, menacing, hard-edged. These are projected postures — the song presents a hard or cold face to the world.
+  - INWARD DARKNESS: lonely, vulnerable, introspective, emotionally exposed, tender, wistful. These are internal emotional states — the song reveals something soft or private beneath the surface.
+- Cold, metallic, sparse, or industrial descriptors belong to OUTWARD COLDNESS. Do NOT slide them into loneliness or vulnerability.
+- Sparse production does NOT imply loneliness.
+- Restrained or cool-toned vocal delivery does NOT imply vulnerability or introspection.
+- Metallic, glossy, or industrial textures signal hardness, menace, or authority — not emotional exposure.
+- ONLY use words like "lonely," "vulnerable," "introspective," "tender," or "emotionally raw" if the Sonic DNA Profile explicitly contains descriptors such as "lonely," "tender," "wistful," or "yearning." If those descriptors are absent, do not infer them from production choices.`,
         messages: [{ role: "user", content: prompt }],
       }),
     });
