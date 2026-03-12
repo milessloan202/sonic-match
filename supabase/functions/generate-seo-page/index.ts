@@ -769,6 +769,13 @@ relatedArtists: 3 artists whose broader catalog overlaps most with the sonic wor
 
 whyTheseWork: 2-3 sentences explaining the SPECIFIC sonic thread connecting these recommendations. Each recommended track should share at least 2 descriptor traits with the center song — name which traits (e.g., "Both share the stalking energy and cold emotional tone"). Reference concrete musical details: drum pattern, harmonic movement, production technique. Never use "similar vibe," "same feel," "fans of X will enjoy," or "same energy."
 
+POSTURE ANCHOR (do this before writing the summary):
+Step 1 — Read the Sonic DNA Profile descriptors and infer the song's single dominant projected emotional posture. Choose ONE from this list (or the closest equivalent):
+  dominant | detached | menacing | melancholic | dreamlike | euphoric | nostalgic | playful | vulnerable | defiant | triumphant | restless | seductive | tender
+Step 2 — Hold that posture as a constraint. Every sentence of the summary must be consistent with it.
+Step 3 — Apply the contradiction check. If the posture is dominant/detached/menacing/defiant/triumphant, the summary MUST NOT contain words like lonely, vulnerable, introspective, exposed, raw, or emotionally fragile. If the posture is vulnerable/tender/melancholic, the summary MUST NOT contain words like commanding, confrontational, dominant, or hard-edged.
+Step 4 — Prioritize the outward emotional stance the song projects toward the listener. Do not speculate about the artist's inner psychology. Describe what the track DOES, not what it FEELS inside.
+
 summary: EXACTLY 3 sentences. Dense and specific beats long and vague.
 - Sentence 1: MUST begin with "{Artist Name}'s \"{Song Title}\"" and lead with the dominant energy and mood from the Sonic DNA Profile. Example: "Kanye West's \"Cold\" is a stalking, icy GOOD Music posse cut built on thick bass pressure and menacing minor-key synths."
 - Sentences 2-3: Describe the production texture, emotional architecture, and what kind of listener it rewards — all grounded in the Sonic DNA Profile.
