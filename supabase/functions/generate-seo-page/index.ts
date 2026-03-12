@@ -497,7 +497,10 @@ const POSTURE_SIGNALS: Array<{ slugs: string[]; posture: Posture; weight: number
   { slugs: ["glamorous"],                                       posture: "dominant",    weight: 1 },
   { slugs: ["explosive", "charging", "propulsive", "driving"], posture: "dominant",    weight: 1 },
   // ── Detached / cool / controlled ────────────────────────────────────────────
-  { slugs: ["cold", "cool-toned", "restrained-vocal"],         posture: "detached",    weight: 2 },
+  // Weight 3: cold/cool-toned/restrained-vocal are strong, explicit detachment signals.
+  // Raising from 2→3 ensures detached beats a melancholic tie (wistful+lonely=4)
+  // for tracks like Future's Mask Off where the flute can mislead toward sadness.
+  { slugs: ["cold", "cool-toned", "restrained-vocal"],         posture: "detached",    weight: 3 },
   // ── Triumphant / euphoric ────────────────────────────────────────────────────
   { slugs: ["triumphant", "euphoric"],                         posture: "triumphant",  weight: 2 },
   { slugs: ["explosive-chorus", "euphoric-lift"],              posture: "euphoric",    weight: 1 },
@@ -567,8 +570,11 @@ const POSTURE_GUARDRAILS: Record<Posture, { forbidden: string[]; emphasize: stri
     emphasize: ["longing","bittersweet distance","muted ache","wistful atmosphere","soft decay"],
   },
   dreamlike:   {
-    forbidden: ["aggressive","confrontational","dominant","hard-edged","industrial"],
-    emphasize: ["drifting atmosphere","hazy texture","nocturnal immersion","weightless ambience"],
+    // Nightcall / synthwave protection: nocturnal and cinematic tracks are cold and sleek,
+    // not confessional. Add intimate/vulnerable/confessional to the forbidden list so that
+    // even if a track lands on dreamlike rather than detached, the prose stays correct.
+    forbidden: ["aggressive","confrontational","dominant","hard-edged","industrial","intimate vulnerability","confessional","vulnerable","raw emotional honesty","emotionally exposed"],
+    emphasize: ["drifting atmosphere","hazy texture","nocturnal immersion","weightless ambience","sleek distance","cinematic cool"],
   },
   euphoric:    {
     forbidden: ["lonely","melancholic","introspective","dark","somber"],
