@@ -845,6 +845,9 @@ serve(async (req) => {
     // client retries rather than generating prose with no sonic grounding.
     let sonicDnaBlock = "";
     let postureAnchorBlock = "";
+    if (page_type === "song" && !verifiedMetadata.spotify_track_id) {
+      console.warn("[PostureAnchor] SKIP — no spotify_track_id for song page, postureAnchorBlock will be empty");
+    }
     if (
       page_type === "song" &&
       verifiedMetadata.spotify_track_id &&
@@ -868,6 +871,7 @@ serve(async (req) => {
       const posture = inferPosture(sonicResult.descriptors);
       postureAnchorBlock = buildPostureAnchorBlock(posture, sonicResult.confidenceScore);
       console.log(`[SonicDNA] Profile ready (confidence=${sonicResult.confidenceScore ?? "unknown"}, posture=${posture}) — proceeding with grounded generation`);
+      console.log(`[PostureAnchor] Block built (posture=${posture}, chars=${postureAnchorBlock.length}) — will be sent to Claude`);
     }
 
     // --- Fetch overused songs for anti-repetition ---
