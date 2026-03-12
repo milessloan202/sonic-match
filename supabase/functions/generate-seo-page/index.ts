@@ -1146,17 +1146,7 @@ ACCURACY RULES (CRITICAL — follow strictly):
 ALL music data must be REAL — real artist names, real song titles, real release years. Never fabricate tracks.
 Return JSON only. No markdown, no code fences.`;
 
-    const aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 2048,
-        system: `You are a world-class music discovery engine with encyclopedic knowledge of production techniques, genre lineages, and sonic connections across decades. You think like a legendary record store clerk, not a streaming algorithm. Return only valid JSON, no markdown, no code fences.
+    const systemPrompt = `You are a world-class music discovery engine with encyclopedic knowledge of production techniques, genre lineages, and sonic connections across decades. You think like a legendary record store clerk, not a streaming algorithm. Return only valid JSON, no markdown, no code fences.
 
 CRITICAL ACCURACY RULES:
 - Every track you recommend MUST be a REAL song by a REAL artist that was commercially released and is likely to appear in major music catalogs (Spotify, Apple Music, etc.).
@@ -1193,7 +1183,22 @@ EMOTIONAL POSTURE VS. EMOTIONAL VULNERABILITY (CRITICAL DISTINCTION):
 - Sparse production does NOT imply loneliness.
 - Restrained or cool-toned vocal delivery does NOT imply vulnerability or introspection.
 - Metallic, glossy, or industrial textures signal hardness, menace, or authority — not emotional exposure.
-- ONLY use words like "lonely," "vulnerable," "introspective," "tender," or "emotionally raw" if the Sonic DNA Profile explicitly contains descriptors such as "lonely," "tender," "wistful," or "yearning." If those descriptors are absent, do not infer them from production choices.`,
+- ONLY use words like "lonely," "vulnerable," "introspective," "tender," or "emotionally raw" if the Sonic DNA Profile explicitly contains descriptors such as "lonely," "tender," "wistful," or "yearning." If those descriptors are absent, do not infer them from production choices.`;
+
+    console.log("[PromptDebug] System prompt:\n" + systemPrompt);
+    console.log("[PromptDebug] Full prompt sent to Claude:\n" + prompt);
+
+    const aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 2048,
+        system: systemPrompt,
         messages: [{ role: "user", content: prompt }],
       }),
     });
