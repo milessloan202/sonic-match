@@ -16,8 +16,8 @@ import { supabase } from "@/integrations/supabase/client";
 // =============================================================================
 
 export interface SonicProfile {
-  tempo_feel: string[];
-  groove: string[];
+  energy_posture: string[];
+  groove_character: string[];
   drum_character: string[];
   bass_character: string[];
   harmonic_color: string[];
@@ -25,6 +25,7 @@ export interface SonicProfile {
   vocal_character: string[];
   texture: string[];
   arrangement_energy_arc: string[];
+  spatial_feel: string[];
   emotional_tone: string[];
   era_period: string[];
   era_movement: string[];
@@ -171,7 +172,7 @@ export function getTopDescriptors(profile: SonicProfile, count = 3): string[] {
     ...(profile.era_movement || []),
     ...(profile.era_period || []),
     ...profile.environment_imagery,
-    ...profile.tempo_feel,
+    ...(profile.energy_posture || []),
   ];
   return [...new Set(priority)].slice(0, count);
 }

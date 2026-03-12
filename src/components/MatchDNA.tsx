@@ -39,13 +39,14 @@ const PROFILE_DISPLAY_CATEGORIES: Array<{
   clickable: boolean;
 }> = [
   { key: "emotional_tone",         label: "Emotional Tone",    category: "emotional_tone",         clickable: true  },
+  { key: "energy_posture",         label: "Energy Posture",    category: "energy_posture",         clickable: true  },
   { key: "texture",                label: "Texture",           category: "texture",                clickable: true  },
+  { key: "spatial_feel",           label: "Space",             category: "spatial_feel",           clickable: true  },
   { key: "era_movement",           label: "Era Movement",      category: "era_movement",           clickable: true  },
   { key: "era_period",             label: "Era Period",        category: "era_period",             clickable: true  },
   { key: "environment_imagery",    label: "Environment",       category: "environment_imagery",    clickable: true  },
   { key: "listener_use_case",      label: "Best For",          category: "listener_use_case",      clickable: true  },
-  { key: "tempo_feel",             label: "Tempo Feel",        category: "tempo_feel",             clickable: true  },
-  { key: "groove",                 label: "Groove",            category: "groove",                 clickable: true  },
+  { key: "groove_character",       label: "Groove",            category: "groove_character",       clickable: true  },
   { key: "drum_character",         label: "Drums",             category: "drum_character",         clickable: true  },
   { key: "bass_character",         label: "Bass",              category: "bass_character",         clickable: true  },
   { key: "harmonic_color",         label: "Harmony",           category: "harmonic_color",         clickable: true  },

@@ -334,11 +334,12 @@ interface CanonicalDescriptor {
 
 const SONIC_CATEGORY_LABELS: Record<string, string> = {
   emotional_tone:      "Mood",
+  energy_posture:      "Energy",
   texture:             "Texture",
+  spatial_feel:        "Space",
   era_movement:        "Era",
   era_period:          "Period",
-  tempo_feel:          "Feel",
-  groove:              "Groove",
+  groove_character:    "Groove",
   harmonic_color:      "Harmony",
   vocal_character:     "Vocals",
   environment_imagery: "Environment",
@@ -346,9 +347,9 @@ const SONIC_CATEGORY_LABELS: Record<string, string> = {
 };
 
 const SONIC_CATEGORY_ORDER = [
-  "emotional_tone", "texture", "era_movement", "era_period", "tempo_feel",
-  "groove", "harmonic_color", "vocal_character",
-  "environment_imagery", "listener_use_case",
+  "emotional_tone", "energy_posture", "texture", "spatial_feel",
+  "era_movement", "era_period", "groove_character", "harmonic_color",
+  "vocal_character", "environment_imagery", "listener_use_case",
 ];
 
 async function fetchSonicDescriptors(

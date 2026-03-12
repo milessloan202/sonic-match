@@ -23,16 +23,56 @@ const corsHeaders = {
 };
 
 const DESCRIPTOR_VOCABULARY = {
-  tempo_feel: ["slow-burn","laid-back","midtempo","driving","urgent","propulsive","floating","steady"],
-  groove: ["straight","swung","syncopated","shuffling","pulsing","hypnotic","bouncy","stuttering","gliding","marching","rolling","locked-in"],
-  drum_character: ["crisp","dusty","punchy","clipped","roomy","electronic","live-kit","808-heavy","breakbeat-driven","clap-forward","gated","skeletal"],
-  bass_character: ["sub-heavy","melodic-bass","rubbery","droning","warm-bass","distorted","restrained","funky","syrupy","synth-bass"],
-  harmonic_color: ["minor-key","major-key","jazzy","lush","suspended","gospel-rich","melancholic","bright","cinematic","static-vamp","nostalgic"],
-  melodic_character: ["chant-like","airy","conversational","hook-forward","leap-heavy","repetitive","silky","angular","anthemic","intimate"],
-  vocal_character: ["breathy","commanding","restrained-vocal","falsetto-led","layered","talk-sung","rhythmic","emotionally-direct","cool-toned","raw","yearning"],
-  texture: ["glossy","grainy","neon","analog","lo-fi","polished","hazy","saturated","sparse","lush-texture","metallic","warm"],
-  arrangement_energy_arc: ["immediate-impact","slow-build","sustained-drive","explosive-chorus","hypnotic-loop","late-night-cruise","euphoric-lift","tension-release","simmering","full-bloom"],
-  emotional_tone: ["wistful","triumphant","lonely","seductive","swaggering","devotional","restless","playful","cold","glamorous","tender","nocturnal","euphoric"],
+  // Energy posture — how force and momentum are held; the song's physical and emotional charge
+  energy_posture: [
+    "relaxed","gliding","floating","slow-burn","coiled",
+    "midtempo","driving","charging","explosive","stalking",
+    "propulsive","urgent","steady",
+  ],
+  // Groove character — how rhythm moves and feels in the body
+  groove_character: [
+    "straight","swung","syncopated","shuffling","pulsing",
+    "hypnotic","bouncy","stuttering","marching","rolling",
+    "locked-in","stomping","clipped","swinging","strutting","galloping",
+  ],
+  drum_character: [
+    "crisp","dusty","punchy","roomy","electronic","live-kit",
+    "808-heavy","breakbeat-driven","clap-forward","gated","skeletal",
+  ],
+  bass_character: [
+    "sub-heavy","melodic-bass","rubbery","droning","warm-bass",
+    "distorted","restrained","funky","syrupy","synth-bass",
+  ],
+  harmonic_color: [
+    "minor-key","major-key","jazzy","lush","suspended","gospel-rich",
+    "melancholic","bright","cinematic","static-vamp","nostalgic",
+  ],
+  melodic_character: [
+    "chant-like","airy","conversational","hook-forward","leap-heavy",
+    "repetitive","silky","angular","anthemic",
+  ],
+  vocal_character: [
+    "breathy","commanding","restrained-vocal","falsetto-led","layered",
+    "talk-sung","rhythmic","emotionally-direct","cool-toned","raw","yearning",
+  ],
+  texture: [
+    "glossy","grainy","neon","analog","lo-fi","polished","hazy",
+    "saturated","sparse","lush-texture","metallic","warm",
+    "glassy","velvety","organic","gritty",
+  ],
+  arrangement_energy_arc: [
+    "immediate-impact","slow-build","sustained-drive","explosive-chorus",
+    "hypnotic-loop","late-night-cruise","euphoric-lift","tension-release","simmering","full-bloom",
+  ],
+  // Spatial feel — the perceived physical scale and room of the production
+  spatial_feel: [
+    "intimate","cavernous","boxed-in","widescreen","airless","open","reverb-drenched","dry",
+  ],
+  emotional_tone: [
+    "wistful","triumphant","lonely","seductive","swaggering","devotional",
+    "restless","playful","cold","glamorous","tender","nocturnal","euphoric",
+    "menacing","defiant",
+  ],
   // Chronological placement — WHEN the song sounds situated
   era_period: [
     "1980s","early-90s","mid-90s","late-90s",
@@ -58,20 +98,32 @@ const DESCRIPTOR_VOCABULARY = {
     "chicago-drill","brooklyn-drill","uk-drill","jersey-drill",
     // Hyper-modern
     "rage-rap","hypertrap","glitch-rap",
-    // Non-rap sonic movements (cross-genre coverage)
-    "80s-revival","trap-soul","neo-soul","quiet-storm",
+    // R&B and soul lineage
+    "trap-soul","neo-soul","quiet-storm","alternative-rnb",
+    // Pop and electronic cross-genre
+    "80s-revival","synthwave","bedroom-pop","art-pop","hyperpop","indie-dance",
+    // Rock-adjacent
+    "indie-folk-revival","dream-pop","shoegaze-revival","post-punk-revival",
+    // Beat / lo-fi
+    "lo-fi-hiphop",
   ],
-  environment_imagery: ["night-drive","club-floor","headphones-alone","rooftop-city","summer-daylight","rainy-street","after-hours","house-party"],
-  listener_use_case: ["pregame","late-night-walk","dancefloor","windows-down","flirtation","reflective-commute"],
+  environment_imagery: [
+    "night-drive","club-floor","headphones-alone","rooftop-city",
+    "summer-daylight","rainy-street","after-hours","house-party",
+  ],
+  listener_use_case: [
+    "pregame","late-night-walk","dancefloor","windows-down","flirtation","reflective-commute",
+  ],
 };
 
 const INTENSITY_LEVELS = ["very-low","low","medium-low","medium","medium-high","high","very-high"];
 const DANCEABILITY_FEELS = ["not-danceable","minimal","moderate","danceable","highly-danceable","made-for-dancefloor"];
 
-// Categories included in canonical display_descriptors
+// Categories shown in canonical display_descriptors (the 12 core display dimensions)
 const CANONICAL_CATEGORIES = new Set([
-  "tempo_feel", "texture", "emotional_tone", "era_period", "era_movement",
-  "environment_imagery", "listener_use_case", "groove", "harmonic_color", "vocal_character",
+  "energy_posture", "groove_character", "texture", "spatial_feel",
+  "emotional_tone", "harmonic_color", "vocal_character", "arrangement_energy_arc",
+  "era_period", "era_movement", "environment_imagery", "listener_use_case",
 ]);
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -110,32 +162,58 @@ const DESCRIPTOR_GLOSSARY: Array<{
   means: string;
   notMeans: string[];
 }> = [
-  // tempo_feel
-  { slug: "laid-back",        category: "tempo_feel",             means: "Genuinely easy, loose, unforced comfort. The song feels unhurried and the listener can settle into it.", notMeans: ["sparse production", "midtempo BPM alone", "cool or detached delivery", "slow-paced trap", "cold or arrogant energy"] },
-  { slug: "slow-burn",        category: "tempo_feel",             means: "Restrained energy with suppressed force. Tension building — not relaxation.", notMeans: ["laid-back", "easygoing", "calm"] },
-  { slug: "driving",          category: "tempo_feel",             means: "Relentless forward momentum. Can be dark, cold, or hypnotic at any tempo.", notMeans: ["fast only", "aggressive only"] },
+  // energy_posture
+  { slug: "laid-back",   category: "energy_posture", means: "Genuinely easy, loose, unforced comfort. The song feels unhurried and the listener can settle into it.", notMeans: ["sparse production", "midtempo BPM alone", "cool or detached delivery", "slow-paced trap", "cold or arrogant energy"] },
+  { slug: "relaxed",     category: "energy_posture", means: "Genuine ease and release of tension. The song settles rather than coils — no suppressed force, no ambient threat.", notMeans: ["slow alone", "sparse alone", "quiet — relaxed is emotional ease not reduced volume"] },
+  { slug: "slow-burn",   category: "energy_posture", means: "Restrained energy with suppressed force. Tension building — not relaxation.", notMeans: ["laid-back", "relaxed", "calm"] },
+  { slug: "driving",     category: "energy_posture", means: "Relentless forward momentum. Can be dark, cold, or hypnotic at any tempo.", notMeans: ["fast only", "aggressive only"] },
+  { slug: "coiled",      category: "energy_posture", means: "Compressed, held-back energy that hasn't released yet. A spring under tension — quiet but loaded.", notMeans: ["calm", "relaxed", "laid-back — coiled carries hidden force"] },
+  { slug: "charging",    category: "energy_posture", means: "Building or already-at-full momentum, actively gathering kinetic energy.", notMeans: ["gentle", "gliding", "floating", "relaxed"] },
+  { slug: "explosive",   category: "energy_posture", means: "Energy discharges suddenly and completely. Maximum impact, maximum release.", notMeans: ["sustained", "coiled", "simmering", "relaxed"] },
+  { slug: "stalking",    category: "energy_posture", means: "Deliberate, menacing forward motion. Controlled threat — predatory pacing.", notMeans: ["relaxed", "playful", "gliding", "warm"] },
+  { slug: "gliding",     category: "energy_posture", means: "Smooth, frictionless forward motion with no effort or resistance.", notMeans: ["stomping", "marching", "heavy percussion", "coiled"] },
+  // groove_character
+  { slug: "stomping",    category: "groove_character", means: "Heavy, percussive rhythmic emphasis with physical weight on the beat.", notMeans: ["gliding", "floating", "delicate", "airy"] },
+  { slug: "clipped",     category: "groove_character", means: "Short, tightly gated rhythmic hits. Patterns cut short rather than allowed to ring or breathe.", notMeans: ["roomy", "reverb-drenched", "lush-texture", "open"] },
+  { slug: "swinging",    category: "groove_character", means: "Shuffled, triplet-feel groove with jazz or blues-influenced looseness.", notMeans: ["straight", "mechanical", "grid-locked", "stomping"] },
+  { slug: "strutting",   category: "groove_character", means: "Confident, self-possessed rhythmic motion. The groove carries attitude and ownership.", notMeans: ["hesitant", "gliding", "floating", "nervous"] },
+  { slug: "galloping",   category: "groove_character", means: "Fast, forward-propelled triplet or dotted-note rhythmic feel. Urgency in the forward drive.", notMeans: ["laid-back", "relaxed", "shuffled", "static"] },
   // emotional_tone
-  { slug: "cold",             category: "emotional_tone",         means: "Icy detachment, sterile confidence, arrogance, or predatory distance. Assertive and distancing.", notMeans: ["calm", "mellow", "relaxed", "laid-back", "introspective"] },
-  { slug: "swaggering",       category: "emotional_tone",         means: "Dominant, self-assured outward projection of power and confidence.", notMeans: ["laid-back ease", "gentle confidence", "mellow"] },
-  { slug: "nocturnal",        category: "emotional_tone",         means: "Atmospheric, late-night, withdrawn. Dark introspection — not peaceful or calm.", notMeans: ["calm", "peaceful", "euphoric", "triumphant"] },
-  { slug: "restless",         category: "emotional_tone",         means: "Anxious, unresolved tension. Urgency and discomfort in the emotional character.", notMeans: ["laid-back", "easygoing", "relaxed"] },
-  { slug: "wistful",          category: "emotional_tone",         means: "Gentle longing and bittersweet reflection. Soft, inward, and emotionally tender.", notMeans: ["cold", "aggressive", "swaggering", "confrontational"] },
-  { slug: "playful",          category: "emotional_tone",         means: "Light, spirited, and fun. Levity without heaviness or darkness.", notMeans: ["cold", "dark", "aggressive", "tense", "menacing"] },
+  { slug: "cold",        category: "emotional_tone", means: "Icy detachment, sterile confidence, arrogance, or predatory distance. Assertive and distancing.", notMeans: ["calm", "mellow", "relaxed", "laid-back", "introspective"] },
+  { slug: "swaggering",  category: "emotional_tone", means: "Dominant, self-assured outward projection of power and confidence.", notMeans: ["laid-back ease", "gentle confidence", "mellow"] },
+  { slug: "nocturnal",   category: "emotional_tone", means: "Atmospheric, late-night, withdrawn. Dark introspection — not peaceful or calm.", notMeans: ["calm", "peaceful", "euphoric", "triumphant"] },
+  { slug: "restless",    category: "emotional_tone", means: "Anxious, unresolved tension. Urgency and discomfort in the emotional character.", notMeans: ["laid-back", "easygoing", "relaxed"] },
+  { slug: "wistful",     category: "emotional_tone", means: "Gentle longing and bittersweet reflection. Soft, inward, and emotionally tender.", notMeans: ["cold", "aggressive", "swaggering", "confrontational"] },
+  { slug: "playful",     category: "emotional_tone", means: "Light, spirited, and fun. Levity without heaviness or darkness.", notMeans: ["cold", "menacing", "aggressive", "tense", "stalking"] },
+  { slug: "menacing",    category: "emotional_tone", means: "Threat without eruption. The song carries danger — controlled intimidation.", notMeans: ["playful", "tender", "warm", "relaxed", "euphoric"] },
+  { slug: "defiant",     category: "emotional_tone", means: "Assertive resistance. Proud refusal — not rage, but unwillingness to yield.", notMeans: ["submissive", "tender", "wistful", "devotional"] },
   // vocal_character
-  { slug: "cool-toned",       category: "vocal_character",        means: "Controlled, precise, emotionally restrained vocal delivery. Detached — not relaxed.", notMeans: ["laid-back", "easygoing", "mellow — cool-toned can be predatory or forceful"] },
-  { slug: "commanding",       category: "vocal_character",        means: "Assertive, dominant, authoritative vocal presence that controls the room.", notMeans: ["laid-back", "gentle", "easygoing"] },
+  { slug: "cool-toned",  category: "vocal_character", means: "Controlled, precise, emotionally restrained vocal delivery. Detached — not relaxed.", notMeans: ["laid-back", "easygoing", "mellow — cool-toned can be predatory or forceful"] },
+  { slug: "commanding",  category: "vocal_character", means: "Assertive, dominant, authoritative vocal presence that controls the room.", notMeans: ["laid-back", "gentle", "easygoing"] },
   // texture
-  { slug: "sparse",           category: "texture",                means: "Minimalist production with deliberate space between elements.", notMeans: ["relaxed", "laid-back", "easygoing — sparse can be cold, tense, or threatening"] },
-  { slug: "warm",             category: "texture",                means: "Organic, rounded, inviting sonic surface. Comfort and analog richness.", notMeans: ["cold emotional character", "metallic", "harsh", "icy", "sterile"] },
-  { slug: "glossy",           category: "texture",                means: "Polished, high-sheen, modern production surface. Clean, refined, and controlled.", notMeans: ["warm", "analog", "raw", "gritty"] },
-  { slug: "metallic",         category: "texture",                means: "Hard, machine-like, sharp-edged sonic surface. Cold precision.", notMeans: ["warm", "organic", "cozy", "laid-back"] },
+  { slug: "sparse",      category: "texture", means: "Minimalist production with deliberate space between elements.", notMeans: ["relaxed", "laid-back", "easygoing — sparse can be cold, tense, or threatening"] },
+  { slug: "warm",        category: "texture", means: "Organic, rounded, inviting sonic surface. Comfort and analog richness.", notMeans: ["cold emotional character", "metallic", "harsh", "icy", "sterile"] },
+  { slug: "glossy",      category: "texture", means: "Polished, high-sheen, modern production surface. Clean, refined, and controlled.", notMeans: ["warm", "analog", "raw", "gritty"] },
+  { slug: "metallic",    category: "texture", means: "Hard, machine-like, sharp-edged sonic surface. Cold precision.", notMeans: ["warm", "organic", "cozy", "laid-back"] },
+  { slug: "glassy",      category: "texture", means: "Smooth, reflective, frictionless surface. Pristine and high-definition.", notMeans: ["grainy", "gritty", "analog", "warm"] },
+  { slug: "velvety",     category: "texture", means: "Soft, dense, friction-free surface. Rich without being harsh.", notMeans: ["metallic", "grainy", "gritty", "sparse"] },
+  { slug: "organic",     category: "texture", means: "Natural, material-feeling production. Wood, skin, air — unprocessed human presence.", notMeans: ["electronic", "synthetic", "glossy", "neon"] },
+  { slug: "gritty",      category: "texture", means: "Rough-textured, abrasive surface with grain and friction.", notMeans: ["glossy", "polished", "glassy", "velvety"] },
   // arrangement_energy_arc
   { slug: "simmering",        category: "arrangement_energy_arc", means: "Sustained suppressed tension. Force held back without release — contained and coiled.", notMeans: ["relaxed", "laid-back", "calm"] },
   { slug: "sustained-drive",  category: "arrangement_energy_arc", means: "Unrelenting forward motion maintained throughout the track.", notMeans: ["laid-back", "floaty", "unhurried"] },
   { slug: "immediate-impact", category: "arrangement_energy_arc", means: "Full energy present from bar one. Hits hard immediately — no buildup.", notMeans: ["gradual", "laid-back", "easygoing"] },
+  // spatial_feel
+  { slug: "intimate",         category: "spatial_feel", means: "Physically close, small-room or headphone-scale production. The music feels personal and near.", notMeans: ["arena-sized", "cavernous", "widescreen", "reverb-drenched"] },
+  { slug: "cavernous",        category: "spatial_feel", means: "Vast, reverberant sonic space. Everything echoes — wide and deep.", notMeans: ["dry", "boxed-in", "intimate", "airless"] },
+  { slug: "boxed-in",         category: "spatial_feel", means: "Compressed, claustrophobic space. Walls feel close. Pressure without release.", notMeans: ["open", "widescreen", "cavernous"] },
+  { slug: "widescreen",       category: "spatial_feel", means: "Panoramic stereo width and epic scope. Cinematic scale, engineered for large playback.", notMeans: ["intimate", "boxed-in", "dry", "airless"] },
+  { slug: "airless",          category: "spatial_feel", means: "No reverb, no space — vacuum-tight production. Sterile and pressurized.", notMeans: ["cavernous", "reverb-drenched", "open"] },
+  { slug: "reverb-drenched",  category: "spatial_feel", means: "Heavily processed with reverb. The space itself becomes the dominant texture.", notMeans: ["dry", "airless", "boxed-in"] },
+  { slug: "dry",              category: "spatial_feel", means: "No reverb, no spatial processing. Recorded flat and close. Stark and undecorated.", notMeans: ["reverb-drenched", "cavernous", "lush-texture"] },
   // drum_character
-  { slug: "808-heavy",        category: "drum_character",         means: "Deep, dominant 808 sub-bass that defines the rhythmic weight and pressure.", notMeans: ["warm", "organic", "laid-back — 808s add aggression and physical weight"] },
-  { slug: "punchy",           category: "drum_character",         means: "Sharp-transient percussion with immediate physical impact.", notMeans: ["soft", "laid-back", "roomy", "organic"] },
+  { slug: "808-heavy",        category: "drum_character", means: "Deep, dominant 808 sub-bass that defines the rhythmic weight and pressure.", notMeans: ["warm", "organic", "laid-back — 808s add aggression and physical weight"] },
+  { slug: "punchy",           category: "drum_character", means: "Sharp-transient percussion with immediate physical impact.", notMeans: ["soft", "laid-back", "roomy", "organic"] },
   // era_period — chronological placement (WHEN the song sounds situated)
   { slug: "1980s",       category: "era_period", means: "Production rooted in 1980s aesthetics: analog warmth, drum machines (LinnDrum, Roland TR-808/909), gated reverb, synth textures. Pre-sampling-era hip-hop and R&B.", notMeans: ["trap", "sampling-era boom bap", "digital maximalism", "streaming-era production"] },
   { slug: "early-90s",   category: "era_period", means: "1990–1992 sonic feel: golden-age hip-hop genesis, vinyl-era warmth, early digital R&B production. Boom bap in formation, pre-G-funk.", notMeans: ["jiggy-era gloss", "trap production", "digital maximalism"] },
@@ -192,11 +270,25 @@ const DESCRIPTOR_GLOSSARY: Array<{
   { slug: "rage-rap",              category: "era_movement", means: "Playboi Carti / Ken Carson influence: high-pitched melodic rapping, rapid-fire snares, hedonistic and maximally detached.", notMeans: ["lyric-focused rap", "boom bap", "emotional emo-rap"] },
   { slug: "hypertrap",             category: "era_movement", means: "Everything pushed to the extreme: saturated 808s, hyper-fast or hyper-slow BPMs, maximally intense affect.", notMeans: ["understated trap", "cloud rap", "mellow hip-hop"] },
   { slug: "glitch-rap",            category: "era_movement", means: "Digital artifact aesthetics embedded in production: stuttering, chopped, corrupted or glitchy textures as deliberate style.", notMeans: ["clean polished production", "conventional trap", "boom bap"] },
-  // era_movement — non-rap sonic movements (cross-genre coverage)
-  { slug: "80s-revival",           category: "era_movement", means: "Modern production channeling 80s synth aesthetics: gated reverb, analog warmth, neon palette. The Weeknd, M83, Daft Punk.", notMeans: ["actual 80s recordings", "lo-fi", "trap or hip-hop lineage"] },
-  { slug: "trap-soul",             category: "era_movement", means: "Trap production married to R&B/soul vocal melody and emotional register. The Weeknd, Drake, 6LACK, PartyNextDoor.", notMeans: ["hard trap", "boom bap", "gospel or traditional soul"] },
-  { slug: "neo-soul",              category: "era_movement", means: "Early 2000s soul renaissance: live instrumentation, introspective lyricism, emotional depth. D'Angelo, Erykah Badu, Lauryn Hill.", notMeans: ["trap soul", "contemporary pop R&B", "gospel"] },
-  { slug: "quiet-storm",           category: "era_movement", means: "Smooth late-night R&B: lush orchestral arrangements, romantic themes, soft-focus production. Luther Vandross lineage.", notMeans: ["trap soul", "hard R&B", "neo-soul rawness"] },
+  // era_movement — R&B and soul lineage
+  { slug: "trap-soul",        category: "era_movement", means: "Trap production married to R&B/soul vocal melody and emotional register. The Weeknd, Drake, 6LACK, PartyNextDoor.", notMeans: ["hard trap", "boom bap", "gospel or traditional soul"] },
+  { slug: "neo-soul",         category: "era_movement", means: "Late-90s/early-2000s soul renaissance: live instrumentation, introspective lyricism, emotional depth. D'Angelo, Erykah Badu, Lauryn Hill.", notMeans: ["trap soul", "contemporary pop R&B", "gospel"] },
+  { slug: "quiet-storm",      category: "era_movement", means: "Smooth late-night R&B: lush orchestral arrangements, romantic themes, soft-focus production. Luther Vandross lineage.", notMeans: ["trap soul", "hard R&B", "neo-soul rawness"] },
+  { slug: "alternative-rnb",  category: "era_movement", means: "Left-of-center R&B resisting radio formula: Frank Ocean, SZA, Solange. Introspective, sonically experimental, genre-blurring.", notMeans: ["commercial pop R&B", "trap soul", "gospel"] },
+  // era_movement — pop and electronic cross-genre
+  { slug: "80s-revival",      category: "era_movement", means: "Modern production channeling 80s synth aesthetics: gated reverb, analog warmth, neon palette. The Weeknd, M83, Daft Punk.", notMeans: ["actual 80s recordings", "lo-fi", "trap or hip-hop lineage"] },
+  { slug: "synthwave",        category: "era_movement", means: "Pure 1980s synth nostalgia revival: arpeggiated sequences, electronic pulse, retrofuturist neon aesthetic.", notMeans: ["80s-revival as stylistic homage", "trap", "indie or acoustic"] },
+  { slug: "bedroom-pop",      category: "era_movement", means: "DIY lo-fi pop with intimate scale and homemade warmth: Rex Orange County, Clairo, Wallows. Emotional directness over production polish.", notMeans: ["arena pop", "heavily produced R&B", "trap"] },
+  { slug: "art-pop",          category: "era_movement", means: "Conceptually ambitious, formally adventurous pop: Kate Bush, Björk, Lorde, FKA Twigs. Genre-resistant and theatrical.", notMeans: ["straightforward pop", "trap", "generic indie"] },
+  { slug: "hyperpop",         category: "era_movement", means: "Maximally distorted, pitch-shifted, glitchy pop: 100 gecs, Charli XCX PC Music era. Nothing natural — everything processed to extremes.", notMeans: ["organic pop", "acoustic", "bedroom-pop warmth"] },
+  { slug: "indie-dance",      category: "era_movement", means: "Dancefloor energy meets indie sensibility: LCD Soundsystem, Phoenix, Hot Chip. Post-punk groove with electronic pulse.", notMeans: ["pure club EDM", "boom bap", "acoustic indie"] },
+  // era_movement — rock-adjacent
+  { slug: "indie-folk-revival", category: "era_movement", means: "Early-2010s folk-influenced indie: Fleet Foxes, Bon Iver, Iron & Wine. Acoustic warmth, layered harmonies, pastoral introspection.", notMeans: ["electric rock", "trap", "pop polish"] },
+  { slug: "dream-pop",        category: "era_movement", means: "Hazy, melodic pop with heavy reverb and atmospheric texture: Beach House, Mazzy Star, Cocteau Twins aesthetic.", notMeans: ["hard rock", "trap", "lo-fi bedroom rawness"] },
+  { slug: "shoegaze-revival", category: "era_movement", means: "Layered guitar distortion, buried vocals, oceanic reverb wash. My Bloody Valentine lineage resurfacing in modern indie.", notMeans: ["clean production", "pop hooks", "trap"] },
+  { slug: "post-punk-revival", category: "era_movement", means: "Angular, dark indie rock with early-2000s cool: Interpol, Franz Ferdinand, The Strokes. New Order / Wire influence.", notMeans: ["pop punk", "metal", "trap", "smooth R&B"] },
+  // era_movement — beat and lo-fi
+  { slug: "lo-fi-hiphop",    category: "era_movement", means: "Study-beats aesthetic: gentle boom bap, vinyl warmth, mellow keys, tape saturation. Nujabes lineage, ambient hip-hop.", notMeans: ["hard trap", "aggressive rap", "polished production"] },
 ];
 
 // ── Contradiction rules ───────────────────────────────────────────────────────
@@ -209,23 +301,41 @@ const CONTRADICTION_RULES: Array<{
   reason: string;
   era?: boolean;  // if true, uses era-specific log format
 }> = [
+  // ── Energy posture contradictions ─────────────────────────────────────────
   {
     target: "laid-back",
     blockers: [
-      "cold", "swaggering", "restless", "triumphant",      // emotional tone — not easygoing
-      "commanding", "emotionally-direct",                   // vocal — forceful delivery
-      "immediate-impact", "tension-release",                // arrangement — tension or hard impact
-      "sustained-drive", "simmering",                       // arrangement — suppressed or persistent force
-      "808-heavy", "punchy",                                // drums — hard, physical impact
-      "metallic",                                           // texture — cold, machine-like
+      "cold", "swaggering", "restless", "triumphant", "menacing",  // emotional — not easygoing
+      "commanding", "emotionally-direct",                           // vocal — forceful delivery
+      "immediate-impact", "tension-release",                        // arrangement — tension or hard impact
+      "sustained-drive", "simmering",                               // arrangement — suppressed or persistent force
+      "808-heavy", "punchy",                                        // drums — hard, physical impact
+      "metallic",                                                   // texture — cold, machine-like
+      "charging", "explosive", "stalking", "galloping",             // energy posture — force or threat
     ],
     reason: "laid-back requires genuine ease; these signal force, tension, or emotional distance",
   },
   {
-    target: "floating",
-    blockers: ["immediate-impact", "808-heavy", "punchy", "tension-release", "sustained-drive"],
-    reason: "floating implies weightlessness; hard-hitting or high-tension elements contradict it",
+    target: "relaxed",
+    blockers: [
+      "explosive", "charging", "stalking", "urgent", "propulsive", // force or threat
+      "menacing", "cold", "restless",                               // emotional tension
+      "immediate-impact", "simmering", "sustained-drive",           // arrangement force
+      "808-heavy", "punchy",                                        // hard percussion
+    ],
+    reason: "relaxed implies genuine release of tension; these signal force, threat, or suppressed energy",
   },
+  {
+    target: "floating",
+    blockers: [
+      "stomping", "marching", "galloping",                         // groove — grounded or driven
+      "immediate-impact", "808-heavy", "punchy",                   // drums — hard-hitting
+      "sustained-drive", "tension-release",                        // arrangement — driving force
+      "charging", "explosive",                                     // posture — kinetic force
+    ],
+    reason: "floating implies weightlessness; stomping, heavy percussion, or relentless drive grounds it",
+  },
+  // ── Emotional tone contradictions ─────────────────────────────────────────
   {
     target: "warm",
     blockers: ["cold", "metallic"],
@@ -233,8 +343,8 @@ const CONTRADICTION_RULES: Array<{
   },
   {
     target: "tender",
-    blockers: ["cold", "swaggering", "restless"],
-    reason: "tender emotion is incompatible with cold detachment, dominant swagger, or anxious urgency",
+    blockers: ["cold", "swaggering", "restless", "menacing"],
+    reason: "tender emotion is incompatible with cold detachment, dominant swagger, anxious urgency, or menace",
   },
   {
     target: "nocturnal",
@@ -243,13 +353,29 @@ const CONTRADICTION_RULES: Array<{
   },
   {
     target: "wistful",
-    blockers: ["swaggering", "cold", "restless"],
-    reason: "wistful is soft and reflective; these signal assertion, distance, or agitation",
+    blockers: ["swaggering", "cold", "restless", "menacing", "defiant"],
+    reason: "wistful is soft and reflective; these signal assertion, distance, agitation, or threat",
   },
   {
     target: "playful",
-    blockers: ["cold", "swaggering", "simmering", "tension-release"],
-    reason: "playful requires lightness; cold, dominant, or high-tension energy contradicts levity",
+    blockers: ["cold", "swaggering", "menacing", "stalking", "simmering", "tension-release"],
+    reason: "playful requires lightness; cold, dominant, menacing, or high-tension energy contradicts levity",
+  },
+  // ── Spatial feel contradictions ───────────────────────────────────────────
+  {
+    target: "intimate",
+    blockers: ["cavernous", "widescreen", "reverb-drenched"],
+    reason: "intimate (close-scale, personal) contradicts vast or heavily reverberant spatial treatment",
+  },
+  {
+    target: "widescreen",
+    blockers: ["boxed-in", "airless", "intimate", "dry"],
+    reason: "widescreen (panoramic, epic) contradicts compressed, vacuum-tight, or close-scale spatial treatment",
+  },
+  {
+    target: "airless",
+    blockers: ["cavernous", "reverb-drenched", "lush-texture"],
+    reason: "airless (vacuum-tight) contradicts vast space or heavily reverberant production",
   },
 
   // ── Era contradictions ────────────────────────────────────────────────────
@@ -292,22 +418,25 @@ const CONTRADICTION_RULES: Array<{
   },
 ];
 
-// Intensity levels that are definitionally incompatible with laid-back.
+// Intensity levels incompatible with ease-posture slugs (laid-back, relaxed).
 // Checked independently of slug co-occurrence.
 const HIGH_INTENSITY = new Set(["medium-high", "high", "very-high"]);
+const EASE_POSTURE_SLUGS = new Set(["laid-back", "relaxed"]);
 
 // ── Glossary → prompt formatter ───────────────────────────────────────────────
 
 function formatGlossaryForPrompt(): string {
   const categoryOrder = [
-    "tempo_feel", "emotional_tone", "vocal_character",
-    "texture", "arrangement_energy_arc", "drum_character", "era_movement",
+    "energy_posture", "groove_character", "emotional_tone", "vocal_character",
+    "texture", "spatial_feel", "arrangement_energy_arc", "drum_character", "era_movement",
   ];
   const categoryLabels: Record<string, string> = {
-    tempo_feel:             "TEMPO FEEL",
+    energy_posture:         "ENERGY POSTURE",
+    groove_character:       "GROOVE CHARACTER",
     emotional_tone:         "EMOTIONAL TONE",
     vocal_character:        "VOCAL CHARACTER",
     texture:                "TEXTURE",
+    spatial_feel:           "SPATIAL FEEL",
     arrangement_energy_arc: "ARRANGEMENT ARC",
     drum_character:         "DRUM CHARACTER",
     era_movement:           "ERA MOVEMENT / PRODUCTION WAVE",
@@ -336,8 +465,8 @@ function flagDescriptorConflicts(
   profile: Record<string, unknown>,
 ): { profile: Record<string, unknown>; removals: string[] } {
   const arrayFields = [
-    "tempo_feel","groove","drum_character","bass_character","harmonic_color",
-    "melodic_character","vocal_character","texture","arrangement_energy_arc",
+    "energy_posture","groove_character","drum_character","bass_character","harmonic_color",
+    "melodic_character","vocal_character","texture","arrangement_energy_arc","spatial_feel",
     "emotional_tone","era_period","era_movement","environment_imagery","listener_use_case",
   ];
 
@@ -365,11 +494,13 @@ function flagDescriptorConflicts(
     }
   }
 
-  // Intensity gate: high-intensity songs are definitionally not laid-back
-  if (allSlugs.has("laid-back") && !toRemove.has("laid-back")) {
-    if (HIGH_INTENSITY.has(profile.intensity_level as string)) {
-      console.warn(`[sonic-profile] Intensity gate: removing "laid-back" (intensity_level=${profile.intensity_level})`);
-      toRemove.add("laid-back");
+  // Intensity gate: high-intensity songs are definitionally not at-ease
+  if (HIGH_INTENSITY.has(profile.intensity_level as string)) {
+    for (const slug of EASE_POSTURE_SLUGS) {
+      if (allSlugs.has(slug) && !toRemove.has(slug)) {
+        console.warn(`[sonic-profile] Intensity gate: removing "${slug}" (intensity_level=${profile.intensity_level})`);
+        toRemove.add(slug);
+      }
     }
   }
 
@@ -393,8 +524,8 @@ function resolveConflicts(
   registry: Map<string, RegistryRow>,
 ): string[] {
   const arrayFields = [
-    "tempo_feel","groove","drum_character","bass_character","harmonic_color",
-    "melodic_character","vocal_character","texture","arrangement_energy_arc",
+    "energy_posture","groove_character","drum_character","bass_character","harmonic_color",
+    "melodic_character","vocal_character","texture","arrangement_energy_arc","spatial_feel",
     "emotional_tone","era_period","era_movement","environment_imagery","listener_use_case",
   ];
 
@@ -480,10 +611,11 @@ VOCABULARY:
 ${JSON.stringify(DESCRIPTOR_VOCABULARY, null, 2)}
 
 EVALUATION ORDER — always assess these before choosing descriptors:
-1. EMOTIONAL POSTURE: Is the song dominant, vulnerable, cold, warm, playful, or tense?
+1. EMOTIONAL POSTURE: Is the song dominant, vulnerable, cold, warm, playful, menacing, or tense?
 2. FORCE AND TENSION: Is there suppressed or overt force — even at slow tempos?
-3. GROOVE CHARACTER: Does the rhythm feel easy and loose, or locked and deliberate?
+3. GROOVE CHARACTER: Does the rhythm feel easy and loose, stomping, coiled, or galloping?
 4. VOCAL DELIVERY: Is it assertive, detached, expressive, or easygoing?
+5. SPATIAL SCALE: Does this feel intimate and close, cavernous, boxed-in, or panoramic?
 Surface cues (tempo, sparseness) come LAST. Never let sparse or midtempo override a cold or forceful emotional posture.
 
 DO NOT CONFUSE:
@@ -493,6 +625,9 @@ DO NOT CONFUSE:
 • cool-toned → easygoing (cool-toned is control, not ease)
 • midtempo → laid-back (midtempo cold or hard-edged songs are NOT laid-back)
 • slow → comfortable (slow-burn and simmering imply suppressed force, not relaxation)
+• relaxed → laid-back (relaxed is broader; use laid-back only for songs with genuine hip-hop or genre-chill connotation)
+• intimate → quiet (intimate is physical scale, not volume or sparseness)
+• cavernous → powerful (reverb creates space, not force)
 
 DESCRIPTOR GLOSSARY:
 ${formatGlossaryForPrompt()}
@@ -509,7 +644,7 @@ If unsure between "laid-back" and "midtempo" → always choose "midtempo".
 
 HARD INCOMPATIBILITIES — the system will enforce these; do not generate them together:
 ${CONTRADICTION_RULES.map((r) => `• "${r.target}" cannot coexist with: ${r.blockers.map((b) => `"${b}"`).join(", ")}`).join("\n")}
-• "laid-back" cannot coexist with intensity levels: medium-high, high, very-high
+• "laid-back" and "relaxed" cannot coexist with intensity levels: medium-high, high, very-high
 
 ERA GUIDANCE — two independent dimensions:
 • "era_period"   = WHEN: decade-grain chronological placement (e.g. "mid-90s", "early-2010s"). Use the period that matches the song's SONIC FEEL, not necessarily its release year. Optional — omit if the song transcends a specific period.
@@ -520,8 +655,8 @@ ERA GUIDANCE — two independent dimensions:
 
 OUTPUT FORMAT (return exactly this structure, no extra fields):
 {
-  "tempo_feel": ["slug1"],
-  "groove": ["slug1", "slug2"],
+  "energy_posture": ["slug1"],
+  "groove_character": ["slug1", "slug2"],
   "drum_character": ["slug1", "slug2"],
   "bass_character": ["slug1"],
   "harmonic_color": ["slug1", "slug2"],
@@ -529,6 +664,7 @@ OUTPUT FORMAT (return exactly this structure, no extra fields):
   "vocal_character": ["slug1", "slug2"],
   "texture": ["slug1", "slug2"],
   "arrangement_energy_arc": ["slug1", "slug2"],
+  "spatial_feel": ["slug1"],
   "emotional_tone": ["slug1", "slug2"],
   "era_period": ["slug1"],
   "era_movement": ["slug1"],
@@ -563,8 +699,8 @@ Return only the JSON profile.`;
 function extractDescriptorSlugs(profile: Record<string, unknown>): string[] {
   const slugs: string[] = [];
   const arrayFields = [
-    "tempo_feel","groove","drum_character","bass_character","harmonic_color",
-    "melodic_character","vocal_character","texture","arrangement_energy_arc",
+    "energy_posture","groove_character","drum_character","bass_character","harmonic_color",
+    "melodic_character","vocal_character","texture","arrangement_energy_arc","spatial_feel",
     "emotional_tone","era_period","era_movement","environment_imagery","listener_use_case",
   ];
   for (const field of arrayFields) {

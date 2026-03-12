@@ -31,8 +31,8 @@ const SONG_FILTER        = Deno.env.get("SONG_FILTER")?.toLowerCase() ?? "";
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 interface SongProfile {
-  tempo_feel?: string[];
-  groove?: string[];
+  energy_posture?: string[];
+  groove_character?: string[];
   drum_character?: string[];
   bass_character?: string[];
   harmonic_color?: string[];
@@ -64,9 +64,9 @@ interface CalibrationResult {
 
 function extractAllSlugs(profile: SongProfile): string[] {
   const fields = [
-    "tempo_feel","groove","drum_character","bass_character","harmonic_color",
+    "energy_posture","groove_character","drum_character","bass_character","harmonic_color",
     "melodic_character","vocal_character","texture","arrangement_energy_arc",
-    "emotional_tone","era_period","era_movement","environment_imagery","listener_use_case",
+    "emotional_tone","era_period","era_movement","environment_imagery","listener_use_case","spatial_feel",
   ] as const;
   const slugs: string[] = [];
   for (const f of fields) {

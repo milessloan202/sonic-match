@@ -19,17 +19,18 @@ import SEOHead from "@/components/SEOHead";
 // =============================================================================
 
 const CATEGORY_ORDER = [
-  "emotional_tone", "texture", "era_movement", "era_period", "tempo_feel",
-  "groove", "harmonic_color", "vocal_character",
-  "environment_imagery", "listener_use_case",
+  "emotional_tone", "energy_posture", "texture", "spatial_feel",
+  "era_movement", "era_period", "groove_character", "harmonic_color",
+  "vocal_character", "environment_imagery", "listener_use_case",
 ];
 const CATEGORY_LABELS: Record<string, string> = {
   emotional_tone:      "Emotional Tone",
+  energy_posture:      "Energy Posture",
   texture:             "Texture",
+  spatial_feel:        "Space",
   era_movement:        "Era Movement",
   era_period:          "Era Period",
-  tempo_feel:          "Tempo Feel",
-  groove:              "Groove",
+  groove_character:    "Groove",
   harmonic_color:      "Harmonic Color",
   vocal_character:     "Vocal Character",
   environment_imagery: "Environment",
@@ -44,8 +45,8 @@ const POPULAR_DESCRIPTORS = [
   { slug: "laid-back",       label: "Laid Back",        category: "tempo_feel" },
   { slug: "glossy",          label: "Glossy",           category: "texture" },
   { slug: "lo-fi",           label: "Lo-Fi",            category: "texture" },
-  { slug: "neo-soul",        label: "Neo Soul",         category: "era_movement" },
-  { slug: "trap-soul",       label: "Trap Soul",        category: "era_movement" },
+  { slug: "neo-soul",        label: "Neo Soul",         category: "era_movement"  },
+  { slug: "trap-soul",       label: "Trap Soul",        category: "era_movement"  },
   { slug: "night-drive",     label: "Night Drive",      category: "environment_imagery" },
   { slug: "seductive",       label: "Seductive",        category: "emotional_tone" },
   { slug: "swaggering",      label: "Swaggering",       category: "emotional_tone" },

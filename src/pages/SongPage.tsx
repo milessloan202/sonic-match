@@ -27,11 +27,12 @@ import type { CanonicalDescriptor } from "@/hooks/useSonicProfile";
 // Canonical category groups for the grouped Sonic DNA display under prose
 const SONIC_DNA_GROUPS: { key: string; label: string }[] = [
   { key: "emotional_tone",      label: "Mood"        },
+  { key: "energy_posture",      label: "Energy"      },
   { key: "texture",             label: "Texture"     },
+  { key: "spatial_feel",        label: "Space"       },
   { key: "era_movement",        label: "Era"         },
   { key: "era_period",          label: "Period"      },
-  { key: "tempo_feel",          label: "Feel"        },
-  { key: "groove",              label: "Groove"      },
+  { key: "groove_character",    label: "Groove"      },
   { key: "harmonic_color",      label: "Harmony"     },
   { key: "vocal_character",     label: "Vocals"      },
   { key: "environment_imagery", label: "Environment" },
