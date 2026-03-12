@@ -100,10 +100,13 @@ const DESCRIPTOR_VOCABULARY = {
     "rage-rap","hypertrap","glitch-rap",
     // R&B and soul lineage
     "trap-soul","neo-soul","quiet-storm","alternative-rnb",
-    // Pop and electronic cross-genre
+    // Pop
+    "electro-pop","dance-pop","alt-pop","synthpop-revival",
     "80s-revival","synthwave","bedroom-pop","art-pop","hyperpop","indie-dance",
+    // Electronic
+    "french-house","ambient-techno","lo-fi-house",
     // Rock-adjacent
-    "indie-folk-revival","dream-pop","shoegaze-revival","post-punk-revival",
+    "garage-rock-revival","indie-folk-revival","dream-pop","shoegaze-revival","post-punk-revival",
     // Beat / lo-fi
     "lo-fi-hiphop",
   ],
@@ -282,7 +285,17 @@ const DESCRIPTOR_GLOSSARY: Array<{
   { slug: "art-pop",          category: "era_movement", means: "Conceptually ambitious, formally adventurous pop: Kate Bush, Björk, Lorde, FKA Twigs. Genre-resistant and theatrical.", notMeans: ["straightforward pop", "trap", "generic indie"] },
   { slug: "hyperpop",         category: "era_movement", means: "Maximally distorted, pitch-shifted, glitchy pop: 100 gecs, Charli XCX PC Music era. Nothing natural — everything processed to extremes.", notMeans: ["organic pop", "acoustic", "bedroom-pop warmth"] },
   { slug: "indie-dance",      category: "era_movement", means: "Dancefloor energy meets indie sensibility: LCD Soundsystem, Phoenix, Hot Chip. Post-punk groove with electronic pulse.", notMeans: ["pure club EDM", "boom bap", "acoustic indie"] },
+  // era_movement — pop
+  { slug: "electro-pop",      category: "era_movement", means: "Synth-forward pop with crisp electronic production: prominent synthesizers, processed vocals, danceable hooks. Robyn, early Lady Gaga, Kylie Minogue territory.", notMeans: ["organic indie pop", "trap", "bedroom-pop lo-fi warmth"] },
+  { slug: "dance-pop",        category: "era_movement", means: "Uptempo, hook-driven pop engineered for dancefloors: polished production, four-on-the-floor pulse, mass crossover appeal. Carly Rae Jepsen, Justin Timberlake, early 2010s radio.", notMeans: ["lo-fi", "introspective art-pop", "acoustic"] },
+  { slug: "alt-pop",          category: "era_movement", means: "Alternative pop that sidesteps mainstream formula: unconventional arrangements, introspective register, genre-blurring textures. Lorde, Billie Eilish, Caroline Polachek.", notMeans: ["straightforward radio pop", "dance-pop hooks", "trap"] },
+  { slug: "synthpop-revival", category: "era_movement", means: "Modern bands channeling classic synthpop: icy synths, minimal live instrumentation, detached emotional delivery. Depeche Mode / New Order / Pet Shop Boys lineage in contemporary form. Chromatics, The Midnight, Editors.", notMeans: ["actual 80s recordings", "synthwave cinematic nostalgia", "trap"] },
+  // era_movement — electronic
+  { slug: "french-house",     category: "era_movement", means: "Disco-filtered house with compressed warmth, vocoder harmonies, and stutter edits. Daft Punk / Cassius / Modjo / Justice influence. Clean, groovy, euphoric without being hard.", notMeans: ["hard techno", "ambient", "trap", "acoustic"] },
+  { slug: "ambient-techno",   category: "era_movement", means: "Techno with atmospheric, textural depth: washed chords, slow evolution, machine pulse subordinated to mood. Aphex Twin ambient works, The Orb, early Warp Records.", notMeans: ["hard club techno", "aggressive EDM", "trap", "lo-fi warmth"] },
+  { slug: "lo-fi-house",      category: "era_movement", means: "Cassette-warped, dusty house music: compressed warmth, tape saturation, lo-fi degradation applied to four-on-the-floor. DJ Healer, Dj Stingray adjacent; house that sounds worn and intimate.", notMeans: ["pristine club production", "hard techno", "aggressive EDM"] },
   // era_movement — rock-adjacent
+  { slug: "garage-rock-revival", category: "era_movement", means: "Early-2000s raw guitar rock revival: stripped-down arrangements, dry recording aesthetic, swagger and grit. The White Stripes, The Strokes, The Vines, Yeah Yeah Yeahs.", notMeans: ["polished rock production", "post-punk cool", "trap", "smooth pop"] },
   { slug: "indie-folk-revival", category: "era_movement", means: "Early-2010s folk-influenced indie: Fleet Foxes, Bon Iver, Iron & Wine. Acoustic warmth, layered harmonies, pastoral introspection.", notMeans: ["electric rock", "trap", "pop polish"] },
   { slug: "dream-pop",        category: "era_movement", means: "Hazy, melodic pop with heavy reverb and atmospheric texture: Beach House, Mazzy Star, Cocteau Twins aesthetic.", notMeans: ["hard rock", "trap", "lo-fi bedroom rawness"] },
   { slug: "shoegaze-revival", category: "era_movement", means: "Layered guitar distortion, buried vocals, oceanic reverb wash. My Bloody Valentine lineage resurfacing in modern indie.", notMeans: ["clean production", "pop hooks", "trap"] },
@@ -648,7 +661,7 @@ ${CONTRADICTION_RULES.map((r) => `• "${r.target}" cannot coexist with: ${r.blo
 
 ERA GUIDANCE — two independent dimensions:
 • "era_period"   = WHEN: decade-grain chronological placement (e.g. "mid-90s", "early-2010s"). Use the period that matches the song's SONIC FEEL, not necessarily its release year. Optional — omit if the song transcends a specific period.
-• "era_movement" = WHAT: the specific production wave or stylistic school (e.g. "boom-bap-era", "yeezus-era", "trap-soul"). This is the primary and more meaningful signal.
+• "era_movement" = WHAT: the specific production wave or stylistic school (e.g. "boom-bap-era", "yeezus-era", "trap-soul", "electro-pop", "french-house", "garage-rock-revival", "alt-pop"). This is the primary and more meaningful signal.
 • These are complementary, not redundant: a golden-age boom bap track is "mid-90s" AND "golden-age-hiphop" AND "boom-bap-era".
 • Do NOT assign era_movement slugs based on release date alone — only use them if the sonic character genuinely matches.
 • era_period uses decade-grain slugs only: 1980s / early-90s / mid-90s / late-90s / early-2000s / mid-2000s / late-2000s / early-2010s / mid-2010s / late-2010s / early-2020s
