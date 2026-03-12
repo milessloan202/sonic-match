@@ -35,7 +35,8 @@ const DESCRIPTOR_VOCABULARY = {
   emotional_tone: ["wistful","triumphant","lonely","seductive","swaggering","devotional","restless","playful","cold","glamorous","tender","nocturnal","euphoric"],
   // Chronological placement — WHEN the song sounds situated
   era_period: [
-    "pre-2000","early-2000s","mid-2000s","late-2000s",
+    "1980s","early-90s","mid-90s","late-90s",
+    "early-2000s","mid-2000s","late-2000s",
     "early-2010s","mid-2010s","late-2010s","early-2020s",
   ],
   // Sonic movement — WHAT production wave or stylistic school it belongs to
@@ -136,9 +137,12 @@ const DESCRIPTOR_GLOSSARY: Array<{
   { slug: "808-heavy",        category: "drum_character",         means: "Deep, dominant 808 sub-bass that defines the rhythmic weight and pressure.", notMeans: ["warm", "organic", "laid-back — 808s add aggression and physical weight"] },
   { slug: "punchy",           category: "drum_character",         means: "Sharp-transient percussion with immediate physical impact.", notMeans: ["soft", "laid-back", "roomy", "organic"] },
   // era_period — chronological placement (WHEN the song sounds situated)
-  { slug: "pre-2000",    category: "era_period", means: "Sound rooted in pre-2000 production: analog warmth, live instrumentation dominance, pre-digital aesthetics.", notMeans: ["trap", "808-driven production", "digital maximalism"] },
-  { slug: "early-2000s", category: "era_period", means: "Production situated in the 2000–2004 window: polished radio sound, early digital production, late-90s holdovers.", notMeans: ["lo-fi bedroom aesthetics", "streaming-era polish", "SoundCloud rawness"] },
-  { slug: "mid-2000s",   category: "era_period", means: "2005–2007 sonic placement: blog-era beginnings, trap emerging, mainstream radio still dominant.", notMeans: ["streaming-native production", "pre-2000 analog warmth"] },
+  { slug: "1980s",       category: "era_period", means: "Production rooted in 1980s aesthetics: analog warmth, drum machines (LinnDrum, Roland TR-808/909), gated reverb, synth textures. Pre-sampling-era hip-hop and R&B.", notMeans: ["trap", "sampling-era boom bap", "digital maximalism", "streaming-era production"] },
+  { slug: "early-90s",   category: "era_period", means: "1990–1992 sonic feel: golden-age hip-hop genesis, vinyl-era warmth, early digital R&B production. Boom bap in formation, pre-G-funk.", notMeans: ["jiggy-era gloss", "trap production", "digital maximalism"] },
+  { slug: "mid-90s",     category: "era_period", means: "1993–1996 production feel: boom bap peak, G-funk dominance, mid-decade R&B, west-coast maximalism. The classic sampling era.", notMeans: ["jiggy-era rap gloss", "trap 808s", "streaming-era production"] },
+  { slug: "late-90s",    category: "era_period", means: "1997–1999 sonic character: jiggy-era rap, Timbaland/Missy minimalism, late-decade R&B maximalism, digital production transition.", notMeans: ["early-90s raw boom bap", "trap production", "SoundCloud rawness"] },
+  { slug: "early-2000s", category: "era_period", means: "2000–2004 sonic placement: Neptunes/Timbaland era, polished radio rap, early digital production, late-90s holdovers.", notMeans: ["lo-fi bedroom aesthetics", "streaming-era polish", "SoundCloud rawness"] },
+  { slug: "mid-2000s",   category: "era_period", means: "2005–2007 sonic placement: blog-era beginnings, early trap emerging, mainstream radio still dominant, crunk and snap era.", notMeans: ["streaming-native production", "90s analog warmth"] },
   { slug: "late-2000s",  category: "era_period", means: "2008–2010 production feel: mixtape economy peak, blog-era rap, Auto-Tune normalization (808s & Heartbreak era).", notMeans: ["pre-internet hip-hop", "SoundCloud era rawness"] },
   { slug: "early-2010s", category: "era_period", means: "2011–2013 sonic character: trap codifying, cloud rap emerging, pop-electronic crossover peaking.", notMeans: ["streaming-era gloss", "pre-digital warmth"] },
   { slug: "mid-2010s",   category: "era_period", means: "2014–2016 production feel: streaming era taking hold, melodic trap rising, Drake/Future dominance.", notMeans: ["pre-streaming mixtape culture", "SoundCloud punk rawness"] },
@@ -508,10 +512,11 @@ ${CONTRADICTION_RULES.map((r) => `• "${r.target}" cannot coexist with: ${r.blo
 • "laid-back" cannot coexist with intensity levels: medium-high, high, very-high
 
 ERA GUIDANCE — two independent dimensions:
-• "era_period"   = WHEN: broad chronological placement (e.g. "early-2010s"). Use the period that matches the song's sonic feel, NOT its release year if they differ. Optional — omit if the song transcends a specific period.
-• "era_movement" = WHAT: the specific production wave or stylistic school (e.g. "yeezus-era", "trap-soul"). This is the primary signal. Always prefer era_movement over era_period when both apply.
-• A song from 2013 can sound "early-2010s" AND be "yeezus-era" — these are complementary, not redundant.
-• Do NOT use era_movement slugs that conflict with the song's sonic character just because the release date matches.
+• "era_period"   = WHEN: decade-grain chronological placement (e.g. "mid-90s", "early-2010s"). Use the period that matches the song's SONIC FEEL, not necessarily its release year. Optional — omit if the song transcends a specific period.
+• "era_movement" = WHAT: the specific production wave or stylistic school (e.g. "boom-bap-era", "yeezus-era", "trap-soul"). This is the primary and more meaningful signal.
+• These are complementary, not redundant: a golden-age boom bap track is "mid-90s" AND "golden-age-hiphop" AND "boom-bap-era".
+• Do NOT assign era_movement slugs based on release date alone — only use them if the sonic character genuinely matches.
+• era_period uses decade-grain slugs only: 1980s / early-90s / mid-90s / late-90s / early-2000s / mid-2000s / late-2000s / early-2010s / mid-2010s / late-2010s / early-2020s
 
 OUTPUT FORMAT (return exactly this structure, no extra fields):
 {
