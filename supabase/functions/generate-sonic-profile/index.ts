@@ -222,11 +222,12 @@ const DESCRIPTOR_GLOSSARY: Array<{
   { slug: "strutting",   category: "groove_character", means: "Confident, self-possessed rhythmic motion. The groove carries attitude and ownership.", notMeans: ["hesitant", "gliding", "floating", "nervous"] },
   { slug: "galloping",   category: "groove_character", means: "Fast, forward-propelled triplet or dotted-note rhythmic feel. Urgency in the forward drive.", notMeans: ["laid-back", "relaxed", "shuffled", "static"] },
   // emotional_tone
-  { slug: "cold",        category: "emotional_tone", means: "Icy detachment, sterile confidence, arrogance, or predatory distance. Assertive and distancing.", notMeans: ["calm", "mellow", "relaxed", "laid-back", "introspective"] },
+  { slug: "cold",        category: "emotional_tone", means: "Icy detachment, sterile confidence, arrogance, or predatory distance. The OUTWARD emotional presentation is distancing and controlled — assertive and armored.", notMeans: ["calm", "mellow", "relaxed", "laid-back", "introspective — cold is an outward posture, not inner peace"] },
+  { slug: "lonely",      category: "emotional_tone", means: "Emotional isolation: the feeling of being unreachable, disconnected, or alone even within presence or performance. The INWARD emotional subtext beneath a confident or detached surface. Use when the song's emotional reality is one of disconnection, even if the outward register is cold, swaggering, or detached.", notMeans: ["sad or weeping — lonely is quiet and inward, not openly expressive grief", "nocturnal alone — loneliness is relational disconnection, not just atmosphere"] },
   { slug: "swaggering",  category: "emotional_tone", means: "Dominant, self-assured outward projection of power and confidence.", notMeans: ["laid-back ease", "gentle confidence", "mellow"] },
   { slug: "nocturnal",   category: "emotional_tone", means: "Atmospheric, late-night, withdrawn. Dark introspection — not peaceful or calm.", notMeans: ["calm", "peaceful", "euphoric", "triumphant"] },
   { slug: "restless",    category: "emotional_tone", means: "Anxious, unresolved tension. Urgency and discomfort in the emotional character.", notMeans: ["laid-back", "easygoing", "relaxed"] },
-  { slug: "wistful",     category: "emotional_tone", means: "Gentle longing and bittersweet reflection. Soft, inward, and emotionally tender.", notMeans: ["cold", "aggressive", "swaggering", "confrontational"] },
+  { slug: "wistful",     category: "emotional_tone", means: "Gentle longing and bittersweet reflection. Soft, inward, and emotionally tender. Can coexist with a cold or detached outward presentation — wistful is the underlying register when coldness is emotional armor over longing.", notMeans: ["swaggering", "aggressive", "confrontational — wistful is inward, not outward assertion"] },
   { slug: "playful",     category: "emotional_tone", means: "Light, spirited, and fun. Levity without heaviness or darkness.", notMeans: ["cold", "menacing", "aggressive", "tense", "stalking"] },
   { slug: "menacing",    category: "emotional_tone", means: "Threat without eruption. The song carries danger — controlled intimidation.", notMeans: ["playful", "tender", "warm", "relaxed", "euphoric"] },
   { slug: "defiant",     category: "emotional_tone", means: "Assertive resistance. Proud refusal — not rage, but unwillingness to yield.", notMeans: ["submissive", "tender", "wistful", "devotional"] },
@@ -431,8 +432,11 @@ const CONTRADICTION_RULES: Array<{
   },
   {
     target: "wistful",
-    blockers: ["swaggering", "cold", "restless", "menacing", "defiant"],
-    reason: "wistful is soft and reflective; these signal assertion, distance, agitation, or threat",
+    // "cold" intentionally NOT in this list — cold is outward presentation; wistful can be the
+    // underlying subtext beneath emotional armor. A song can be cold on the surface and wistful
+    // underneath (e.g. "Heartless"). Blocking cold here would flatten layered emotional profiles.
+    blockers: ["swaggering", "restless", "menacing", "defiant"],
+    reason: "wistful is inward and soft; swaggering, restless, menacing, and defiant are all outward assertive registers that contradict internal tenderness — but cold (outward armor) does not",
   },
   {
     target: "playful",
@@ -689,7 +693,9 @@ VOCABULARY:
 ${JSON.stringify(DESCRIPTOR_VOCABULARY, null, 2)}
 
 EVALUATION ORDER — assess in this sequence before assigning any descriptor:
-1. EMOTIONAL POSTURE  : What is the core emotional register? (dominant / vulnerable / cold / warm / playful / menacing / tense)
+1. EMOTIONAL POSTURE  : What is the outward emotional register? (dominant / vulnerable / cold / warm / playful / menacing / tense)
+   ↳ Then ask: is there an underlying emotional subtext beneath the surface? (e.g. cold presentation masking loneliness, swagger over yearning, detachment over grief)
+   ↳ If yes, include both in emotional_tone. Dominant posture first, subtext second. Do NOT flatten to one register.
 2. ENERGY POSTURE     : How does energy behave? (relaxed / coiled / charging / simmering / gliding / floating / explosive / buoyant)
    ↳ energy_posture is NOT BPM, NOT intensity_level. A fast song can be gliding; a slow song can be coiled.
    ↳ It describes how energy moves through the song — its behavior and disposition, not its speed or volume.
@@ -806,7 +812,8 @@ This is internal scaffolding — it will drive precise descriptor assignment in 
 Return ONLY valid JSON matching this exact structure, no preamble, no markdown:
 
 {
-  "emotional_posture": ["<core emotional register, e.g. cold, menacing, vulnerable, triumphant>"],
+  "emotional_posture": ["<OUTWARD emotional register — the presented face of the song, e.g. cold, menacing, swaggering, triumphant>"],
+  "emotional_subtext": ["<UNDERLYING emotional register — what the song feels beneath its surface, e.g. lonely, longing, wounded, hollow. Omit if outward and inward are the same.>"],
   "energy_behavior": ["<how energy moves, e.g. stalking, coiled, gliding, simmering, explosive>"],
   "rhythmic_behavior": ["<groove and rhythmic feel, e.g. pulsing, locked-in, shuffling, hypnotic>"],
   "production_surface": ["<sonic texture, e.g. metallic, lush, hazy, grainy, glassy, velvety>"],
@@ -819,6 +826,8 @@ Return ONLY valid JSON matching this exact structure, no preamble, no markdown:
 
 Rules:
 - Each array: 1–3 values using precise, specific terms
+- "emotional_posture" = what the song performs outwardly
+- "emotional_subtext" = what the song actually feels underneath (omit if there is no gap)
 - "movement" must name the specific sonic school, not a broad genre
 - Do not add any keys outside this structure`;
 }
@@ -827,7 +836,8 @@ function buildTraitUserPrompt(title: string, artist: string): string {
   return `Analyze the core sonic traits of "${title}" by ${artist}.
 
 Think like a producer or sound designer — not a critic writing a review:
-- What is the emotional posture? (behavioral register, not a mood label)
+- What is the outward emotional posture? (what the song presents on its surface)
+- Does the song have an underlying emotional subtext different from the surface? (e.g. cold detachment over loneliness, swagger over vulnerability, confidence over yearning) If so, name it.
 - How does energy move through the song? Contained? Stalking? Simmering?
 - What does the rhythm feel like in the body?
 - What is the surface texture of the production?
@@ -845,6 +855,8 @@ function buildDescriptorUserPrompt(title: string, artist: string, traits: Record
 ${JSON.stringify(traits, null, 2)}
 
 Now assign Sonic DNA descriptors for this song. Use the trait analysis above as your grounding — do not jump directly from song impression to label. Let each trait value constrain and drive your descriptor selection from the vocabulary.
+
+EMOTIONAL LAYERING: If the trait analysis identifies both an outward emotional posture and an underlying subtext, preserve both in emotional_tone. The dominant posture should appear first; the subtext can follow if it is genuinely present. Do not flatten layered profiles to a single register.
 
 Focus on:
 - The actual rhythmic feel and groove
