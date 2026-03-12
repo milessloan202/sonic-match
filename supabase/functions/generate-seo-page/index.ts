@@ -399,9 +399,36 @@ async function fetchSonicDescriptors(
     const descriptors = data?.canonical_descriptors?.display_descriptors;
     if (Array.isArray(descriptors) && descriptors.length > 0) {
       console.log(`[SonicDNA] Generated ${descriptors.length} descriptors`);
+
+      // Belt-and-suspenders: write to song_sonic_profiles here in case
+      // generate-sonic-profile's own DB write failed (e.g. RLS or insert error).
+      // Uses upsert so it's a no-op if generate-sonic-profile already persisted it.
+      const rawConfidence = data?.profile?.confidence_score;
+      const confidenceScore = typeof rawConfidence === "number"
+        ? Math.min(Math.max(rawConfidence, 0), 1)
+        : null;
+      try {
+        const { error: upsertError } = await supabase
+          .from("song_sonic_profiles")
+          .upsert({
+            spotify_track_id: spotifyTrackId,
+            song_title: songTitle,
+            artist_name: artistName,
+            profile_json: data.profile,
+            confidence_score: confidenceScore,
+          }, { onConflict: "spotify_track_id" });
+        if (upsertError) {
+          console.warn("[SonicDNA] Belt-and-suspenders upsert failed:", upsertError.message);
+        } else {
+          console.log("[SonicDNA] Belt-and-suspenders upsert succeeded");
+        }
+      } catch (upsertEx) {
+        console.warn("[SonicDNA] Belt-and-suspenders upsert threw:", upsertEx);
+      }
+
       return {
         descriptors: descriptors as CanonicalDescriptor[],
-        confidenceScore: typeof data?.confidence_score === "number" ? data.confidence_score : null,
+        confidenceScore,
       };
     }
 
