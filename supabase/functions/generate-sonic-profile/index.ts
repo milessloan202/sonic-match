@@ -279,7 +279,7 @@ const DESCRIPTOR_GLOSSARY: Array<{
   { slug: "neptunes-era",          category: "era_movement", means: "Pharrell / Chad Hugo production signature: skeletal percussion, idiosyncratic funk, sparse but infectious minimalism.", notMeans: ["dense layered production", "boom bap", "generic pop"] },
   { slug: "chipmunk-soul-era",     category: "era_movement", means: "Early Kanye West aesthetic: soul samples pitched up, warm nostalgia, emotional vulnerability over hip-hop beats.", notMeans: ["dark trap", "hard rap", "lo-fi or experimental"] },
   { slug: "early-atl-trap",        category: "era_movement", means: "T.I. / Gucci Mane era Atlanta: slow hi-hat rolls, hard 808s, street narratives. The original trap blueprint.", notMeans: ["melodic trap", "cloud rap", "emo trap"] },
-  { slug: "blog-era-rap",          category: "era_movement", means: "2007–2012 internet rap economy: free mixtapes, eclectic production, Drake / Wale / Kid Cudi / early Odd Future.", notMeans: ["pre-internet classic hip-hop", "SoundCloud era", "streaming-era rap"] },
+  { slug: "blog-era-rap",          category: "era_movement", means: "2007–2012 internet mixtape circuit: the blog/free-download economy before streaming. Defined by eclectic beat sourcing across genres, underground-meets-internet energy, and the mixtape-circuit artist lane — Wale (Mixtape About Nothing), Wiz Khalifa (Kush & OJ), early Kid Cudi, Curren$y, early Mac Miller. The defining trait is production eclecticism and the cultural moment of free mixtape distribution, NOT any particular sonic texture or mood.", notMeans: ["trap-soul or dark R&B crossover (The Weeknd, 6LACK, PartyNextDoor)", "melodic trap or sing-rap aesthetic", "alternative-rnb sonic experimentation", "dark synthetic pop-rap", "80s-influenced synth production", "any moody 2010s song that is not in the mixtape/blog-circuit lane", "SoundCloud-era rawness", "streaming-era polish"] },
   // era_movement — 2010s crossovers
   { slug: "synth-rap-era",         category: "era_movement", means: "Rap over electronic and synth-driven production in the 2011–2015 crossover window. Electronic influences meeting hip-hop structures.", notMeans: ["organic boom bap", "trap 808s", "lo-fi"] },
   { slug: "bloghouse-era",         category: "era_movement", means: "Ed Banger / blog-era electronic crossover: filtered house, French touch influence bleeding into hip-hop and indie dance.", notMeans: ["classic hip-hop", "trap", "acoustic"] },
@@ -460,8 +460,8 @@ const CONTRADICTION_RULES: Array<{
   // Keep the more specific / more modern descriptor; remove the generic one.
   {
     target: "blog-era-rap",
-    blockers: ["industrial-rap", "rage-rap", "yeezus-era"],
-    reason: "industrial-rap, rage-rap, and yeezus-era all postdate and contradict the blog-era aesthetic",
+    blockers: ["industrial-rap", "rage-rap", "yeezus-era", "trap-soul", "melodic-trap", "alternative-rnb", "80s-revival", "synthpop-revival"],
+    reason: "trap-soul, melodic-trap, and alternative-rnb are distinct sonic movements that override the blog-era cultural umbrella; 80s-revival and synthpop-revival indicate a synthetic/nostalgic production lane incompatible with mixtape-circuit eclecticism; industrial-rap, rage-rap, and yeezus-era postdate and contradict the blog-era aesthetic",
     era: true,
   },
   {
@@ -739,6 +739,7 @@ ERA GUIDANCE — two independent dimensions:
 • "era_movement" = WHAT: the specific production wave or stylistic school (e.g. "boom-bap-era", "yeezus-era", "trap-soul", "electro-pop", "french-house", "garage-rock-revival", "alt-pop"). This is the primary and more meaningful signal.
 • These are complementary, not redundant: a golden-age boom bap track is "mid-90s" AND "golden-age-hiphop" AND "boom-bap-era".
 • Do NOT assign era_movement slugs based on release date alone — only use them if the sonic character genuinely matches.
+• "blog-era-rap" is a CULTURAL/ECONOMIC movement (mixtape circuit, blog distribution), NOT a sonic texture or mood. Do NOT assign it based on era_period, darkness, or emotional register alone. It requires a genuinely mixtape/blog-circuit aesthetic. If trap-soul, melodic-trap, or alternative-rnb better describes the sonic character, use those instead.
 • era_period uses decade-grain slugs only: 1980s / early-90s / mid-90s / late-90s / early-2000s / mid-2000s / late-2000s / early-2010s / mid-2010s / late-2010s / early-2020s
 
 GENRE CLASSIFICATION (for filtering and browsing only — not used in similarity scoring):
