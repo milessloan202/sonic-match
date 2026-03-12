@@ -39,16 +39,6 @@ async function isDailyLimited(supabase: any): Promise<boolean> {
 
 // ============= VERIFIED METADATA LAYER =============
 
-interface AudioFeatures {
-  energy: number;
-  valence: number;
-  danceability: number;
-  tempo: number;
-  acousticness: number;
-  instrumentalness: number;
-  speechiness: number;
-}
-
 interface VerifiedMetadata {
   song_title: string | null;
   artist_name: string | null;
@@ -61,7 +51,6 @@ interface VerifiedMetadata {
   sampled_artist_name: string | null; // only if verified
   sample_verified: boolean;
   metadata_confidence: "high" | "medium" | "low";
-  audio_features: AudioFeatures | null;
 }
 
 async function fetchVerifiedMetadata(
@@ -82,7 +71,6 @@ async function fetchVerifiedMetadata(
     sampled_artist_name: null,
     sample_verified: false,
     metadata_confidence: "low",
-    audio_features: null,
   };
 
   if (pageType !== "song") {
@@ -144,36 +132,6 @@ async function fetchVerifiedMetadata(
             }
           }
 
-          // Fetch audio features — non-blocking bonus metadata
-          try {
-            const featRes = await fetch(
-              `https://api.spotify.com/v1/audio-features/${metadata.spotify_track_id}`,
-              { headers: { Authorization: `Bearer ${spotifyToken}` } }
-            );
-            if (featRes.ok) {
-              const feat = await featRes.json();
-              console.log(`[AudioFeatures] HTTP 200 for ${metadata.spotify_track_id} — raw:`, JSON.stringify(feat).slice(0, 300));
-              if (feat?.energy != null) {
-                metadata.audio_features = {
-                  energy:           feat.energy,
-                  valence:          feat.valence,
-                  danceability:     feat.danceability,
-                  tempo:            feat.tempo,
-                  acousticness:     feat.acousticness,
-                  instrumentalness: feat.instrumentalness,
-                  speechiness:      feat.speechiness,
-                };
-                console.log(`[AudioFeatures] Parsed OK — energy=${feat.energy} valence=${feat.valence} tempo=${Math.round(feat.tempo)}BPM acousticness=${feat.acousticness}`);
-              } else {
-                console.log(`[AudioFeatures] HTTP 200 but energy field missing — body: ${JSON.stringify(feat).slice(0, 200)}`);
-              }
-            } else {
-              const errBody = await featRes.text().catch(() => "(unreadable)");
-              console.log(`[AudioFeatures] HTTP ${featRes.status} for ${metadata.spotify_track_id} — body: ${errBody.slice(0, 300)}`);
-            }
-          } catch (e) {
-            console.log("[AudioFeatures] Fetch threw exception (non-blocking):", e);
-          }
         }
       }
     } catch (e) {
@@ -232,26 +190,8 @@ function buildMetadataBlock(metadata: VerifiedMetadata): string {
   }
 
   lines.push(`\nMetadata Confidence: ${metadata.metadata_confidence.toUpperCase()}`);
-  lines.push("=== END VERIFIED METADATA ===");
+  lines.push("=== END VERIFIED METADATA ===\n");
 
-  if (metadata.audio_features) {
-    const f = metadata.audio_features;
-    const energyLabel    = f.energy      >= 0.7 ? "high"                   : f.energy      >= 0.4 ? "medium"  : "low";
-    const valenceLabel   = f.valence     >= 0.6 ? "positive/upbeat"        : f.valence     >= 0.3 ? "neutral/mixed" : "low — darker emotional tone";
-    const acousticLabel  = f.acousticness >= 0.6 ? "acoustic/organic"      : f.acousticness >= 0.2 ? "mixed"   : "synthetic/electronic";
-
-    lines.push("\n=== AUDIO FEATURES ===");
-    lines.push(`energy: ${f.energy.toFixed(2)} (${energyLabel})`);
-    lines.push(`valence: ${f.valence.toFixed(2)} (${valenceLabel})`);
-    lines.push(`danceability: ${f.danceability.toFixed(2)}`);
-    lines.push(`tempo: ${Math.round(f.tempo)} BPM`);
-    lines.push(`acousticness: ${f.acousticness.toFixed(2)} (${acousticLabel})`);
-    lines.push(`instrumentalness: ${f.instrumentalness.toFixed(2)}`);
-    lines.push(`speechiness: ${f.speechiness.toFixed(2)}`);
-    lines.push("=== END AUDIO FEATURES ===");
-  }
-
-  lines.push("");
   return lines.join("\n");
 }
 
@@ -270,8 +210,7 @@ FACTUAL ACCURACY RULES (CRITICAL — STRICTLY ENFORCED):
    - Producer credits (unless provided in verified metadata)
    - Sample sources or interpolations (unless provided in verified metadata)
    - Specific instrumentation claims (e.g., "built around a Fender Rhodes")
-   - Studio or recording details
-   - Collaboration or writing credits
+   - Studio or recording details, collaboration or writing credits
    - Historical claims about the recording process
 
 3. SAMPLE RULE:
@@ -279,37 +218,33 @@ FACTUAL ACCURACY RULES (CRITICAL — STRICTLY ENFORCED):
    - If sample info is verified, you MAY reference it naturally in the summary
    - If no verified sample info exists, do NOT speculate about samples
 
-4. AUDIO FEATURES GROUND TRUTH:
-   - If AUDIO FEATURES are present above, treat them as objective measurements — they override impressionistic guesses
-   - energy ≥ 0.7 → describe as intense, driving, or high-energy — NOT sparse, minimal, or restrained
-   - energy ≤ 0.3 → describe as understated, sparse, or restrained — NOT explosive or high-octane
-   - valence ≥ 0.6 → lean toward upbeat, bright, euphoric, or triumphant tone
-   - valence ≤ 0.3 → lean toward dark, melancholic, tense, or cold tone
-   - acousticness ≥ 0.6 → describe as organic, acoustic, or natural-sounding — avoid "electronic" or "synthetic"
-   - acousticness ≤ 0.2 → describe as synthetic, electronic, or heavily produced — avoid "acoustic" or "raw"
-   - Do NOT contradict audio features: a high-energy track is not "meditative"; a high-valence track is not "somber"`;
+4. SONIC DNA PROFILE — GROUND TRUTH (ALWAYS ENFORCED):
+   - The SONIC DNA PROFILE block is the objective ground truth for how this song sounds
+   - Every energy, mood, and texture claim in the prose MUST be consistent with it
+   - Lead the summary with the dominant energy and mood reflected by those descriptors
+   - NEVER use adjectives that contradict the profile: if it says "driving" or "stalking," do not write "sparse" or "meditative"; if it says "cold" or "nocturnal," do not write "warm" or "euphoric"
+   - If no Sonic DNA Profile is present, describe the track broadly without specific energy/mood claims`;
 
   if (confidence === "low") {
     return baseInstructions + `
 
-4. LOW CONFIDENCE MODE:
-   - Write broader, more impressionistic descriptions
-   - Focus on mood, atmosphere, and sonic character
-   - Avoid specific factual claims about the track's creation
-   - Use phrases like "evokes," "channels," "recalls" rather than definitive statements`;
+5. LOW CONFIDENCE MODE:
+   - Write broader, more impressionistic descriptions anchored to the Sonic DNA Profile
+   - Use phrases like "evokes," "channels," "recalls" rather than definitive statements
+   - Avoid specific factual claims about the track's creation beyond what metadata confirms`;
   } else if (confidence === "medium") {
     return baseInstructions + `
 
-4. MEDIUM CONFIDENCE MODE:
+5. MEDIUM CONFIDENCE MODE:
    - You may use verified metadata fields (year, artist, genres) confidently
    - For other details, lean toward description over assertion
-   - Balance specificity with caution on unverified facts`;
+   - Stay anchored to the Sonic DNA Profile for all energy and mood claims`;
   } else {
     return baseInstructions + `
 
-4. HIGH CONFIDENCE MODE:
+5. HIGH CONFIDENCE MODE:
    - Use all verified metadata fields confidently
-   - You may write with more specificity about the track's sonic character
+   - Write with specificity about the track's sonic character, fully grounded in the Sonic DNA Profile
    - Still do NOT invent production credits, samples, or historical claims beyond metadata`;
   }
 }
@@ -443,7 +378,7 @@ async function fetchSonicDescriptors(
     }
 
     // Generate via the sonic-profile edge function
-    console.log("[SonicDNA] Generating profile for prose anchoring...");
+    console.log("[SonicDNA] Profile missing — calling generate-sonic-profile before prose");
     const { data } = await supabase.functions.invoke("generate-sonic-profile", {
       body: {
         spotify_track_id: spotifyTrackId,
@@ -458,9 +393,10 @@ async function fetchSonicDescriptors(
       return descriptors as CanonicalDescriptor[];
     }
 
+    console.log("[SonicDNA] generate-sonic-profile returned no descriptors");
     return null;
   } catch (e) {
-    console.log("[SonicDNA] Profile fetch failed (non-fatal):", e);
+    console.log("[SonicDNA] Profile fetch failed:", e);
     return null;
   }
 }
@@ -706,7 +642,9 @@ serve(async (req) => {
     const metadataBlock = buildMetadataBlock(verifiedMetadata);
     const factualInstructions = getFactualInstructions(verifiedMetadata.metadata_confidence);
 
-    // --- Fetch/generate Sonic DNA profile to anchor prose to real descriptors ---
+    // --- Fetch/generate Sonic DNA profile — hard prerequisite for song prose ---
+    // If we have a resolved track ID but can't get a profile, return 202 so the
+    // client retries rather than generating prose with no sonic grounding.
     let sonicDnaBlock = "";
     if (
       page_type === "song" &&
@@ -720,7 +658,15 @@ serve(async (req) => {
         verifiedMetadata.artist_name,
         supabase,
       );
-      if (descriptors) sonicDnaBlock = buildSonicDnaBlock(descriptors);
+      if (!descriptors || descriptors.length === 0) {
+        console.log("[SonicDNA] Profile unavailable after generation attempt — returning retry");
+        return new Response(
+          JSON.stringify({ status: "retry", reason: "sonic_profile_unavailable" }),
+          { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+      sonicDnaBlock = buildSonicDnaBlock(descriptors);
+      console.log("[SonicDNA] Profile ready — proceeding with grounded generation");
     }
 
     // --- Fetch overused songs for anti-repetition ---
@@ -804,9 +750,14 @@ sameEnergy: 5 songs that share the emotional and atmospheric DNA but arrive from
 
 relatedArtists: 3 artists whose broader catalog overlaps most with the sonic world of this specific track. Go one level deeper than the obvious choices.
 
-whyTheseWork: 2-3 sentences explaining the SPECIFIC sonic thread connecting these recommendations. Reference concrete musical details: name the synth texture, the drum pattern, the harmonic movement, the production technique. Never use phrases like "similar vibe," "same feel," "fans of X will enjoy," or "same energy." Write like a music journalist who respects the reader's intelligence.
+whyTheseWork: 2-3 sentences explaining the SPECIFIC sonic thread connecting these recommendations. Each recommended track should share at least 2 descriptor traits with the center song — name which traits (e.g., "Both share the stalking energy and cold emotional tone"). Reference concrete musical details: drum pattern, harmonic movement, production technique. Never use "similar vibe," "same feel," "fans of X will enjoy," or "same energy."
 
-summary: A 2-3 sentence description of what makes this track sonically distinctive — its production fingerprint, its emotional architecture, and the specific type of listener it rewards. CRITICAL: The first sentence MUST begin with "{Artist Name}'s \"{Song Title}\"" to clearly identify the song. Example: "Joe Budden's \"Pump It Up\" is an early-2000s soul-sample hip-hop track built around a driving piano loop and crisp drum programming."${sonicDnaBlock ? ' CRITICAL: You MUST ground this description in the Sonic DNA Profile above. Every quality you name — mood, texture, rhythm, atmosphere — must reflect those verified descriptors. Do not describe sonic qualities that contradict the profile.' : ''}`;
+summary: EXACTLY 3 sentences. Dense and specific beats long and vague.
+- Sentence 1: MUST begin with "{Artist Name}'s \"{Song Title}\"" and lead with the dominant energy and mood from the Sonic DNA Profile. Example: "Kanye West's \"Cold\" is a stalking, icy GOOD Music posse cut built on thick bass pressure and menacing minor-key synths."
+- Sentences 2-3: Describe the production texture, emotional architecture, and what kind of listener it rewards — all grounded in the Sonic DNA Profile.
+- CRITICAL: The Sonic DNA Profile is ground truth. Every adjective you use must be consistent with it. If the profile says "driving," do not write "sparse." If it says "cold," do not write "warm." If it says "swaggering," do not write "meditative."
+- Write like a music critic describing the track to someone who hasn't heard it — specific, grounded, energetic where the track is energetic.
+- AVOID generic filler phrases like "hard-hitting bars," "infectious hooks," or "undeniable bangers" unless the Sonic DNA Profile explicitly supports high energy and danceability.`;
 
     const artistPrompt = `You are a world-class music curator — part crate-digger, part musicologist, part the best record store clerk alive. You think in terms of artistic DNA: how an artist's sonic identity, production choices, and creative evolution connect them to the broader musical landscape.
 
@@ -1013,7 +964,14 @@ FACTUAL WRITING RULES (CRITICAL):
 SAMPLE INFORMATION RULE (CRITICAL):
 - NEVER mention sampling, interpolation, borrowed melodies, or sample sources UNLESS the VERIFIED METADATA explicitly includes sample information.
 - Sample data is handled by a separate verified system (MusicBrainz). Any sample references you generate without verified metadata are unverified and potentially fabricated.
-- Do NOT reference sampling even for well-known cases unless metadata confirms it.`,
+- Do NOT reference sampling even for well-known cases unless metadata confirms it.
+
+SONIC DNA PROFILE RULE (CRITICAL):
+- If a SONIC DNA PROFILE block is present in the user prompt, it is the objective ground truth for how this song sounds.
+- Every energy, mood, and texture claim in the summary MUST be consistent with those descriptors. Never use adjectives that contradict the profile.
+- Lead the summary with the dominant energy and mood reflected by the profile — do not lead with biographical or contextual information.
+- If the profile indicates low energy, calm, melancholic, or tender descriptors, do NOT describe the track as energetic, hard-hitting, or aggressive.
+- If no Sonic DNA Profile is present, describe the track broadly without making specific energy or mood claims.`,
         messages: [{ role: "user", content: prompt }],
       }),
     });
