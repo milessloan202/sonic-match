@@ -35,6 +35,9 @@ export interface SonicProfile {
   danceability_feel: string;
   confidence_score?: number;
   canonical_descriptors?: CanonicalDescriptorPayload;
+  // Genre classification — for filtering/browsing/SEO only, not used in similarity scoring
+  genre?: string;
+  subgenre?: string[];
 }
 
 export interface CanonicalDescriptor {

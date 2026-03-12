@@ -119,6 +119,44 @@ const DESCRIPTOR_VOCABULARY = {
   ],
 };
 
+// =============================================================================
+// Genre classification vocabulary
+// Used for filtering, browsing, and SEO pages ONLY.
+// Must NOT appear in descriptor_slugs — never used in similarity scoring.
+// =============================================================================
+
+const GENRE_VOCABULARY = {
+  genres: [
+    "hip-hop", "r-and-b", "pop", "electronic", "rock",
+    "indie", "alternative", "ambient", "jazz", "folk",
+    "country", "metal", "punk", "latin", "funk-soul",
+  ],
+  subgenres: [
+    // Hip-hop
+    "trap", "drill", "boom-bap", "cloud-rap", "melodic-rap",
+    "emo-rap", "conscious-rap", "gangsta-rap", "lo-fi-rap", "rage-rap",
+    // R&B
+    "contemporary-rnb", "neo-soul", "quiet-storm", "alt-rnb", "trap-soul",
+    // Pop
+    "synth-pop", "dance-pop", "electro-pop", "alt-pop", "art-pop",
+    "teen-pop", "power-pop", "chamber-pop",
+    // Electronic
+    "house", "techno", "ambient-electronic", "drum-and-bass",
+    "trip-hop", "dubstep", "garage", "trance", "lo-fi-house",
+    // Rock / indie
+    "indie-rock", "garage-rock", "post-punk", "shoegaze", "dream-pop",
+    "emo", "grunge", "psych-rock", "noise-rock", "math-rock",
+    // Folk
+    "indie-folk", "singer-songwriter", "folk-rock",
+    // Ambient / experimental
+    "dark-ambient", "drone", "new-age", "experimental",
+    // Metal / punk
+    "heavy-metal", "post-metal", "punk-rock", "hardcore",
+    // Other
+    "jazz-fusion", "afrobeats", "bossa-nova", "soul",
+  ],
+};
+
 const INTENSITY_LEVELS = ["very-low","low","medium-low","medium","medium-high","high","very-high"];
 const DANCEABILITY_FEELS = ["not-danceable","minimal","moderate","danceable","highly-danceable","made-for-dancefloor"];
 
@@ -666,6 +704,13 @@ ERA GUIDANCE — two independent dimensions:
 • Do NOT assign era_movement slugs based on release date alone — only use them if the sonic character genuinely matches.
 • era_period uses decade-grain slugs only: 1980s / early-90s / mid-90s / late-90s / early-2000s / mid-2000s / late-2000s / early-2010s / mid-2010s / late-2010s / early-2020s
 
+GENRE CLASSIFICATION (for filtering and browsing only — not used in similarity scoring):
+• "genre"    = single top-level genre family. Valid values: ${GENRE_VOCABULARY.genres.join(" / ")}
+• "subgenre" = 1–2 specific genre labels from the vocabulary below. These reflect what section of a record store or streaming playlist this belongs in — not the sonic texture.
+  Valid subgenres: ${GENRE_VOCABULARY.subgenres.join(", ")}
+• Genre is separate from era_movement: era_movement describes HOW the song sounds; genre describes WHAT category it belongs to.
+• Example: "Blinding Lights" → genre: "pop", subgenre: ["synth-pop"] (even though era_movement is "synthwave" and "80s-revival")
+
 OUTPUT FORMAT (return exactly this structure, no extra fields):
 {
   "energy_posture": ["slug1"],
@@ -685,7 +730,9 @@ OUTPUT FORMAT (return exactly this structure, no extra fields):
   "listener_use_case": ["slug1"],
   "intensity_level": "medium",
   "danceability_feel": "danceable",
-  "confidence_score": 0.85
+  "confidence_score": 0.85,
+  "genre": "hip-hop",
+  "subgenre": ["trap", "melodic-rap"]
 }
 
 confidence_score reflects how confident you are that this analysis is accurate (0.0–1.0).
@@ -879,6 +926,12 @@ serve(async (req) => {
     const enrichedProfile = { ...profile, canonical_descriptors: canonical };
 
     // ── Write to cache ────────────────────────────────────────────────────────
+    // genre/subgenre extracted as dedicated columns for efficient filtering.
+    // They are intentionally excluded from descriptor_slugs so they never
+    // influence Sonic DNA similarity scoring.
+    const genreValue    = typeof profile.genre === "string" ? profile.genre : null;
+    const subgenreValue = Array.isArray(profile.subgenre) ? profile.subgenre as string[] : null;
+
     const { data: inserted, error: insertError } = await supabase
       .from("song_sonic_profiles")
       .upsert({
@@ -888,6 +941,8 @@ serve(async (req) => {
         profile_json:     enrichedProfile,
         confidence_score: confidenceScore,
         descriptor_slugs: descriptorSlugs,
+        genre:            genreValue,
+        subgenre:         subgenreValue,
       }, { onConflict: "spotify_track_id" })
       .select()
       .single();
