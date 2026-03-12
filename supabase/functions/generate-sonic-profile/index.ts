@@ -794,6 +794,102 @@ Write your analysis as a producer or critic would think about the track's sonic 
 Return only the JSON profile.`;
 }
 
+// ── Stage 1: Trait inference ──────────────────────────────────────────────────
+// Internal scaffolding — not stored. Drives Stage 2 descriptor assignment.
+
+function buildTraitSystemPrompt(): string {
+  return `You are a music analyst performing an intermediate sonic analysis.
+
+Your job is to identify the core musical traits of a song in structured form.
+This is internal scaffolding — it will drive precise descriptor assignment in a second pass.
+
+Return ONLY valid JSON matching this exact structure, no preamble, no markdown:
+
+{
+  "emotional_posture": ["<core emotional register, e.g. cold, menacing, vulnerable, triumphant>"],
+  "energy_behavior": ["<how energy moves, e.g. stalking, coiled, gliding, simmering, explosive>"],
+  "rhythmic_behavior": ["<groove and rhythmic feel, e.g. pulsing, locked-in, shuffling, hypnotic>"],
+  "production_surface": ["<sonic texture, e.g. metallic, lush, hazy, grainy, glassy, velvety>"],
+  "spatial_scale": ["<perceived physical scale, e.g. airless, intimate, cavernous, widescreen>"],
+  "historical_position": {
+    "period": ["<decade-grain era, e.g. late-2010s, early-2000s — or omit if timeless>"],
+    "movement": ["<specific sonic school or wave, e.g. trap-soul, alternative-rnb, 80s-revival>"]
+  }
+}
+
+Rules:
+- Each array: 1–3 values using precise, specific terms
+- "movement" must name the specific sonic school, not a broad genre
+- Do not add any keys outside this structure`;
+}
+
+function buildTraitUserPrompt(title: string, artist: string): string {
+  return `Analyze the core sonic traits of "${title}" by ${artist}.
+
+Think like a producer or sound designer — not a critic writing a review:
+- What is the emotional posture? (behavioral register, not a mood label)
+- How does energy move through the song? Contained? Stalking? Simmering?
+- What does the rhythm feel like in the body?
+- What is the surface texture of the production?
+- What is the spatial scale — airless, intimate, cavernous?
+- What specific sonic movement or historical moment does this belong to?
+
+Return only the JSON trait object.`;
+}
+
+// ── Stage 2: Descriptor assignment with trait context ─────────────────────────
+
+function buildDescriptorUserPrompt(title: string, artist: string, traits: Record<string, unknown>): string {
+  return `You have already analyzed the core traits of "${title}" by ${artist}:
+
+${JSON.stringify(traits, null, 2)}
+
+Now assign Sonic DNA descriptors for this song. Use the trait analysis above as your grounding — do not jump directly from song impression to label. Let each trait value constrain and drive your descriptor selection from the vocabulary.
+
+Focus on:
+- The actual rhythmic feel and groove
+- Drum sound character (live or programmed, what era/style)
+- Bass presence and movement
+- Harmonic language and chord quality
+- Melodic approach and vocal delivery
+- Production texture (how it sounds, not just genre)
+- Emotional register and atmosphere
+- What environment or activity this music fits
+
+Return only the JSON profile.`;
+}
+
+// ── Shared Claude API helper ──────────────────────────────────────────────────
+
+async function callClaude(
+  apiKey: string,
+  system: string,
+  userMessage: string,
+  maxTokens: number,
+): Promise<string> {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type":      "application/json",
+      "x-api-key":         apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model:      "claude-sonnet-4-20250514",
+      max_tokens: maxTokens,
+      system,
+      messages:   [{ role: "user", content: userMessage }],
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Claude API error: ${res.status} — ${err.slice(0, 200)}`);
+  }
+  const data = await res.json();
+  const text = (data.content?.[0]?.text as string) || "";
+  return text.replace(/^```json\s*/i, "").replace(/```\s*$/, "").trim();
+}
+
 function extractDescriptorSlugs(profile: Record<string, unknown>): string[] {
   const slugs: string[] = [];
   const arrayFields = [
@@ -903,40 +999,50 @@ serve(async (req) => {
       );
     }
 
-    // ── Generate via Claude ───────────────────────────────────────────────────
+    // ── Generate via Claude (two-stage) ──────────────────────────────────────
     console.log(`[sonic-profile] Generating: "${song_title}" by ${artist_name}`);
 
     const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY")!;
 
-    const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type":      "application/json",
-        "x-api-key":         anthropicKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model:      "claude-sonnet-4-20250514",
-        max_tokens: 1000,
-        system:     buildSystemPrompt(),
-        messages:   [{ role: "user", content: buildUserPrompt(song_title, artist_name) }],
-      }),
-    });
+    // Stage 1 — trait inference (internal scaffolding, not stored)
+    const traitText = await callClaude(
+      anthropicKey,
+      buildTraitSystemPrompt(),
+      buildTraitUserPrompt(song_title, artist_name),
+      400,
+    );
 
-    if (!aiRes.ok) {
-      const err = await aiRes.text();
-      throw new Error(`Claude API error: ${aiRes.status} — ${err.slice(0, 200)}`);
+    let traits: Record<string, unknown> | null = null;
+    try {
+      traits = JSON.parse(traitText) as Record<string, unknown>;
+    } catch {
+      console.warn(`[sonic-profile] Stage 1 parse failed, falling back to single-stage`);
     }
 
-    const aiData = await aiRes.json();
-    const rawText = (aiData.content?.[0]?.text as string) || "";
-    const jsonText = rawText.replace(/^```json\s*/i, "").replace(/```\s*$/, "").trim();
+    // Stage 2 — descriptor assignment (with trait context if Stage 1 succeeded)
+    let profileText: string;
+    if (traits) {
+      console.log(`[sonic-profile] Two-stage generation: traits inferred, converting to descriptors`);
+      profileText = await callClaude(
+        anthropicKey,
+        buildSystemPrompt(),
+        buildDescriptorUserPrompt(song_title, artist_name, traits),
+        1000,
+      );
+    } else {
+      profileText = await callClaude(
+        anthropicKey,
+        buildSystemPrompt(),
+        buildUserPrompt(song_title, artist_name),
+        1000,
+      );
+    }
 
     let profile: Record<string, unknown>;
     try {
-      profile = JSON.parse(jsonText);
+      profile = JSON.parse(profileText);
     } catch {
-      throw new Error(`Failed to parse Claude JSON response: ${jsonText.slice(0, 300)}`);
+      throw new Error(`Failed to parse Claude JSON response: ${profileText.slice(0, 300)}`);
     }
 
     const { valid, errors } = validateProfile(profile);
