@@ -278,12 +278,10 @@ export type Database = {
           confidence_score: number
           created_at: string
           descriptor_slugs: string[]
-          genre: string | null
           id: string
           profile_json: Json
           song_title: string
           spotify_track_id: string
-          subgenre: string[] | null
           updated_at: string
         }
         Insert: {
@@ -291,12 +289,10 @@ export type Database = {
           confidence_score?: number
           created_at?: string
           descriptor_slugs?: string[]
-          genre?: string | null
           id?: string
           profile_json?: Json
           song_title: string
           spotify_track_id: string
-          subgenre?: string[] | null
           updated_at?: string
         }
         Update: {
@@ -304,12 +300,10 @@ export type Database = {
           confidence_score?: number
           created_at?: string
           descriptor_slugs?: string[]
-          genre?: string | null
           id?: string
           profile_json?: Json
           song_title?: string
           spotify_track_id?: string
-          subgenre?: string[] | null
           updated_at?: string
         }
         Relationships: []
