@@ -1,5 +1,5 @@
 // =============================================================================
-// Sonic DNA Calibration Dataset  v2
+// Sonic DNA Calibration Dataset  v3
 //
 // Curated reference songs anchoring descriptor meanings across genres:
 //   hip-hop · r&b · pop · indie/rock · electronic · ambient/dream-pop
@@ -12,18 +12,19 @@
 // All slugs must exist in DESCRIPTOR_VOCABULARY in generate-sonic-profile.
 //
 // Sections:
-//   1. Aggressive / Confrontational  (hip-hop)
-//   2. Cold / Icy / Menacing         (trap / hip-hop)
-//   3. Defiant / Triumphant          (hip-hop / pop)
-//   4. Laid-back / Genuinely Relaxed
-//   5. Warm Soul / R&B
-//   6. Alternative R&B / Contemporary
-//   7. Dreamy / Floating             (dream-pop / psychedelic)
-//   8. Euphoric / Anthemic           (pop / rock)
-//   9. Electronic / Synth-pop
-//  10. Post-punk / Indie Rock
-//  11. Indie Folk / Bedroom Pop
-//  12. Art-pop / Cross-genre
+//   1.  Aggressive / Confrontational  (hip-hop)
+//   2.  Cold / Icy / Menacing         (trap / hip-hop)
+//   3.  Defiant / Triumphant          (hip-hop / pop)
+//   4.  Laid-back / Genuinely Relaxed
+//   5.  Warm Soul / R&B
+//   6.  Alternative R&B / Contemporary
+//   7.  Dreamy / Floating             (dream-pop / psychedelic)
+//   8.  Euphoric / Anthemic           (pop / rock)
+//   9.  Electronic / Synth-pop
+//  10.  Post-punk / Indie Rock
+//  11.  Indie Folk / Bedroom Pop
+//  12.  Art-pop / Cross-genre
+//  13.  Distinction Calibration       ← focused tests for known problem pairs
 // =============================================================================
 
 export interface CalibrationEntry {
@@ -77,10 +78,10 @@ export const CALIBRATION_SONGS: CalibrationEntry[] = [
   {
     title: "Heartless",
     artist: "The Weeknd",
-    archetype: "cold / icy trap-soul",
-    must_have: ["cold", "sparse"],
-    must_not_have: ["laid-back", "relaxed", "playful", "wistful", "warm", "euphoric"],
-    reasoning: "PRIMARY CALIBRATION CASE. Sparse, cold, arrogant trap-soul. The defining example that must never receive laid-back or relaxed. Cold emotional character overrides slow tempo and sparse texture.",
+    archetype: "cold / icy trap-soul / emotional subtext",
+    must_have: ["cold", "sparse", "lonely"],
+    must_not_have: ["laid-back", "relaxed", "playful", "warm", "euphoric"],
+    reasoning: "PRIMARY CALIBRATION CASE. Tests two things: (1) cold + sparse must never be read as laid-back or relaxed — cold emotional character overrides slow tempo and sparse texture. (2) Emotional layering — lonely must coexist with cold. Cold is the outward armored presentation; lonely is the underlying subtext. Both must appear. wistful removed from must_not_have since cold+wistful coexistence is now supported.",
   },
   {
     title: "The Hills",
@@ -375,5 +376,127 @@ export const CALIBRATION_SONGS: CalibrationEntry[] = [
     must_have: ["wistful", "art-pop", "hazy"],
     must_not_have: ["cold", "swaggering", "stomping", "menacing", "punchy"],
     reasoning: "Midnights-era atmospheric pop. Pitch-shifted vocal anchor and synth textures create dreamy, bittersweet distance. art-pop because the production exceeds conventional pop formulas.",
+  },
+
+  // ── 13. Distinction Calibration ───────────────────────────────────────────────
+  //
+  // Each entry below targets a specific known misclassification pair.
+  // These are not just genre anchors — they are precision tests for the
+  // distinctions that are most likely to fail: cold vs lonely, sparse vs
+  // laid-back, hazy vs spacious, aggressive vs simmering, nostalgic vs
+  // euphoric, intimate vs widescreen, and emotional layering.
+
+  // ── cold vs lonely ────────────────────────────────────────────────────────────
+
+  {
+    title: "Hotline Bling",
+    artist: "Drake",
+    archetype: "lonely / vulnerable pop-rap — NOT cold",
+    must_have: ["lonely", "nocturnal"],
+    must_not_have: ["cold", "swaggering", "menacing", "triumphant", "punchy", "immediate-impact"],
+    reasoning: "Tests cold vs lonely. Drake's most nakedly vulnerable hit — the emotional register is yearning isolation, not detachment or dominance. lonely must be the primary emotional_tone. cold would be wrong: the song is hurt and exposed, not armored.",
+  },
+  {
+    title: "After Hours",
+    artist: "The Weeknd",
+    archetype: "cold + lonely coexistence / emotional layering",
+    must_have: ["cold", "lonely", "nocturnal"],
+    must_not_have: ["laid-back", "relaxed", "playful", "warm", "triumphant"],
+    reasoning: "Tests emotional layering: cold outward presentation over lonely subtext. Both must coexist — cold is the armor, lonely is what's underneath. nocturnal atmosphere throughout. The companion test to Heartless, confirming cold+lonely coexistence across The Weeknd's catalog.",
+  },
+
+  // ── sparse vs laid-back ───────────────────────────────────────────────────────
+
+  {
+    title: "Swimming Pools (Drank)",
+    artist: "Kendrick Lamar",
+    archetype: "sparse / hypnotic trap — NOT laid-back",
+    must_have: ["hypnotic", "sparse", "minor-key"],
+    must_not_have: ["laid-back", "relaxed", "warm", "playful", "triumphant"],
+    reasoning: "Tests sparse vs laid-back. Minimal production and slow BPM could mislead into laid-back, but the song is hypnotic and predatory — a trap, not a chill track. The dark drinking-culture critique is cold and looping, not easygoing.",
+  },
+  {
+    title: "Motion Picture Soundtrack",
+    artist: "Radiohead",
+    archetype: "sparse / yearning / wistful — NOT cold",
+    must_have: ["wistful", "yearning", "intimate"],
+    must_not_have: ["cold", "swaggering", "punchy", "driving", "laid-back", "immediate-impact"],
+    reasoning: "Tests sparse+wistful vs sparse+cold. The sparseness here is tenderness, not detachment — music-box piano over Thom Yorke's most fragile vocal. yearning confirms the inward emotional direction. intimate spatial scale throughout. Cold would be the wrong reading of quiet+sparse.",
+  },
+
+  // ── aggressive vs simmering ───────────────────────────────────────────────────
+
+  {
+    title: "Teardrop",
+    artist: "Massive Attack",
+    archetype: "simmering / coiled trip-hop — NOT aggressive",
+    must_have: ["simmering", "hypnotic", "minor-key"],
+    must_not_have: ["explosive", "immediate-impact", "driving", "laid-back", "warm", "triumphant"],
+    reasoning: "Tests aggressive vs simmering. The coiled, held tension never erupts — it sustains dread without releasing. The sparse beat and haunting vocal create simmering throughout. Must not receive explosive or immediate-impact: this song withholds, it does not discharge.",
+  },
+  {
+    title: "Killing in the Name",
+    artist: "Rage Against the Machine",
+    archetype: "explosive / charging / aggressive — NOT simmering",
+    must_have: ["charging", "defiant", "immediate-impact", "driving"],
+    must_not_have: ["laid-back", "relaxed", "simmering", "wistful", "floating", "tender"],
+    reasoning: "Tests aggressive vs simmering. This song discharges immediately and fully — no restraint. immediate-impact and charging confirm the eruption. simmering would be wrong: the energy is released throughout, not held back. defiant emotional_tone is essential.",
+  },
+
+  // ── nostalgic vs euphoric ─────────────────────────────────────────────────────
+
+  {
+    title: "September",
+    artist: "Earth, Wind & Fire",
+    archetype: "euphoric / celebratory funk — NOT nostalgic",
+    must_have: ["euphoric", "warm", "bouncy", "playful"],
+    must_not_have: ["cold", "nostalgic", "wistful", "simmering", "menacing", "nocturnal"],
+    reasoning: "Tests nostalgic vs euphoric. Pure present-tense celebration — no backward-looking register. The warm horn section, bouncy groove, and joyful delivery are definitively euphoric. nostalgic would be wrong: this song has no bittersweet or retrospective quality.",
+  },
+  {
+    title: "Last Nite",
+    artist: "The Strokes",
+    archetype: "nostalgic / locked-in indie rock — NOT euphoric",
+    must_have: ["nostalgic", "locked-in", "minor-key"],
+    must_not_have: ["euphoric", "laid-back", "warm", "triumphant", "floating", "tender"],
+    reasoning: "Tests nostalgic vs euphoric. The Strokes' dusty analog recording and garage-rock tone create a definitively nostalgic harmonic register. The energy is locked-in and slightly anxious, not celebratory. minor-key harmonic color confirms the undercurrent. Not euphoric.",
+  },
+
+  // ── intimate vs widescreen ────────────────────────────────────────────────────
+
+  {
+    title: "Lover",
+    artist: "Taylor Swift",
+    archetype: "intimate / tender pop — NOT widescreen",
+    must_have: ["tender", "intimate", "warm"],
+    must_not_have: ["cold", "widescreen", "swaggering", "punchy", "menacing", "stomping"],
+    reasoning: "Tests intimate vs widescreen. Deliberately small-scale production — waltz tempo and soft synths create a personal domestic scene. intimate spatial_feel is essential. Despite Taylor Swift's arena-scale career, this song was engineered small and should not receive widescreen.",
+  },
+  {
+    title: "Fix You",
+    artist: "Coldplay",
+    archetype: "widescreen / slow-build / triumphant — NOT intimate",
+    must_have: ["widescreen", "slow-build", "triumphant"],
+    must_not_have: ["cold", "intimate", "punchy", "menacing", "laid-back"],
+    reasoning: "Tests intimate vs widescreen. Opens sparse but builds to definitively widescreen scale — engineered for arenas. triumphant emotional arc and slow-build arrangement are essential. The opening could deceive into intimate, but the destination is always widescreen.",
+  },
+
+  // ── hazy vs spacious ──────────────────────────────────────────────────────────
+
+  {
+    title: "Ultralight Beam",
+    artist: "Kanye West",
+    archetype: "widescreen / euphoric / gospel — NOT hazy",
+    must_have: ["widescreen", "gospel-rich", "triumphant", "euphoric"],
+    must_not_have: ["hazy", "cold", "intimate", "nocturnal", "airless", "sparse"],
+    reasoning: "Tests hazy vs spacious. The gospel-rap maximalism is definitively widescreen — not blurred or woozy. gospel-rich harmonic color and euphoric upward movement distinguish it from atmospheric dreaminess. hazy would be wrong: every element is intentional and luminous, not blurred.",
+  },
+  {
+    title: "The Less I Know the Better",
+    artist: "Tame Impala",
+    archetype: "strutting / seductive psychedelic — neither hazy nor cold",
+    must_have: ["strutting", "seductive", "minor-key"],
+    must_not_have: ["laid-back", "relaxed", "cold", "swaggering", "menacing", "floating"],
+    reasoning: "Tests precision in groove and emotional register. The infectious disco-rock groove is strutting — it carries attitude without aggression. seductive emotional_tone is exact: not cold, not warm, an in-between tension. Minor key adds emotional complexity without darkness.",
   },
 ];
