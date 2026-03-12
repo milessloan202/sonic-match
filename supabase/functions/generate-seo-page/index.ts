@@ -231,7 +231,8 @@ FACTUAL ACCURACY RULES (CRITICAL — STRICTLY ENFORCED):
 5. LOW CONFIDENCE MODE:
    - Write broader, more impressionistic descriptions anchored to the Sonic DNA Profile
    - Use phrases like "evokes," "channels," "recalls" rather than definitive statements
-   - Avoid specific factual claims about the track's creation beyond what metadata confirms`;
+   - Avoid specific factual claims about the track's creation beyond what metadata confirms
+   - If the Sonic DNA Profile is marked LOW confidence, the descriptors are approximate guides — write with slightly broader, less definitive language rather than stating sonic characteristics as absolute fact`;
   } else if (confidence === "medium") {
     return baseInstructions + `
 
@@ -358,23 +359,31 @@ const SONIC_CATEGORY_ORDER = [
   "vocal_character", "environment_imagery", "listener_use_case",
 ];
 
+interface SonicDescriptorResult {
+  descriptors: CanonicalDescriptor[];
+  confidenceScore: number | null;
+}
+
 async function fetchSonicDescriptors(
   spotifyTrackId: string,
   songTitle: string,
   artistName: string,
   supabase: any,
-): Promise<CanonicalDescriptor[] | null> {
+): Promise<SonicDescriptorResult | null> {
   try {
     // Cache-first: check DB before calling the edge function
     const { data: cached } = await (supabase
       .from("song_sonic_profiles")
-      .select("profile_json")
+      .select("profile_json, confidence_score")
       .eq("spotify_track_id", spotifyTrackId)
       .single() as any);
 
     if (cached?.profile_json?.canonical_descriptors?.display_descriptors?.length) {
       console.log("[SonicDNA] Cache hit for prose anchoring");
-      return cached.profile_json.canonical_descriptors.display_descriptors as CanonicalDescriptor[];
+      return {
+        descriptors: cached.profile_json.canonical_descriptors.display_descriptors as CanonicalDescriptor[],
+        confidenceScore: typeof cached.confidence_score === "number" ? cached.confidence_score : null,
+      };
     }
 
     // Generate via the sonic-profile edge function
@@ -390,7 +399,10 @@ async function fetchSonicDescriptors(
     const descriptors = data?.canonical_descriptors?.display_descriptors;
     if (Array.isArray(descriptors) && descriptors.length > 0) {
       console.log(`[SonicDNA] Generated ${descriptors.length} descriptors`);
-      return descriptors as CanonicalDescriptor[];
+      return {
+        descriptors: descriptors as CanonicalDescriptor[],
+        confidenceScore: typeof data?.confidence_score === "number" ? data.confidence_score : null,
+      };
     }
 
     console.log("[SonicDNA] generate-sonic-profile returned no descriptors");
@@ -401,7 +413,7 @@ async function fetchSonicDescriptors(
   }
 }
 
-function buildSonicDnaBlock(descriptors: CanonicalDescriptor[]): string {
+function buildSonicDnaBlock(descriptors: CanonicalDescriptor[], confidenceScore: number | null = null): string {
   if (descriptors.length === 0) return "";
 
   // Group by category
@@ -424,6 +436,11 @@ function buildSonicDnaBlock(descriptors: CanonicalDescriptor[]): string {
     if (!labels || labels.length === 0) continue;
     const catLabel = (SONIC_CATEGORY_LABELS[cat] || cat).padEnd(12);
     lines.push(`${catLabel}: ${labels.join(", ")}`);
+  }
+
+  if (confidenceScore !== null && confidenceScore < 0.65) {
+    lines.push("");
+    lines.push("Profile Confidence: LOW — treat these descriptors as approximate, not definitive");
   }
 
   lines.push("=== END SONIC DNA PROFILE ===");
@@ -652,21 +669,21 @@ serve(async (req) => {
       verifiedMetadata.song_title &&
       verifiedMetadata.artist_name
     ) {
-      const descriptors = await fetchSonicDescriptors(
+      const sonicResult = await fetchSonicDescriptors(
         verifiedMetadata.spotify_track_id,
         verifiedMetadata.song_title,
         verifiedMetadata.artist_name,
         supabase,
       );
-      if (!descriptors || descriptors.length === 0) {
+      if (!sonicResult || sonicResult.descriptors.length === 0) {
         console.log("[SonicDNA] Profile unavailable after generation attempt — returning retry");
         return new Response(
           JSON.stringify({ status: "retry", reason: "sonic_profile_unavailable" }),
           { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
-      sonicDnaBlock = buildSonicDnaBlock(descriptors);
-      console.log("[SonicDNA] Profile ready — proceeding with grounded generation");
+      sonicDnaBlock = buildSonicDnaBlock(sonicResult.descriptors, sonicResult.confidenceScore);
+      console.log(`[SonicDNA] Profile ready (confidence=${sonicResult.confidenceScore ?? "unknown"}) — proceeding with grounded generation`);
     }
 
     // --- Fetch overused songs for anti-repetition ---
@@ -757,7 +774,8 @@ summary: EXACTLY 3 sentences. Dense and specific beats long and vague.
 - Sentences 2-3: Describe the production texture, emotional architecture, and what kind of listener it rewards — all grounded in the Sonic DNA Profile.
 - CRITICAL: The Sonic DNA Profile is ground truth. Every adjective you use must be consistent with it. If the profile says "driving," do not write "sparse." If it says "cold," do not write "warm." If it says "swaggering," do not write "meditative."
 - Write like a music critic describing the track to someone who hasn't heard it — specific, grounded, energetic where the track is energetic.
-- AVOID generic filler phrases like "hard-hitting bars," "infectious hooks," or "undeniable bangers" unless the Sonic DNA Profile explicitly supports high energy and danceability.`;
+- AVOID generic filler phrases like "hard-hitting bars," "infectious hooks," or "undeniable bangers" unless the Sonic DNA Profile explicitly supports high energy and danceability.
+- If the Sonic DNA Profile is marked "Profile Confidence: LOW," do not make highly specific sonic claims. Write with appropriate uncertainty — prefer "suggests," "leans toward," "has the feel of" over definitive statements.`;
 
     const artistPrompt = `You are a world-class music curator — part crate-digger, part musicologist, part the best record store clerk alive. You think in terms of artistic DNA: how an artist's sonic identity, production choices, and creative evolution connect them to the broader musical landscape.
 
