@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, X, ExternalLink } from "lucide-react";
@@ -24,19 +24,25 @@ import { DescriptorTag } from "@/components/DescriptorTag";
 import ResultCard from "../components/ResultCard";
 import type { CanonicalDescriptor } from "@/hooks/useSonicProfile";
 
-// Canonical category groups for the grouped Sonic DNA display under prose
+// All category groups for the unified top Sonic DNA display
 const SONIC_DNA_GROUPS: { key: string; label: string }[] = [
-  { key: "emotional_tone",      label: "Mood"        },
-  { key: "energy_posture",      label: "Energy"      },
-  { key: "texture",             label: "Texture"     },
-  { key: "groove_character",    label: "Groove"      },
-  { key: "vocal_character",     label: "Vocals"      },
-  { key: "harmonic_color",      label: "Harmony"     },
-  { key: "era_movement",        label: "Era"         },
-  { key: "era_period",          label: "Period"      },
-  { key: "spatial_feel",        label: "Space"       },
-  { key: "environment_imagery", label: "Environment" },
-  { key: "listener_use_case",   label: "Best For"    },
+  { key: "emotional_tone",         label: "Mood"        },
+  { key: "energy_posture",         label: "Energy"      },
+  { key: "texture",                label: "Texture"     },
+  { key: "groove_character",       label: "Groove"      },
+  { key: "drum_character",         label: "Drums"       },
+  { key: "bass_character",         label: "Bass"        },
+  { key: "vocal_character",        label: "Vocals"      },
+  { key: "melodic_character",      label: "Melody"      },
+  { key: "harmonic_color",         label: "Harmony"     },
+  { key: "arrangement_energy_arc", label: "Energy Arc"  },
+  { key: "era_movement",           label: "Era"         },
+  { key: "era_period",             label: "Period"      },
+  { key: "spatial_feel",           label: "Space"       },
+  { key: "environment_imagery",    label: "Environment" },
+  { key: "listener_use_case",      label: "Best For"    },
+  { key: "intensity",              label: "Intensity"   },
+  { key: "danceability",           label: "Danceability"},
 ];
 
 const DNA_CATEGORY_LIMIT = 4;
@@ -105,13 +111,86 @@ const SongPage = () => {
     autoGenerate: !!centerTrackId && !!profileSongTitle && !!profileArtistName,
   });
 
-  // Build a slug→descriptor lookup once canonical descriptors arrive
+  // Unified descriptor list: canonical descriptors (proper labels) merged with
+  // raw profile slugs for categories not covered by the canonical set.
+  const unifiedDescriptors = useMemo((): CanonicalDescriptor[] => {
+    const result: CanonicalDescriptor[] = [];
+    const seen = new Set<string>();
+
+    // 1. Canonical descriptors first — they have curated labels
+    for (const d of canonicalDescriptors?.display_descriptors ?? []) {
+      if (!seen.has(d.slug)) {
+        result.push(d);
+        seen.add(d.slug);
+      }
+    }
+
+    if (sonicProfile) {
+      const addSlugs = (slugs: string[], category: string) => {
+        for (const slug of slugs) {
+          if (!seen.has(slug)) {
+            result.push({
+              slug,
+              label: slug.replace(/-/g, " "),
+              category,
+              is_clickable: true,
+              search_url: `/search?descriptors=${slug}`,
+              dna_url: `/search?descriptors=${slug}&mode=lineage`,
+            });
+            seen.add(slug);
+          }
+        }
+      };
+
+      // 2. Raw profile arrays — fills in any slugs not already in canonical set
+      addSlugs(sonicProfile.emotional_tone,         "emotional_tone");
+      addSlugs(sonicProfile.energy_posture,         "energy_posture");
+      addSlugs(sonicProfile.texture,                "texture");
+      addSlugs(sonicProfile.groove_character,       "groove_character");
+      addSlugs(sonicProfile.drum_character,         "drum_character");
+      addSlugs(sonicProfile.bass_character,         "bass_character");
+      addSlugs(sonicProfile.vocal_character,        "vocal_character");
+      addSlugs(sonicProfile.melodic_character,      "melodic_character");
+      addSlugs(sonicProfile.harmonic_color,         "harmonic_color");
+      addSlugs(sonicProfile.arrangement_energy_arc, "arrangement_energy_arc");
+      addSlugs(sonicProfile.spatial_feel,           "spatial_feel");
+      addSlugs(sonicProfile.era_movement,           "era_movement");
+      addSlugs(sonicProfile.era_period,             "era_period");
+      addSlugs(sonicProfile.environment_imagery,    "environment_imagery");
+      addSlugs(sonicProfile.listener_use_case,      "listener_use_case");
+
+      // 3. Scalar fields as pseudo-categories
+      if (sonicProfile.intensity_level && !seen.has(sonicProfile.intensity_level)) {
+        result.push({
+          slug: sonicProfile.intensity_level,
+          label: sonicProfile.intensity_level.replace(/-/g, " "),
+          category: "intensity",
+          is_clickable: true,
+          search_url: `/search?descriptors=${sonicProfile.intensity_level}`,
+          dna_url: `/search?descriptors=${sonicProfile.intensity_level}&mode=lineage`,
+        });
+      }
+      if (sonicProfile.danceability_feel && !seen.has(sonicProfile.danceability_feel)) {
+        result.push({
+          slug: sonicProfile.danceability_feel,
+          label: sonicProfile.danceability_feel.replace(/-/g, " "),
+          category: "danceability",
+          is_clickable: true,
+          search_url: `/search?descriptors=${sonicProfile.danceability_feel}`,
+          dna_url: `/search?descriptors=${sonicProfile.danceability_feel}&mode=lineage`,
+        });
+      }
+    }
+
+    return result;
+  }, [canonicalDescriptors, sonicProfile]);
+
+  // Build a slug→descriptor lookup from the unified set for the Active DNA Mix panel
   useEffect(() => {
-    if (!canonicalDescriptors) return;
     const map: Record<string, CanonicalDescriptor> = {};
-    for (const d of canonicalDescriptors.display_descriptors) map[d.slug] = d;
+    for (const d of unifiedDescriptors) map[d.slug] = d;
     setDescriptorMap(map);
-  }, [canonicalDescriptors]);
+  }, [unifiedDescriptors]);
 
   // ── Top recommended song for MatchDNA comparison ──────────────────────────
   const topMatchSong = data?.closest_matches?.[0] || data?.same_energy?.[0];
@@ -196,8 +275,8 @@ const SongPage = () => {
           />
         )}
 
-        {/* Sonic DNA — grouped descriptor profile with in-page stacking */}
-        {(profileLoading || (canonicalDescriptors?.display_descriptors.length ?? 0) > 0) && (
+        {/* Sonic DNA — unified grouped descriptor profile */}
+        {(profileLoading || unifiedDescriptors.length > 0) && (
           <div className="space-y-2 pt-1">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">Sonic DNA</p>
             {profileLoading ? (
@@ -208,7 +287,7 @@ const SongPage = () => {
             ) : (
               <div className="grid gap-3">
                 {SONIC_DNA_GROUPS.map(({ key, label }) => {
-                  const chips = canonicalDescriptors!.display_descriptors
+                  const chips = unifiedDescriptors
                     .filter(d => d.category === key)
                     .slice(0, DNA_CATEGORY_LIMIT);
                   if (chips.length === 0) return null;
@@ -354,34 +433,25 @@ const SongPage = () => {
             <ResultSection title="Why These Work" items={data.why_these_work} variant="explanation" />
           )}
 
-          {/* 3. Explore This DNA — descriptor chips + sonic lineage */}
-          {(profileLoading || (canonicalDescriptors && canonicalDescriptors.display_descriptors.length > 0)) && (
+          {/* 3. Explore This DNA — match comparison + search CTA */}
+          {(comparisonLoading || !!comparison || (canonicalDescriptors && canonicalDescriptors.display_descriptors.length > 0)) && (
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-foreground">Explore This DNA</h2>
-              {profileLoading ? (
-                <div className="flex items-center gap-3 text-muted-foreground text-sm">
-                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  Loading DNA...
-                </div>
-              ) : (
-                <>
-                  <MatchDNA
-                    centerTitle={profileSongTitle}
-                    centerArtist={profileArtistName}
-                    comparedTitle={topMatchTitle || undefined}
-                    comparedArtist={topMatchArtist || undefined}
-                    comparison={comparison}
-                    centerProfile={sonicProfile}
-                    loading={comparisonLoading && !sonicProfile && !comparison}
-                    activeSlugs={activeSlugs}
-                    onToggle={toggleDescriptor}
-                  />
-                  <ExploreDNA
-                    descriptors={canonicalDescriptors!.display_descriptors}
-                    searchUrl={canonicalDescriptors!.descriptor_search_url}
-                    songTitle={profileSongTitle || songTitleForSample}
-                  />
-                </>
+              {(comparisonLoading || !!comparison) && (
+                <MatchDNA
+                  centerTitle={profileSongTitle}
+                  comparedTitle={topMatchTitle || undefined}
+                  comparedArtist={topMatchArtist || undefined}
+                  comparison={comparison}
+                  loading={comparisonLoading && !comparison}
+                />
+              )}
+              {canonicalDescriptors && canonicalDescriptors.display_descriptors.length > 0 && (
+                <ExploreDNA
+                  descriptors={canonicalDescriptors.display_descriptors}
+                  searchUrl={canonicalDescriptors.descriptor_search_url}
+                  songTitle={profileSongTitle || songTitleForSample}
+                />
               )}
             </div>
           )}

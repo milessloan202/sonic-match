@@ -1,7 +1,5 @@
 import { motion } from "framer-motion";
 import type { SongComparison } from "@/hooks/useSongComparison";
-import type { SonicProfile } from "@/hooks/useSonicProfile";
-import { DescriptorTag, DescriptorTagGroup } from "@/components/DescriptorTag";
 
 // =============================================================================
 // MatchDNA
@@ -23,39 +21,11 @@ import { DescriptorTag, DescriptorTagGroup } from "@/components/DescriptorTag";
 
 interface MatchDNAProps {
   centerTitle: string;
-  centerArtist: string;
   comparedTitle?: string;
   comparedArtist?: string;
   comparison: SongComparison | null;
-  centerProfile: SonicProfile | null;
   loading?: boolean;
-  activeSlugs?: Set<string>;
-  onToggle?: (slug: string) => void;
 }
-
-// Categories shown in the full profile section, in display order
-const PROFILE_DISPLAY_CATEGORIES: Array<{
-  key: keyof SonicProfile;
-  label: string;
-  category: string;
-  clickable: boolean;
-}> = [
-  { key: "emotional_tone",         label: "Emotional Tone",    category: "emotional_tone",         clickable: true  },
-  { key: "energy_posture",         label: "Energy Posture",    category: "energy_posture",         clickable: true  },
-  { key: "texture",                label: "Texture",           category: "texture",                clickable: true  },
-  { key: "spatial_feel",           label: "Space",             category: "spatial_feel",           clickable: true  },
-  { key: "era_movement",           label: "Era Movement",      category: "era_movement",           clickable: true  },
-  { key: "era_period",             label: "Era Period",        category: "era_period",             clickable: true  },
-  { key: "environment_imagery",    label: "Environment",       category: "environment_imagery",    clickable: true  },
-  { key: "listener_use_case",      label: "Best For",          category: "listener_use_case",      clickable: true  },
-  { key: "groove_character",       label: "Groove",            category: "groove_character",       clickable: true  },
-  { key: "drum_character",         label: "Drums",             category: "drum_character",         clickable: true  },
-  { key: "bass_character",         label: "Bass",              category: "bass_character",         clickable: true  },
-  { key: "harmonic_color",         label: "Harmony",           category: "harmonic_color",         clickable: true  },
-  { key: "melodic_character",      label: "Melody",            category: "melodic_character",      clickable: true  },
-  { key: "vocal_character",        label: "Vocals",            category: "vocal_character",        clickable: true  },
-  { key: "arrangement_energy_arc", label: "Energy Arc",        category: "arrangement_energy_arc", clickable: true  },
-];
 
 function MatchStrengthBar({ strength }: { strength: number }) {
   const pct  = Math.round(strength * 100);
@@ -84,14 +54,10 @@ function MatchStrengthBar({ strength }: { strength: number }) {
 
 export function MatchDNA({
   centerTitle,
-  centerArtist,
   comparedTitle,
   comparedArtist,
   comparison,
-  centerProfile,
   loading = false,
-  activeSlugs,
-  onToggle,
 }: MatchDNAProps) {
 
   if (loading) {
@@ -186,74 +152,6 @@ export function MatchDNA({
         </div>
       )}
 
-      {/* ── Sonic Lineage — full profile for center song ── */}
-      {centerProfile && (
-        <div className="rounded-xl border border-white/10 bg-white/5 p-5 space-y-4">
-          <div>
-            <h3 className="text-xs font-semibold text-white/40 uppercase tracking-widest mb-1">
-              Sonic Lineage
-            </h3>
-            <p className="text-sm text-white/60">
-              The musical DNA of{" "}
-              <span className="text-white font-medium">{centerTitle}</span>
-              {" "}by{" "}
-              <span className="text-white/80">{centerArtist}</span>
-            </p>
-          </div>
-
-          <div className="grid gap-3">
-            {PROFILE_DISPLAY_CATEGORIES.map(({ key, label, category, clickable }) => {
-              const slugs = centerProfile[key];
-              if (!Array.isArray(slugs) || slugs.length === 0) return null;
-              return (
-                <div key={key} className="flex items-start gap-3">
-                  <span className="text-[10px] text-white/35 uppercase tracking-wider pt-0.5 w-20 shrink-0 text-right">
-                    {label}
-                  </span>
-                  <DescriptorTagGroup
-                    slugs={slugs}
-                    category={category}
-                    clickable={clickable}
-                    size="sm"
-                    activeSlugs={activeSlugs}
-                    onToggle={onToggle}
-                  />
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Intensity + danceability quick stats */}
-          <div className="flex gap-4 pt-2 border-t border-white/8">
-            {centerProfile.intensity_level && (
-              <div>
-                <p className="text-[10px] text-white/35 uppercase tracking-wider mb-1">Intensity</p>
-                <DescriptorTag
-                  slug={centerProfile.intensity_level}
-                  label={centerProfile.intensity_level.replace(/-/g, " ")}
-                  size="sm"
-                  clickable={!!onToggle}
-                  active={activeSlugs?.has(centerProfile.intensity_level)}
-                  onClick={onToggle ? () => onToggle(centerProfile.intensity_level!) : undefined}
-                />
-              </div>
-            )}
-            {centerProfile.danceability_feel && (
-              <div>
-                <p className="text-[10px] text-white/35 uppercase tracking-wider mb-1">Danceability</p>
-                <DescriptorTag
-                  slug={centerProfile.danceability_feel}
-                  label={centerProfile.danceability_feel.replace(/-/g, " ")}
-                  size="sm"
-                  clickable={!!onToggle}
-                  active={activeSlugs?.has(centerProfile.danceability_feel)}
-                  onClick={onToggle ? () => onToggle(centerProfile.danceability_feel!) : undefined}
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </motion.div>
   );
 }
