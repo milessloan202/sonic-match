@@ -7,12 +7,18 @@ import type { SonicProfile, CanonicalDescriptorPayload } from "./useSonicProfile
 //
 // Finds songs with similar sonic DNA using weighted category scoring.
 //
+// Pipeline:
+//   1. Backend (search-by-descriptors): fetches up to 200 candidates from DB
+//      that overlap at least one descriptor slug with the center song.
+//   2. Frontend (here): applies weighted category scoring over all 200,
+//      then returns the top 8.
+//
 // Scoring formula:
 //   score = Σ(WEIGHT[category(slug)] for slug in matched_slugs)
 //           / Σ(WEIGHT[category(slug)] for slug in center.all_slugs)
 //
-// Each matched slug contributes its category's weight rather than 1.
-// Normalised to [0–1] against the maximum possible weighted score.
+// Each matched slug contributes its category's weight rather than a flat 1.
+// Normalised to [0–1] against the center song's total weighted descriptor mass.
 // Tune CATEGORY_WEIGHTS to adjust which dimensions drive similarity.
 //
 // Diversity filters (hard exclusions):
@@ -43,23 +49,38 @@ interface UseSimilarByDNAArgs {
 // ── Category weights ──────────────────────────────────────────────────────────
 // Controls how strongly each sonic dimension influences similarity scoring.
 // Higher = a match in this category moves the score more.
-// Internal categories (drum, bass, melodic) fall back to DEFAULT_CATEGORY_WEIGHT.
+// Tune these values to adjust which dimensions drive recommendations.
+//
+// Tiers:
+//   High   (2.2–3.0): core sonic identity — these should dominate matching
+//   Medium (1.2–2.0): important texture/character dimensions
+//   Low    (0.4–0.9): contextual or decorative — useful but not load-bearing
+//
+// Any slug whose category is not listed here falls back to DEFAULT_CATEGORY_WEIGHT.
 
 const CATEGORY_WEIGHTS: Record<string, number> = {
+  // High — core sonic identity
   emotional_tone:         3.0,
   energy_posture:         3.0,
   groove_character:       2.8,
   texture:                2.3,
   spatial_feel:           2.2,
+
+  // Medium — important character dimensions
   vocal_character:        2.0,
   harmonic_color:         1.8,
   arrangement_energy_arc: 1.8,
+  melodic_character:      1.5,
   era_movement:           1.5,
+  drum_character:         1.3,
+  bass_character:         1.2,
+
+  // Low — contextual / decorative
   era_period:             0.7,
   environment_imagery:    0.6,
   listener_use_case:      0.4,
 };
-const DEFAULT_CATEGORY_WEIGHT = 1.0; // drum_character, bass_character, melodic_character
+const DEFAULT_CATEGORY_WEIGHT = 1.0; // fallback for any future/unknown categories
 
 // Build slug → weight map from the center profile's known category assignments
 function buildSlugWeightMap(profile: SonicProfile): Map<string, number> {
@@ -108,7 +129,9 @@ export function useSimilarByDNA({
       try {
         const { data, error: fnError } = await supabase.functions.invoke(
           "search-by-descriptors",
-          { body: { descriptors: canonical!.all_slugs, limit: 40 } },
+          // Request the full backend pool (200) so weighted scoring sees all candidates,
+          // not just the top-40 by flat overlap count.
+          { body: { descriptors: canonical!.all_slugs, limit: 200 } },
         );
         if (fnError) throw new Error(fnError.message);
         if (data?.error)  throw new Error(data.error);
