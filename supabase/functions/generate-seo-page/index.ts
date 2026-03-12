@@ -449,6 +449,181 @@ function buildSonicDnaBlock(descriptors: CanonicalDescriptor[], confidenceScore:
   return lines.join("\n");
 }
 
+// ============= POSTURE ANCHOR LAYER =============
+//
+// WHY THIS EXISTS:
+// LLMs have a well-documented heuristic failure in music prose: they read
+// "dark + minor-key + sparse" as sadness or emotional vulnerability because
+// confessional/introspective framing is heavily over-represented in music
+// criticism training data.
+//
+// In hip-hop, industrial, post-punk, and many electronic contexts, those same
+// cues actually signal dominance, menace, or controlled aggression — not emotional
+// exposure. A cold, metallic track is a hard track; restrained vocals signal
+// authority, not fragility; sparse production can mean pressure, not loneliness.
+//
+// CORE RULE: PROSE MUST NOT CONTRADICT SONIC DNA.
+//
+// To prevent re-inference drift, we compute the dominant emotional posture
+// deterministically from the actual descriptor slugs and inject a concrete
+// POSTURE ANCHOR block into the prompt. The LLM receives a named posture,
+// a forbidden-word list, and an emphasize list — not an invitation to infer.
+
+type Posture =
+  | "dominant"
+  | "detached"
+  | "menacing"
+  | "melancholic"
+  | "dreamlike"
+  | "euphoric"
+  | "nostalgic"
+  | "playful"
+  | "vulnerable"
+  | "defiant"
+  | "triumphant"
+  | "restless"
+  | "seductive"
+  | "tender";
+
+// Each entry maps one or more descriptor slugs to a posture signal.
+// Weight reflects how strongly that slug indicates the posture.
+// Scored by summing weights across all matched slugs; highest total wins.
+const POSTURE_SIGNALS: Array<{ slugs: string[]; posture: Posture; weight: number }> = [
+  // ── Dominant / hard / confrontational ───────────────────────────────────────
+  { slugs: ["swaggering", "menacing"],                          posture: "dominant",    weight: 3 },
+  { slugs: ["stalking", "coiled"],                              posture: "menacing",    weight: 3 },
+  { slugs: ["commanding"],                                      posture: "dominant",    weight: 2 },
+  { slugs: ["defiant"],                                         posture: "defiant",     weight: 2 },
+  { slugs: ["glamorous"],                                       posture: "dominant",    weight: 1 },
+  { slugs: ["explosive", "charging", "propulsive", "driving"], posture: "dominant",    weight: 1 },
+  // ── Detached / cool / controlled ────────────────────────────────────────────
+  { slugs: ["cold", "cool-toned", "restrained-vocal"],         posture: "detached",    weight: 2 },
+  // ── Triumphant / euphoric ────────────────────────────────────────────────────
+  { slugs: ["triumphant", "euphoric"],                         posture: "triumphant",  weight: 2 },
+  { slugs: ["explosive-chorus", "euphoric-lift"],              posture: "euphoric",    weight: 1 },
+  // ── Inward / vulnerable / tender ────────────────────────────────────────────
+  { slugs: ["tender", "devotional"],                           posture: "tender",      weight: 2 },
+  { slugs: ["wistful", "lonely"],                              posture: "melancholic", weight: 2 },
+  { slugs: ["melancholic"],                                    posture: "melancholic", weight: 2 },
+  { slugs: ["yearning", "emotionally-direct"],                 posture: "vulnerable",  weight: 2 },
+  // ── Atmospheric / dreamlike ──────────────────────────────────────────────────
+  { slugs: ["nocturnal"],                                      posture: "dreamlike",   weight: 1 },
+  { slugs: ["floating", "gliding", "hazy"],                   posture: "dreamlike",   weight: 1 },
+  // ── Other named postures ─────────────────────────────────────────────────────
+  { slugs: ["nostalgic"],                                      posture: "nostalgic",   weight: 2 },
+  { slugs: ["playful"],                                        posture: "playful",     weight: 2 },
+  { slugs: ["seductive"],                                      posture: "seductive",   weight: 2 },
+  { slugs: ["restless"],                                       posture: "restless",    weight: 2 },
+];
+
+function inferPosture(descriptors: CanonicalDescriptor[]): Posture {
+  const slugSet = new Set(descriptors.map((d) => d.slug));
+  const scores = new Map<Posture, number>();
+
+  for (const { slugs, posture, weight } of POSTURE_SIGNALS) {
+    for (const slug of slugs) {
+      if (slugSet.has(slug)) {
+        scores.set(posture, (scores.get(posture) ?? 0) + weight);
+      }
+    }
+  }
+
+  if (scores.size === 0) return "detached"; // safe fallback
+
+  let best: Posture = "detached";
+  let bestScore = 0;
+  for (const [posture, score] of scores) {
+    if (score > bestScore) { best = posture; bestScore = score; }
+  }
+  return best;
+}
+
+// Per-posture word lists: what to forbid and what to emphasize in the prose.
+// These are injected verbatim into the prompt so the LLM receives concrete lists,
+// not abstract instructions to "stay consistent."
+const POSTURE_GUARDRAILS: Record<Posture, { forbidden: string[]; emphasize: string[] }> = {
+  dominant:    {
+    forbidden: ["lonely","vulnerable","introspective","confessional","emotionally fragile","tender","raw emotional honesty","exposed","intimate"],
+    emphasize: ["authority","swagger","dominance","confrontation","pressure","icy control","hard edge","weight"],
+  },
+  detached:    {
+    forbidden: ["lonely","vulnerable","introspective","confessional","emotionally fragile","tender","raw","intimate","warm"],
+    emphasize: ["detachment","cool precision","controlled distance","restrained authority","airless control"],
+  },
+  menacing:    {
+    forbidden: ["lonely","vulnerable","tender","warm","inviting","playful","confessional","intimate"],
+    emphasize: ["menace","predatory pressure","threat","controlled aggression","industrial force","dark authority"],
+  },
+  defiant:     {
+    forbidden: ["vulnerable","tender","confessional","introspective","submissive"],
+    emphasize: ["defiance","resistance","hard refusal","assertive force","proud refusal"],
+  },
+  triumphant:  {
+    forbidden: ["lonely","sad","dark","melancholic","introspective","vulnerable"],
+    emphasize: ["triumph","ascent","release","victory","euphoric lift","peak energy"],
+  },
+  melancholic: {
+    forbidden: ["dominant","commanding","hard-edged","confrontational","aggressive","swaggering"],
+    emphasize: ["longing","bittersweet distance","muted ache","wistful atmosphere","soft decay"],
+  },
+  dreamlike:   {
+    forbidden: ["aggressive","confrontational","dominant","hard-edged","industrial"],
+    emphasize: ["drifting atmosphere","hazy texture","nocturnal immersion","weightless ambience"],
+  },
+  euphoric:    {
+    forbidden: ["lonely","melancholic","introspective","dark","somber"],
+    emphasize: ["euphoria","lift","radiant energy","peak release","bright momentum"],
+  },
+  nostalgic:   {
+    forbidden: ["confrontational","industrial","aggressive","dominant","hard-edged"],
+    emphasize: ["warmth","memory","bittersweet familiarity","soft decay","temporal distance"],
+  },
+  playful:     {
+    forbidden: ["menacing","confrontational","dark","aggressive","industrial"],
+    emphasize: ["lightness","wit","bounce","irreverence","playful momentum","levity"],
+  },
+  vulnerable:  {
+    forbidden: ["commanding","confrontational","dominant","hard-edged","menacing","industrial"],
+    emphasize: ["emotional exposure","intimacy","fragility","raw candor","unguarded delivery"],
+  },
+  restless:    {
+    forbidden: ["relaxed","laid-back","peaceful","resolved","comfortable"],
+    emphasize: ["unresolved tension","anxious momentum","restless urgency","unsettled energy"],
+  },
+  seductive:   {
+    forbidden: ["confrontational","aggressive","menacing","hard-edged","industrial"],
+    emphasize: ["seductive pull","low-key invitation","sensual restraint","controlled desire"],
+  },
+  tender:      {
+    forbidden: ["commanding","confrontational","dominant","industrial","hard-edged","menacing"],
+    emphasize: ["tenderness","care","soft delivery","emotional warmth","gentle intimacy"],
+  },
+};
+
+function buildPostureAnchorBlock(posture: Posture, confidenceScore: number | null): string {
+  const g = POSTURE_GUARDRAILS[posture];
+  const isLow = confidenceScore !== null && confidenceScore < 0.65;
+  const certaintyCue = isLow
+    ? `Profile confidence is LOW. Soften certainty with "leans toward," "suggests," "feels closer to," or "projects." The posture guardrail still applies — do not contradict it even at low confidence.`
+    : `Profile confidence is HIGH. Write with specificity.`;
+
+  return [
+    "",
+    "=== POSTURE ANCHOR (pre-computed from Sonic DNA — do not override) ===",
+    `Dominant emotional posture: ${posture.toUpperCase()}`,
+    "",
+    "The prose MUST remain consistent with this posture.",
+    "Do NOT reinterpret the Sonic DNA descriptors into a different emotional archetype.",
+    "",
+    `FORBIDDEN words/phrases: ${g.forbidden.join(", ")}`,
+    `EMPHASIZE qualities such as: ${g.emphasize.join(", ")}`,
+    "",
+    certaintyCue,
+    "=== END POSTURE ANCHOR ===",
+    "",
+  ].join("\n");
+}
+
 // ============= ANTI-REPETITION LAYER =============
 
 async function getFrequentlyRecommendedSongs(supabase: any, pageType: string): Promise<string[]> {
@@ -663,6 +838,7 @@ serve(async (req) => {
     // If we have a resolved track ID but can't get a profile, return 202 so the
     // client retries rather than generating prose with no sonic grounding.
     let sonicDnaBlock = "";
+    let postureAnchorBlock = "";
     if (
       page_type === "song" &&
       verifiedMetadata.spotify_track_id &&
@@ -683,7 +859,9 @@ serve(async (req) => {
         );
       }
       sonicDnaBlock = buildSonicDnaBlock(sonicResult.descriptors, sonicResult.confidenceScore);
-      console.log(`[SonicDNA] Profile ready (confidence=${sonicResult.confidenceScore ?? "unknown"}) — proceeding with grounded generation`);
+      const posture = inferPosture(sonicResult.descriptors);
+      postureAnchorBlock = buildPostureAnchorBlock(posture, sonicResult.confidenceScore);
+      console.log(`[SonicDNA] Profile ready (confidence=${sonicResult.confidenceScore ?? "unknown"}, posture=${posture}) — proceeding with grounded generation`);
     }
 
     // --- Fetch overused songs for anti-repetition ---
@@ -769,13 +947,7 @@ relatedArtists: 3 artists whose broader catalog overlaps most with the sonic wor
 
 whyTheseWork: 2-3 sentences explaining the SPECIFIC sonic thread connecting these recommendations. Each recommended track should share at least 2 descriptor traits with the center song — name which traits (e.g., "Both share the stalking energy and cold emotional tone"). Reference concrete musical details: drum pattern, harmonic movement, production technique. Never use "similar vibe," "same feel," "fans of X will enjoy," or "same energy."
 
-POSTURE ANCHOR (do this before writing the summary):
-Step 1 — Read the Sonic DNA Profile descriptors and infer the song's single dominant projected emotional posture. Choose ONE from this list (or the closest equivalent):
-  dominant | detached | menacing | melancholic | dreamlike | euphoric | nostalgic | playful | vulnerable | defiant | triumphant | restless | seductive | tender
-Step 2 — Hold that posture as a constraint. Every sentence of the summary must be consistent with it.
-Step 3 — Apply the contradiction check. If the posture is dominant/detached/menacing/defiant/triumphant, the summary MUST NOT contain words like lonely, vulnerable, introspective, exposed, raw, or emotionally fragile. If the posture is vulnerable/tender/melancholic, the summary MUST NOT contain words like commanding, confrontational, dominant, or hard-edged.
-Step 4 — Prioritize the outward emotional stance the song projects toward the listener. Do not speculate about the artist's inner psychology. Describe what the track DOES, not what it FEELS inside.
-
+${postureAnchorBlock}
 summary: EXACTLY 3 sentences. Dense and specific beats long and vague.
 - Sentence 1: MUST begin with "{Artist Name}'s \"{Song Title}\"" and lead with the dominant energy and mood from the Sonic DNA Profile. Example: "Kanye West's \"Cold\" is a stalking, icy GOOD Music posse cut built on thick bass pressure and menacing minor-key synths."
 - Sentences 2-3: Describe the production texture, emotional architecture, and what kind of listener it rewards — all grounded in the Sonic DNA Profile.
