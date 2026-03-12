@@ -45,6 +45,7 @@ interface SongProfile {
   era_movement?: string[];
   environment_imagery?: string[];
   listener_use_case?: string[];
+  spatial_feel?: string[];
   intensity_level?: string;
   danceability_feel?: string;
   confidence_score?: number;

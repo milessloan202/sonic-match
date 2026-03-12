@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import type { SongComparison } from "@/hooks/useSongComparison";
+import { DescriptorTag } from "@/components/DescriptorTag";
 
 // =============================================================================
 // MatchDNA
