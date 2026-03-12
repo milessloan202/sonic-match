@@ -152,6 +152,7 @@ async function fetchVerifiedMetadata(
             );
             if (featRes.ok) {
               const feat = await featRes.json();
+              console.log(`[AudioFeatures] HTTP 200 for ${metadata.spotify_track_id} — raw:`, JSON.stringify(feat).slice(0, 300));
               if (feat?.energy != null) {
                 metadata.audio_features = {
                   energy:           feat.energy,
@@ -162,13 +163,16 @@ async function fetchVerifiedMetadata(
                   instrumentalness: feat.instrumentalness,
                   speechiness:      feat.speechiness,
                 };
-                console.log(`[Metadata] Audio features fetched for ${metadata.spotify_track_id}`);
+                console.log(`[AudioFeatures] Parsed OK — energy=${feat.energy} valence=${feat.valence} tempo=${Math.round(feat.tempo)}BPM acousticness=${feat.acousticness}`);
+              } else {
+                console.log(`[AudioFeatures] HTTP 200 but energy field missing — body: ${JSON.stringify(feat).slice(0, 200)}`);
               }
             } else {
-              console.log(`[Metadata] Audio features returned HTTP ${featRes.status} — skipping`);
+              const errBody = await featRes.text().catch(() => "(unreadable)");
+              console.log(`[AudioFeatures] HTTP ${featRes.status} for ${metadata.spotify_track_id} — body: ${errBody.slice(0, 300)}`);
             }
           } catch (e) {
-            console.log("[Metadata] Audio features fetch failed (non-blocking):", e);
+            console.log("[AudioFeatures] Fetch threw exception (non-blocking):", e);
           }
         }
       }
