@@ -27,7 +27,7 @@ const DESCRIPTOR_VOCABULARY = {
   energy_posture: [
     "relaxed","gliding","floating","slow-burn","coiled",
     "midtempo","driving","charging","explosive","stalking",
-    "propulsive","urgent","steady",
+    "propulsive","urgent","steady","simmering","buoyant",
   ],
   // Groove character — how rhythm moves and feels in the body
   groove_character: [
@@ -62,7 +62,7 @@ const DESCRIPTOR_VOCABULARY = {
   ],
   arrangement_energy_arc: [
     "immediate-impact","slow-build","sustained-drive","explosive-chorus",
-    "hypnotic-loop","late-night-cruise","euphoric-lift","tension-release","simmering","full-bloom",
+    "hypnotic-loop","late-night-cruise","euphoric-lift","tension-release","full-bloom",
   ],
   // Spatial feel — the perceived physical scale and room of the production
   spatial_feel: [
@@ -213,6 +213,8 @@ const DESCRIPTOR_GLOSSARY: Array<{
   { slug: "explosive",   category: "energy_posture", means: "Energy discharges suddenly and completely. Maximum impact, maximum release.", notMeans: ["sustained", "coiled", "simmering", "relaxed"] },
   { slug: "stalking",    category: "energy_posture", means: "Deliberate, menacing forward motion. Controlled threat — predatory pacing.", notMeans: ["relaxed", "playful", "gliding", "warm"] },
   { slug: "gliding",     category: "energy_posture", means: "Smooth, frictionless forward motion with no effort or resistance.", notMeans: ["stomping", "marching", "heavy percussion", "coiled"] },
+  { slug: "simmering",   category: "energy_posture", means: "Sustained suppressed tension: force held back without release, contained and coiled. The energy is present but deliberately restrained — not calm.", notMeans: ["relaxed", "laid-back", "calm", "floating — simmering has suppressed force where floating has none"] },
+  { slug: "buoyant",     category: "energy_posture", means: "Light, lifted energy with natural upward momentum. Resilient and springy — the song floats upward rather than outward. Has bounce and weight where 'floating' is pure weightlessness.", notMeans: ["floating — buoyant has spring and lift, floating is passive drift", "heavy", "threatening", "coiled", "simmering"] },
   // groove_character
   { slug: "stomping",    category: "groove_character", means: "Heavy, percussive rhythmic emphasis with physical weight on the beat.", notMeans: ["gliding", "floating", "delicate", "airy"] },
   { slug: "clipped",     category: "groove_character", means: "Short, tightly gated rhythmic hits. Patterns cut short rather than allowed to ring or breathe.", notMeans: ["roomy", "reverb-drenched", "lush-texture", "open"] },
@@ -241,7 +243,6 @@ const DESCRIPTOR_GLOSSARY: Array<{
   { slug: "organic",     category: "texture", means: "Natural, material-feeling production. Wood, skin, air — unprocessed human presence.", notMeans: ["electronic", "synthetic", "glossy", "neon"] },
   { slug: "gritty",      category: "texture", means: "Rough-textured, abrasive surface with grain and friction.", notMeans: ["glossy", "polished", "glassy", "velvety"] },
   // arrangement_energy_arc
-  { slug: "simmering",        category: "arrangement_energy_arc", means: "Sustained suppressed tension. Force held back without release — contained and coiled.", notMeans: ["relaxed", "laid-back", "calm"] },
   { slug: "sustained-drive",  category: "arrangement_energy_arc", means: "Unrelenting forward motion maintained throughout the track.", notMeans: ["laid-back", "floaty", "unhurried"] },
   { slug: "immediate-impact", category: "arrangement_energy_arc", means: "Full energy present from bar one. Hits hard immediately — no buildup.", notMeans: ["gradual", "laid-back", "easygoing"] },
   // spatial_feel
@@ -359,7 +360,8 @@ const CONTRADICTION_RULES: Array<{
       "cold", "swaggering", "restless", "triumphant", "menacing",  // emotional — not easygoing
       "commanding", "emotionally-direct",                           // vocal — forceful delivery
       "immediate-impact", "tension-release",                        // arrangement — tension or hard impact
-      "sustained-drive", "simmering",                               // arrangement — suppressed or persistent force
+      "sustained-drive",                                             // arrangement — persistent forward force
+      "simmering",                                                   // posture — suppressed tension is not ease
       "808-heavy", "punchy",                                        // drums — hard, physical impact
       "metallic",                                                   // texture — cold, machine-like
       "charging", "explosive", "stalking", "galloping",             // energy posture — force or threat
@@ -371,7 +373,8 @@ const CONTRADICTION_RULES: Array<{
     blockers: [
       "explosive", "charging", "stalking", "urgent", "propulsive", // force or threat
       "menacing", "cold", "restless",                               // emotional tension
-      "immediate-impact", "simmering", "sustained-drive",           // arrangement force
+      "immediate-impact", "sustained-drive",                         // arrangement force
+      "simmering",                                                   // posture — suppressed tension opposes ease
       "808-heavy", "punchy",                                        // hard percussion
     ],
     reason: "relaxed implies genuine release of tension; these signal force, threat, or suppressed energy",
@@ -382,9 +385,17 @@ const CONTRADICTION_RULES: Array<{
       "stomping", "marching", "galloping",                         // groove — grounded or driven
       "immediate-impact", "808-heavy", "punchy",                   // drums — hard-hitting
       "sustained-drive", "tension-release",                        // arrangement — driving force
-      "charging", "explosive",                                     // posture — kinetic force
+      "charging", "explosive", "simmering",                       // posture — kinetic force or suppressed tension
     ],
-    reason: "floating implies weightlessness; stomping, heavy percussion, or relentless drive grounds it",
+    reason: "floating implies weightlessness; stomping, heavy percussion, relentless drive, or suppressed tension grounds it",
+  },
+  {
+    target: "buoyant",
+    blockers: [
+      "stalking", "coiled", "simmering",    // posture — predatory, loaded, or suppressed energy
+      "menacing", "cold",                   // emotional — threat or detachment collapses lift
+    ],
+    reason: "buoyant energy is light and upward-lifted; it cannot coexist with predatory threat, compressed tension, or emotional coldness",
   },
   // ── Emotional tone contradictions ─────────────────────────────────────────
   {
