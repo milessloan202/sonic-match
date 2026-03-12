@@ -28,7 +28,8 @@ import type { CanonicalDescriptor } from "@/hooks/useSonicProfile";
 const SONIC_DNA_GROUPS: { key: string; label: string }[] = [
   { key: "emotional_tone",      label: "Mood"        },
   { key: "texture",             label: "Texture"     },
-  { key: "era_lineage",         label: "Era"         },
+  { key: "era_movement",        label: "Era"         },
+  { key: "era_period",          label: "Period"      },
   { key: "tempo_feel",          label: "Feel"        },
   { key: "groove",              label: "Groove"      },
   { key: "harmonic_color",      label: "Harmony"     },

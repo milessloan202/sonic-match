@@ -86,7 +86,7 @@ export function useSimilarByDNA({
 
         // Primary slugs: first 3 canonical display descriptors
         const primarySlugs = canonical!.display_descriptors.slice(0, 3).map(d => d.slug);
-        const centerEra    = profile!.era_lineage || [];
+        const centerEra    = [...(profile!.era_movement || []), ...(profile!.era_period || [])];
 
         const scored: SimilarSong[] = rawResults
           .filter(r => {

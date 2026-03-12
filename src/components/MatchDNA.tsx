@@ -40,7 +40,8 @@ const PROFILE_DISPLAY_CATEGORIES: Array<{
 }> = [
   { key: "emotional_tone",         label: "Emotional Tone",    category: "emotional_tone",         clickable: true  },
   { key: "texture",                label: "Texture",           category: "texture",                clickable: true  },
-  { key: "era_lineage",            label: "Era Lineage",       category: "era_lineage",            clickable: true  },
+  { key: "era_movement",           label: "Era Movement",      category: "era_movement",           clickable: true  },
+  { key: "era_period",             label: "Era Period",        category: "era_period",             clickable: true  },
   { key: "environment_imagery",    label: "Environment",       category: "environment_imagery",    clickable: true  },
   { key: "listener_use_case",      label: "Best For",          category: "listener_use_case",      clickable: true  },
   { key: "tempo_feel",             label: "Tempo Feel",        category: "tempo_feel",             clickable: true  },

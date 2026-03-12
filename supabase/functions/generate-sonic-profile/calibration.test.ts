@@ -41,7 +41,8 @@ interface SongProfile {
   texture?: string[];
   arrangement_energy_arc?: string[];
   emotional_tone?: string[];
-  era_lineage?: string[];
+  era_period?: string[];
+  era_movement?: string[];
   environment_imagery?: string[];
   listener_use_case?: string[];
   intensity_level?: string;
@@ -65,7 +66,7 @@ function extractAllSlugs(profile: SongProfile): string[] {
   const fields = [
     "tempo_feel","groove","drum_character","bass_character","harmonic_color",
     "melodic_character","vocal_character","texture","arrangement_energy_arc",
-    "emotional_tone","era_lineage","environment_imagery","listener_use_case",
+    "emotional_tone","era_period","era_movement","environment_imagery","listener_use_case",
   ] as const;
   const slugs: string[] = [];
   for (const f of fields) {

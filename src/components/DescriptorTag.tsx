@@ -16,7 +16,8 @@ import { CanonicalDescriptor } from "@/hooks/useSonicProfile";
 const CATEGORY_COLORS: Record<string, string> = {
   emotional_tone:          "bg-purple-500/15 text-purple-300 border-purple-500/30",
   texture:                 "bg-cyan-500/15 text-cyan-300 border-cyan-500/30",
-  era_lineage:             "bg-amber-500/15 text-amber-300 border-amber-500/30",
+  era_movement:            "bg-amber-500/15 text-amber-300 border-amber-500/30",
+  era_period:              "bg-amber-500/15 text-amber-300 border-amber-500/30",
   environment_imagery:     "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
   listener_use_case:       "bg-rose-500/15 text-rose-300 border-rose-500/30",
   tempo_feel:              "bg-blue-500/15 text-blue-300 border-blue-500/30",

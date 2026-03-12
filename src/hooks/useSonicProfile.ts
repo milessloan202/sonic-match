@@ -26,7 +26,8 @@ export interface SonicProfile {
   texture: string[];
   arrangement_energy_arc: string[];
   emotional_tone: string[];
-  era_lineage: string[];
+  era_period: string[];
+  era_movement: string[];
   environment_imagery: string[];
   listener_use_case: string[];
   intensity_level: string;
@@ -161,13 +162,14 @@ export function useSonicProfile({
 }
 
 // ── Utility: get top N descriptors from a profile for compact display ─────────
-// Prioritizes emotional_tone, texture, and era_lineage for compact card display
+// Prioritizes emotional_tone, texture, and era for compact card display
 
 export function getTopDescriptors(profile: SonicProfile, count = 3): string[] {
   const priority = [
     ...profile.emotional_tone,
     ...profile.texture,
-    ...profile.era_lineage,
+    ...(profile.era_movement || []),
+    ...(profile.era_period || []),
     ...profile.environment_imagery,
     ...profile.tempo_feel,
   ];
