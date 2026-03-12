@@ -39,6 +39,16 @@ async function isDailyLimited(supabase: any): Promise<boolean> {
 
 // ============= VERIFIED METADATA LAYER =============
 
+interface AudioFeatures {
+  energy: number;
+  valence: number;
+  danceability: number;
+  tempo: number;
+  acousticness: number;
+  instrumentalness: number;
+  speechiness: number;
+}
+
 interface VerifiedMetadata {
   song_title: string | null;
   artist_name: string | null;
@@ -51,6 +61,7 @@ interface VerifiedMetadata {
   sampled_artist_name: string | null; // only if verified
   sample_verified: boolean;
   metadata_confidence: "high" | "medium" | "low";
+  audio_features: AudioFeatures | null;
 }
 
 async function fetchVerifiedMetadata(
@@ -71,6 +82,7 @@ async function fetchVerifiedMetadata(
     sampled_artist_name: null,
     sample_verified: false,
     metadata_confidence: "low",
+    audio_features: null,
   };
 
   if (pageType !== "song") {
@@ -131,6 +143,33 @@ async function fetchVerifiedMetadata(
               console.log("[Metadata] Failed to fetch artist genres:", e);
             }
           }
+
+          // Fetch audio features — non-blocking bonus metadata
+          try {
+            const featRes = await fetch(
+              `https://api.spotify.com/v1/audio-features/${metadata.spotify_track_id}`,
+              { headers: { Authorization: `Bearer ${spotifyToken}` } }
+            );
+            if (featRes.ok) {
+              const feat = await featRes.json();
+              if (feat?.energy != null) {
+                metadata.audio_features = {
+                  energy:           feat.energy,
+                  valence:          feat.valence,
+                  danceability:     feat.danceability,
+                  tempo:            feat.tempo,
+                  acousticness:     feat.acousticness,
+                  instrumentalness: feat.instrumentalness,
+                  speechiness:      feat.speechiness,
+                };
+                console.log(`[Metadata] Audio features fetched for ${metadata.spotify_track_id}`);
+              }
+            } else {
+              console.log(`[Metadata] Audio features returned HTTP ${featRes.status} — skipping`);
+            }
+          } catch (e) {
+            console.log("[Metadata] Audio features fetch failed (non-blocking):", e);
+          }
         }
       }
     } catch (e) {
@@ -189,8 +228,26 @@ function buildMetadataBlock(metadata: VerifiedMetadata): string {
   }
 
   lines.push(`\nMetadata Confidence: ${metadata.metadata_confidence.toUpperCase()}`);
-  lines.push("=== END VERIFIED METADATA ===\n");
+  lines.push("=== END VERIFIED METADATA ===");
 
+  if (metadata.audio_features) {
+    const f = metadata.audio_features;
+    const energyLabel    = f.energy      >= 0.7 ? "high"                   : f.energy      >= 0.4 ? "medium"  : "low";
+    const valenceLabel   = f.valence     >= 0.6 ? "positive/upbeat"        : f.valence     >= 0.3 ? "neutral/mixed" : "low — darker emotional tone";
+    const acousticLabel  = f.acousticness >= 0.6 ? "acoustic/organic"      : f.acousticness >= 0.2 ? "mixed"   : "synthetic/electronic";
+
+    lines.push("\n=== AUDIO FEATURES ===");
+    lines.push(`energy: ${f.energy.toFixed(2)} (${energyLabel})`);
+    lines.push(`valence: ${f.valence.toFixed(2)} (${valenceLabel})`);
+    lines.push(`danceability: ${f.danceability.toFixed(2)}`);
+    lines.push(`tempo: ${Math.round(f.tempo)} BPM`);
+    lines.push(`acousticness: ${f.acousticness.toFixed(2)} (${acousticLabel})`);
+    lines.push(`instrumentalness: ${f.instrumentalness.toFixed(2)}`);
+    lines.push(`speechiness: ${f.speechiness.toFixed(2)}`);
+    lines.push("=== END AUDIO FEATURES ===");
+  }
+
+  lines.push("");
   return lines.join("\n");
 }
 
@@ -216,7 +273,17 @@ FACTUAL ACCURACY RULES (CRITICAL — STRICTLY ENFORCED):
 3. SAMPLE RULE:
    - ONLY mention sampling if VERIFIED SAMPLE appears in the metadata above
    - If sample info is verified, you MAY reference it naturally in the summary
-   - If no verified sample info exists, do NOT speculate about samples`;
+   - If no verified sample info exists, do NOT speculate about samples
+
+4. AUDIO FEATURES GROUND TRUTH:
+   - If AUDIO FEATURES are present above, treat them as objective measurements — they override impressionistic guesses
+   - energy ≥ 0.7 → describe as intense, driving, or high-energy — NOT sparse, minimal, or restrained
+   - energy ≤ 0.3 → describe as understated, sparse, or restrained — NOT explosive or high-octane
+   - valence ≥ 0.6 → lean toward upbeat, bright, euphoric, or triumphant tone
+   - valence ≤ 0.3 → lean toward dark, melancholic, tense, or cold tone
+   - acousticness ≥ 0.6 → describe as organic, acoustic, or natural-sounding — avoid "electronic" or "synthetic"
+   - acousticness ≤ 0.2 → describe as synthetic, electronic, or heavily produced — avoid "acoustic" or "raw"
+   - Do NOT contradict audio features: a high-energy track is not "meditative"; a high-valence track is not "somber"`;
 
   if (confidence === "low") {
     return baseInstructions + `
