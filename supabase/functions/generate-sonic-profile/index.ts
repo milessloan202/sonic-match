@@ -249,7 +249,7 @@ const DESCRIPTOR_GLOSSARY: Array<{
   { slug: "sustained-drive",  category: "arrangement_energy_arc", means: "Unrelenting forward motion maintained throughout the track.", notMeans: ["laid-back", "floaty", "unhurried"] },
   { slug: "immediate-impact", category: "arrangement_energy_arc", means: "Full energy present from bar one. Hits hard immediately — no buildup.", notMeans: ["gradual", "laid-back", "easygoing"] },
   // spatial_feel
-  { slug: "intimate",         category: "spatial_feel", means: "Physically close, small-room or headphone-scale production. The music feels personal and near.", notMeans: ["arena-sized", "cavernous", "widescreen", "reverb-drenched"] },
+  { slug: "intimate",         category: "spatial_feel", means: "Close-mic vocal presence, small-room spatial feel, or minimal spatial distance between performer and listener. The mix places the listener physically close to the source.", notMeans: ["arena-sized", "cavernous", "widescreen", "reverb-drenched", "merely emotional or personal — intimate is physical proximity in the mix, not lyrical intimacy"] },
   { slug: "cavernous",        category: "spatial_feel", means: "Vast, reverberant sonic space. Everything echoes — wide and deep.", notMeans: ["dry", "boxed-in", "intimate", "airless"] },
   { slug: "boxed-in",         category: "spatial_feel", means: "Compressed, claustrophobic space. Walls feel close. Pressure without release.", notMeans: ["open", "widescreen", "cavernous"] },
   { slug: "widescreen",       category: "spatial_feel", means: "Panoramic stereo width and epic scope. Cinematic scale, engineered for large playback.", notMeans: ["intimate", "boxed-in", "dry", "airless"] },
