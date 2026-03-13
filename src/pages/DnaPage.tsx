@@ -51,14 +51,24 @@ export default function DnaPage() {
 
     async function load() {
       try {
-        // Load descriptor metadata
+        // Load descriptor metadata — only public descriptors
         const { data: descData } = await (supabase
           .from("descriptor_registry" as any)
           .select("slug, label, category, description, is_seo_enabled")
-          .in("slug", slugs) as any);
+          .in("slug", slugs)
+          .eq("is_public", true) as any);
 
+        const publicDescs = (descData || []) as unknown as DescriptorRow[];
         if (cancelled) return;
-        setDescriptors((descData || []) as unknown as DescriptorRow[]);
+
+        // If any requested slug has no public registry row, treat as not found
+        if (publicDescs.length !== slugs.length) {
+          setError("not_found");
+          setLoading(false);
+          return;
+        }
+
+        setDescriptors(publicDescs);
 
         // Query songs that contain ALL specified slugs
         // Uses the GIN index on descriptor_slugs array
@@ -198,7 +208,21 @@ export default function DnaPage() {
           </motion.div>
 
           {/* Results */}
-          {error ? (
+          {error === "not_found" ? (
+            <div className="text-center py-16 space-y-4">
+              <p className="text-4xl">🔇</p>
+              <p className="text-foreground font-medium">Page not found</p>
+              <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+                This descriptor page doesn't exist.
+              </p>
+              <button
+                onClick={() => navigate("/")}
+                className="mt-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:brightness-110 transition-all"
+              >
+                Go home
+              </button>
+            </div>
+          ) : error ? (
             <div className="text-center py-12 text-muted-foreground">
               <p>Something went wrong loading this page.</p>
               <p className="text-sm mt-1">{error}</p>
