@@ -343,6 +343,32 @@ export default function DnaPage() {
               </div>
             </motion.div>
           )}
+
+          {/* Explore combinations — reuses relatedSounds data */}
+          {relatedSounds.length >= 2 && !error && slugs.length === 1 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="space-y-4"
+            >
+              <h2 className="text-sm font-semibold text-foreground">Explore combinations</h2>
+              <p className="text-xs text-muted-foreground">
+                Mix <strong>{primaryDescriptor?.label || slug}</strong> with related sounds to narrow your search.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {relatedSounds.slice(0, 6).map(rs => (
+                  <button
+                    key={rs.slug}
+                    onClick={() => navigate(`/search?descriptors=${slug},${rs.slug}&mode=descriptor`)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-primary/25 bg-primary/8 text-xs font-medium text-primary hover:bg-primary/18 hover:border-primary/40 transition-all"
+                  >
+                    {primaryDescriptor?.label || slug?.replace(/-/g, " ")} + {rs.label}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
         </div>
       </div>
     </>
