@@ -365,6 +365,7 @@ const SONIC_CATEGORY_ORDER = [
 interface SonicDescriptorResult {
   descriptors: CanonicalDescriptor[];
   confidenceScore: number | null;
+  dominantEmotionalTone: string | null;
 }
 
 async function fetchSonicDescriptors(
