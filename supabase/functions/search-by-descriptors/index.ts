@@ -77,6 +77,7 @@ serve(async (req) => {
       artist_name: string;
       descriptor_slugs: string[];
       profile_json: Record<string, unknown>;
+      dominant_emotional_tone: string | null;
     }
 
     const rows = (data || []) as ProfileRow[];
