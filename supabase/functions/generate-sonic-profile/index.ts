@@ -342,6 +342,8 @@ const DESCRIPTOR_GLOSSARY: Array<{
   { slug: "post-punk-revival", category: "era_movement", means: "Angular, dark indie rock with early-2000s cool: Interpol, Franz Ferdinand, The Strokes. New Order / Wire influence.", notMeans: ["pop punk", "metal", "trap", "smooth R&B"] },
   // era_movement — beat and lo-fi
   { slug: "lo-fi-hiphop",    category: "era_movement", means: "Study-beats aesthetic: gentle boom bap, vinyl warmth, mellow keys, tape saturation. Nujabes lineage, ambient hip-hop.", notMeans: ["hard trap", "aggressive rap", "polished production"] },
+  // melodic_character
+  { slug: "chant-like",      category: "melodic_character", means: "True chant-style vocal delivery: call-and-response structure, group vocal energy, rallying or crowd-style unison, or strong repetitive hook phrasing that invites communal participation. The vocal must feel collective, ritualistic, or crowd-driven — not simply repetitive or rhythmically clipped.", notMeans: ["clipped staccato rap delivery", "minimalist solo rap phrasing", "direct or commanding solo rap", "rhythmic but non-melodic rap cadence", "sparse vocal arrangements with a single voice"] },
 ];
 
 // ── Contradiction rules ───────────────────────────────────────────────────────
