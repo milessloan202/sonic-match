@@ -350,7 +350,7 @@ export default function SearchPage() {
                 <p className="text-xs text-muted-foreground">
                   About the{" "}
                   <button
-                    onClick={() => navigate(`/dna/${primarySlug}`)}
+                    onClick={() => navigate(`/sounds/${primarySlug}`)}
                     className="text-primary hover:underline"
                   >
                     {getDescriptorLabel(primarySlug)} DNA page →

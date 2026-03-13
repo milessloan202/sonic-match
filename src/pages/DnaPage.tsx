@@ -188,7 +188,7 @@ export default function DnaPage() {
       <SEOHead
         title={`Songs with ${pageTitle} sound | Sonic DNA`}
         description={metaDescription}
-        path={`/dna/${slugs.join("/")}`}
+        path={`/sounds/${slugs.join("/")}`}
       />
 
       <div className="min-h-screen bg-background">
@@ -253,10 +253,10 @@ export default function DnaPage() {
               <p className="text-xs text-muted-foreground/60">
                 Tip: combine descriptors for more precise discovery, e.g.{" "}
                 <button
-                  onClick={() => navigate(`/dna/${slug}/nocturnal`)}
-                  className="text-primary hover:underline"
-                >
-                  /{slug}/nocturnal
+                   onClick={() => navigate(`/sounds/${slug}/nocturnal`)}
+                   className="text-primary hover:underline"
+                 >
+                   /{slug}/nocturnal
                 </button>
               </p>
             )}
