@@ -77,32 +77,14 @@ export default function ExplorePage() {
               Start with a sound
             </p>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
-              {CURATED_CHIPS.map((slug) => {
-                const reg = labelMap.get(slug);
-                const cat = reg?.category ?? DESCRIPTOR_CATEGORY_MAP[slug];
-                const hoverClass = cat ? CATEGORY_HOVER_COLORS[cat] : "";
-
-                return (
-                  <Link
-                    key={slug}
-                    to={`/sounds/${slug}`}
-                    className="block group"
-                  >
-                    <div
-                      className={`rounded-xl border border-border/60 bg-secondary/30 transition-all duration-200 px-4 py-3.5 text-center hover:scale-[1.03] active:scale-95 ${hoverClass ? `group-hover:${hoverClass}` : "hover:bg-secondary/60 hover:border-primary/30"}`}
-                      style={
-                        cat && CATEGORY_GLOW_RGB[cat]
-                          ? { "--pill-glow": CATEGORY_GLOW_RGB[cat] } as React.CSSProperties
-                          : undefined
-                      }
-                    >
-                      <span className="text-sm font-medium text-foreground capitalize group-hover:text-foreground">
-                        {reg?.label ?? slug.replace(/-/g, " ")}
-                      </span>
-                    </div>
-                  </Link>
-                );
-              })}
+              {CURATED_CHIPS.map((slug) => (
+                <ExplorePill
+                  key={slug}
+                  slug={slug}
+                  label={labelMap.get(slug)?.label}
+                  category={labelMap.get(slug)?.category ?? DESCRIPTOR_CATEGORY_MAP[slug]}
+                />
+              ))}
             </div>
           </motion.section>
 
