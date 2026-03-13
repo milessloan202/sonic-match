@@ -461,6 +461,7 @@ async function fetchSonicDescriptors(
       return {
         descriptors: descriptors as CanonicalDescriptor[],
         confidenceScore,
+        dominantEmotionalTone: data.profile?.dominant_emotional_tone ?? null,
       };
     }
 
