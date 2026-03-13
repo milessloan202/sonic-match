@@ -342,6 +342,8 @@ const DESCRIPTOR_GLOSSARY: Array<{
   { slug: "post-punk-revival", category: "era_movement", means: "Angular, dark indie rock with early-2000s cool: Interpol, Franz Ferdinand, The Strokes. New Order / Wire influence.", notMeans: ["pop punk", "metal", "trap", "smooth R&B"] },
   // era_movement — beat and lo-fi
   { slug: "lo-fi-hiphop",    category: "era_movement", means: "Study-beats aesthetic: gentle boom bap, vinyl warmth, mellow keys, tape saturation. Nujabes lineage, ambient hip-hop.", notMeans: ["hard trap", "aggressive rap", "polished production"] },
+  // melodic_character
+  { slug: "chant-like",      category: "melodic_character", means: "True chant-style vocal delivery: call-and-response structure, group vocal energy, rallying or crowd-style unison, or strong repetitive hook phrasing that invites communal participation. The vocal must feel collective, ritualistic, or crowd-driven — not simply repetitive or rhythmically clipped.", notMeans: ["clipped staccato rap delivery", "minimalist solo rap phrasing", "direct or commanding solo rap", "rhythmic but non-melodic rap cadence", "sparse vocal arrangements with a single voice"] },
 ];
 
 // ── Contradiction rules ───────────────────────────────────────────────────────
@@ -498,6 +500,16 @@ const CONTRADICTION_RULES: Array<{
     reason: "uk-drill's dark British street sensibility is incompatible with chipmunk-soul's warmth and nostalgia",
     era: true,
   },
+  // ── Melodic character contradictions ──────────────────────────────────────
+  {
+    target: "chant-like",
+    blockers: [
+      "commanding",         // vocal — solo authoritative delivery, not communal
+      "cool-toned",         // vocal — controlled detachment, not rallying energy
+      "restrained-vocal",   // vocal — held-back delivery, not group unison
+    ],
+    reason: "chant-like requires communal, call-and-response, or rallying vocal energy; solo commanding, cool-toned, or restrained delivery indicates individual control, not collective chant",
+  },
 ];
 
 // Intensity levels incompatible with ease-posture slugs (laid-back, relaxed).
@@ -509,12 +521,13 @@ const EASE_POSTURE_SLUGS = new Set(["laid-back", "relaxed"]);
 
 function formatGlossaryForPrompt(): string {
   const categoryOrder = [
-    "energy_posture", "groove_character", "emotional_tone", "vocal_character",
+    "energy_posture", "groove_character", "melodic_character", "emotional_tone", "vocal_character",
     "texture", "spatial_feel", "arrangement_energy_arc", "drum_character", "era_movement",
   ];
   const categoryLabels: Record<string, string> = {
     energy_posture:         "ENERGY POSTURE",
     groove_character:       "GROOVE CHARACTER",
+    melodic_character:      "MELODIC CHARACTER",
     emotional_tone:         "EMOTIONAL TONE",
     vocal_character:        "VOCAL CHARACTER",
     texture:                "TEXTURE",
