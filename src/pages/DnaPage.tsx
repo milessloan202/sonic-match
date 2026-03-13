@@ -31,16 +31,24 @@ interface DescriptorRow {
   is_seo_enabled: boolean;
 }
 
+interface RelatedDescriptor {
+  slug: string;
+  label: string;
+  category: string;
+  count: number;
+}
+
 export default function DnaPage() {
   const { slug, slug2 } = useParams<{ slug: string; slug2?: string }>();
   const navigate = useNavigate();
 
   const slugs = [slug, slug2].filter(Boolean) as string[];
 
-  const [songs, setSongs]           = useState<ProfileRow[]>([]);
-  const [descriptors, setDescriptors] = useState<DescriptorRow[]>([]);
-  const [loading, setLoading]       = useState(true);
-  const [error, setError]           = useState<string | null>(null);
+  const [songs, setSongs]                     = useState<ProfileRow[]>([]);
+  const [descriptors, setDescriptors]           = useState<DescriptorRow[]>([]);
+  const [relatedSounds, setRelatedSounds]       = useState<RelatedDescriptor[]>([]);
+  const [loading, setLoading]                   = useState(true);
+  const [error, setError]                       = useState<string | null>(null);
 
   useEffect(() => {
     if (slugs.length === 0) return;
@@ -88,6 +96,53 @@ export default function DnaPage() {
 
         if (songError) throw songError;
         setSongs((songData || []) as unknown as ProfileRow[]);
+
+        // ── Co-occurrence: find related descriptors ──────────────────────
+        // Fetch up to 200 profiles for co-occurrence (only need descriptor_slugs)
+        let coQuery = supabase
+          .from("song_sonic_profiles" as any)
+          .select("descriptor_slugs")
+          .limit(200) as any;
+        for (const s of slugs) {
+          coQuery = coQuery.contains("descriptor_slugs", [s]);
+        }
+        const { data: coData } = await coQuery;
+        if (cancelled) return;
+
+        // Count slug frequencies, excluding current slugs
+        const freq = new Map<string, number>();
+        for (const row of (coData || []) as { descriptor_slugs: string[] }[]) {
+          for (const ds of row.descriptor_slugs || []) {
+            if (!slugs.includes(ds)) {
+              freq.set(ds, (freq.get(ds) || 0) + 1);
+            }
+          }
+        }
+
+        // Fetch registry rows for co-occurring slugs (public only)
+        const coSlugs = [...freq.keys()];
+        if (coSlugs.length > 0) {
+          const { data: regData } = await (supabase
+            .from("descriptor_registry" as any)
+            .select("slug, label, category, is_public")
+            .in("slug", coSlugs)
+            .eq("is_public", true) as any);
+
+          if (cancelled) return;
+
+          const regMap = new Map<string, { label: string; category: string }>();
+          for (const r of (regData || []) as { slug: string; label: string; category: string }[]) {
+            regMap.set(r.slug, { label: r.label, category: r.category });
+          }
+
+          const ranked: RelatedDescriptor[] = [...freq.entries()]
+            .filter(([s]) => regMap.has(s))
+            .map(([s, count]) => ({ slug: s, label: regMap.get(s)!.label, category: regMap.get(s)!.category, count }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 6);
+
+          setRelatedSounds(ranked);
+        }
 
       } catch (e) {
         if (!cancelled) {
@@ -263,6 +318,30 @@ export default function DnaPage() {
                 ))}
               </div>
             </div>
+          )}
+
+          {/* Related sounds — co-occurrence based */}
+          {relatedSounds.length >= 2 && !error && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="space-y-4"
+            >
+              <h2 className="text-sm font-semibold text-foreground">Related sounds</h2>
+              <div className="flex flex-wrap gap-2">
+                {relatedSounds.map(rs => (
+                  <DescriptorTag
+                    key={rs.slug}
+                    slug={rs.slug}
+                    label={rs.label}
+                    category={rs.category}
+                    size="sm"
+                    clickable
+                  />
+                ))}
+              </div>
+            </motion.div>
           )}
         </div>
       </div>
