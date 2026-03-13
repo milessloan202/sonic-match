@@ -500,6 +500,16 @@ const CONTRADICTION_RULES: Array<{
     reason: "uk-drill's dark British street sensibility is incompatible with chipmunk-soul's warmth and nostalgia",
     era: true,
   },
+  // ── Melodic character contradictions ──────────────────────────────────────
+  {
+    target: "chant-like",
+    blockers: [
+      "commanding",         // vocal — solo authoritative delivery, not communal
+      "cool-toned",         // vocal — controlled detachment, not rallying energy
+      "restrained-vocal",   // vocal — held-back delivery, not group unison
+    ],
+    reason: "chant-like requires communal, call-and-response, or rallying vocal energy; solo commanding, cool-toned, or restrained delivery indicates individual control, not collective chant",
+  },
 ];
 
 // Intensity levels incompatible with ease-posture slugs (laid-back, relaxed).
