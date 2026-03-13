@@ -473,7 +473,7 @@ async function fetchSonicDescriptors(
   }
 }
 
-function buildSonicDnaBlock(descriptors: CanonicalDescriptor[], confidenceScore: number | null = null): string {
+function buildSonicDnaBlock(descriptors: CanonicalDescriptor[], confidenceScore: number | null = null, dominantEmotionalTone: string | null = null): string {
   if (descriptors.length === 0) return "";
 
   // Group by category
@@ -488,8 +488,16 @@ function buildSonicDnaBlock(descriptors: CanonicalDescriptor[], confidenceScore:
     "=== SONIC DNA PROFILE (VERIFIED — ANCHOR YOUR SUMMARY TO THESE) ===",
     "These descriptors reflect the actual sonic character of this track.",
     "Your summary MUST stay within this lane. Do not describe qualities that contradict these.",
+    "Do NOT infer additional emotional qualities from the artist's reputation, genre stereotypes, or general music knowledge.",
+    "Only use emotional language that is directly supported by the descriptors listed below.",
     "",
   ];
+
+  if (dominantEmotionalTone) {
+    lines.push(`DOMINANT EMOTIONAL ANCHOR: ${dominantEmotionalTone.replace(/-/g, " ")}`);
+    lines.push("This is the primary emotional identity of the track. All prose must be anchored to this tone first.");
+    lines.push("");
+  }
 
   for (const cat of SONIC_CATEGORY_ORDER) {
     const labels = grouped[cat];
