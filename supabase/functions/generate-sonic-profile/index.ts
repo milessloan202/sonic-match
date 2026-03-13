@@ -343,7 +343,7 @@ const DESCRIPTOR_GLOSSARY: Array<{
   // era_movement — beat and lo-fi
   { slug: "lo-fi-hiphop",    category: "era_movement", means: "Study-beats aesthetic: gentle boom bap, vinyl warmth, mellow keys, tape saturation. Nujabes lineage, ambient hip-hop.", notMeans: ["hard trap", "aggressive rap", "polished production"] },
   // melodic_character
-  { slug: "chant-like",      category: "melodic_character", means: "True chant-style vocal delivery: call-and-response structure, group vocal energy, rallying or crowd-style unison, or strong repetitive hook phrasing that invites communal participation. The vocal must feel collective, ritualistic, or crowd-driven — not simply repetitive or rhythmically clipped.", notMeans: ["clipped staccato rap delivery", "minimalist solo rap phrasing", "direct or commanding solo rap", "rhythmic but non-melodic rap cadence", "sparse vocal arrangements with a single voice"] },
+  { slug: "chant-like",      category: "melodic_character", means: "True chant-style vocal delivery requiring explicit communal evidence: call-and-response structure, group/crowd vocal energy, rallying unison, or slogan-like hook delivery with group feel. Rhythmic repetition alone is NOT sufficient — the vocal must feel collective, ritualistic, or crowd-driven. If the delivery is a single voice rapping rhythmically, percussively, or with clipped staccato phrasing, use 'commanding', 'percussive-vocal', or 'staccato' instead.", notMeans: ["clipped staccato rap delivery", "minimalist solo rap phrasing", "direct or commanding solo rap", "rhythmic but non-melodic rap cadence", "sparse vocal arrangements with a single voice", "percussive solo rap delivery", "any solo rap with rhythmic repetition but no communal/group energy"] },
 ];
 
 // ── Contradiction rules ───────────────────────────────────────────────────────
@@ -507,8 +507,10 @@ const CONTRADICTION_RULES: Array<{
       "commanding",         // vocal — solo authoritative delivery, not communal
       "cool-toned",         // vocal — controlled detachment, not rallying energy
       "restrained-vocal",   // vocal — held-back delivery, not group unison
+      "staccato",           // vocal — clipped percussive phrasing, not chant
+      "percussive-vocal",   // vocal — rhythmic hitting, not communal singing
     ],
-    reason: "chant-like requires communal, call-and-response, or rallying vocal energy; solo commanding, cool-toned, or restrained delivery indicates individual control, not collective chant",
+    reason: "chant-like requires explicit communal/call-and-response evidence; rhythmic repetition alone is insufficient. Solo commanding, cool-toned, restrained, staccato, or percussive vocal delivery indicates individual rhythmic control, not collective chant energy",
   },
 ];
 
