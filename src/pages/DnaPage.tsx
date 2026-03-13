@@ -319,6 +319,30 @@ export default function DnaPage() {
               </div>
             </div>
           )}
+
+          {/* Related sounds — co-occurrence based */}
+          {relatedSounds.length >= 2 && !error && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="space-y-4"
+            >
+              <h2 className="text-sm font-semibold text-foreground">Related sounds</h2>
+              <div className="flex flex-wrap gap-2">
+                {relatedSounds.map(rs => (
+                  <DescriptorTag
+                    key={rs.slug}
+                    slug={rs.slug}
+                    label={rs.label}
+                    category={rs.category}
+                    size="sm"
+                    clickable
+                  />
+                ))}
+              </div>
+            </motion.div>
+          )}
         </div>
       </div>
     </>
