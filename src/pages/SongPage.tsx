@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, X, ExternalLink } from "lucide-react";
+import { ArrowLeft, X, ExternalLink, Network, Layers, Map } from "lucide-react";
 import ResultSection from "../components/ResultSection";
 import SEOHead from "../components/SEOHead";
 import PageSkeleton from "../components/PageSkeleton";
@@ -46,6 +46,17 @@ const SONIC_DNA_GROUPS: { key: string; label: string }[] = [
 ];
 
 const DNA_CATEGORY_LIMIT = 4;
+
+// For "Keep Exploring" — strongest identity-defining sonic categories,
+// in priority order.
+const CORE_SONIC_CATEGORIES = [
+  "emotional_tone", "energy_posture", "texture", "groove_character",
+  "drum_character", "bass_character", "vocal_character", "melodic_character", "harmonic_color",
+];
+// Categories that are weak / contextual — excluded from exploration slugs.
+const WEAK_CATEGORIES = new Set([
+  "intensity", "danceability", "listener_use_case", "era_movement", "era_period",
+]);
 
 type SongItem = { title: string; subtitle?: string; tag?: string; spotify_id?: string | null };
 
@@ -204,6 +215,33 @@ const SongPage = () => {
     for (const d of unifiedDescriptors) map[d.slug] = d;
     setDescriptorMap(map);
   }, [unifiedDescriptors]);
+
+  // ── Keep Exploring — derived exploration URLs ─────────────────────────────
+  // All sonic slugs (weak/era categories excluded), capped at 10.
+  const explorationSlugs = useMemo(
+    () => unifiedDescriptors.filter(d => !WEAK_CATEGORIES.has(d.category)).slice(0, 10).map(d => d.slug),
+    [unifiedDescriptors],
+  );
+
+  // Top 3 identity-defining slugs — prefer strongest sonic categories first.
+  const coreTraitSlugs = useMemo(() => {
+    const core = unifiedDescriptors.filter(d => CORE_SONIC_CATEGORIES.includes(d.category));
+    const other = unifiedDescriptors.filter(d => !CORE_SONIC_CATEGORIES.includes(d.category) && !WEAK_CATEGORIES.has(d.category));
+    return [...core, ...other].slice(0, 3).map(d => d.slug);
+  }, [unifiedDescriptors]);
+
+  const exploreDnaUrl = explorationSlugs.length > 0
+    ? `/search?descriptors=${explorationSlugs.join(",")}&mode=descriptor`
+    : null;
+
+  const coreTraitsUrl = coreTraitSlugs.length > 0
+    ? `/search?descriptors=${coreTraitSlugs.join(",")}&mode=descriptor`
+    : null;
+
+  function scrollToMap() {
+    setView("map");
+    setTimeout(() => document.getElementById("music-map-section")?.scrollIntoView({ behavior: "smooth" }), 50);
+  }
 
   // ── Top recommended song for MatchDNA comparison ──────────────────────────
   const topMatchSong = data?.closest_matches?.[0] || data?.same_energy?.[0];
@@ -382,17 +420,90 @@ const SongPage = () => {
         </AnimatePresence>
       </motion.div>
 
+      {/* Keep Exploring */}
+      {!profileLoading && unifiedDescriptors.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="space-y-3"
+        >
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+            Keep Exploring
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+
+            {/* 1. Explore this DNA mix */}
+            {exploreDnaUrl && (
+              <Link
+                to={exploreDnaUrl}
+                className="group flex items-start gap-3 rounded-xl border border-border/60 bg-card/40 p-3.5 hover:border-primary/40 hover:bg-card/60 hover:-translate-y-1 transition-all duration-200"
+              >
+                <Network className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary transition-colors mt-0.5 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
+                    Explore this DNA mix
+                  </p>
+                  <p className="text-[10px] text-muted-foreground/50 mt-0.5">
+                    {explorationSlugs.length} traits
+                  </p>
+                </div>
+              </Link>
+            )}
+
+            {/* 2. Explore core traits */}
+            {coreTraitsUrl && (
+              <Link
+                to={coreTraitsUrl}
+                className="group flex items-start gap-3 rounded-xl border border-border/60 bg-card/40 p-3.5 hover:border-primary/40 hover:bg-card/60 hover:-translate-y-1 transition-all duration-200"
+              >
+                <Layers className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary transition-colors mt-0.5 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
+                    Explore core traits
+                  </p>
+                  <p className="text-[10px] text-muted-foreground/50 mt-0.5 truncate">
+                    {coreTraitSlugs.join(" · ")}
+                  </p>
+                </div>
+              </Link>
+            )}
+
+            {/* 3. View in Music Map — desktop only */}
+            {!isMobile && activeView !== "map" && (
+              <button
+                onClick={scrollToMap}
+                className="group flex items-start gap-3 rounded-xl border border-border/60 bg-card/40 p-3.5 hover:border-primary/40 hover:bg-card/60 hover:-translate-y-1 transition-all duration-200 text-left"
+              >
+                <Map className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary transition-colors mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
+                    View in Music Map
+                  </p>
+                  <p className="text-[10px] text-muted-foreground/50 mt-0.5">
+                    Spatial view
+                  </p>
+                </div>
+              </button>
+            )}
+
+          </div>
+        </motion.div>
+      )}
+
       {sample && <SampleInfo sample={sample} />}
 
       {activeView === "map" ? (
-        <MusicMap
-          centerLabel={displayName}
-          closestMatches={data.closest_matches}
-          sameEnergy={data.same_energy}
-          relatedArtists={data.related_artists}
-          relatedVibes={data.related_vibes}
-          pageType="song"
-        />
+        <div id="music-map-section">
+          <MusicMap
+            centerLabel={displayName}
+            closestMatches={data.closest_matches}
+            sameEnergy={data.same_energy}
+            relatedArtists={data.related_artists}
+            relatedVibes={data.related_vibes}
+            pageType="song"
+          />
+        </div>
       ) : (
         <>
           {/* 1. Songs With Similar DNA — shows descriptor-filtered results when mix is active */}
