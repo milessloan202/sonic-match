@@ -51,11 +51,12 @@ export default function DnaPage() {
 
     async function load() {
       try {
-        // Load descriptor metadata
+        // Load descriptor metadata — only public descriptors
         const { data: descData } = await (supabase
           .from("descriptor_registry" as any)
           .select("slug, label, category, description, is_seo_enabled")
-          .in("slug", slugs) as any);
+          .in("slug", slugs)
+          .eq("is_public", true) as any);
 
         if (cancelled) return;
         setDescriptors((descData || []) as unknown as DescriptorRow[]);
