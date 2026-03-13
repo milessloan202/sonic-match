@@ -11,7 +11,7 @@ import MusicMap from "../components/MusicMap";
 import { supabase } from "@/integrations/supabase/client";
 import { useSeoPage } from "../hooks/useSeoPage";
 import { useDiscoveryPath } from "../hooks/useDiscoveryPath";
-import { useSpotifyImages } from "../hooks/useSpotifyImages";
+import { useSpotifyImages, songKey } from "../hooks/useSpotifyImages";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSampleData } from "@/hooks/useSampleData";
 import { useSonicProfile } from "@/hooks/useSonicProfile";
@@ -90,7 +90,7 @@ const SongPage = () => {
     data?.related_artists || [],
   );
   const centerImageUrl = songTitleForSample && artistForSample
-    ? (songImages[`${songTitleForSample}|||${artistForSample}`] ?? null)
+    ? (songImages[songKey(songTitleForSample, artistForSample)] ?? null)
     : null;
 
   // ── Resolve center song Spotify identity ───────────────────────────────────
