@@ -558,6 +558,26 @@ function formatGlossaryForPrompt(): string {
 
 // ── Post-generation validation ────────────────────────────────────────────────
 
+// ── Dominant posture gate ──────────────────────────────────────────────────────
+// When a dominant emotional tone is set, these supporting tones are blocked.
+const DOMINANT_POSTURE_GATES: Record<string, string[]> = {
+  cold:        ["tender", "playful", "devotional"],
+  wistful:     ["swaggering", "defiant", "menacing", "triumphant"],
+  playful:     ["menacing", "cold", "lonely"],
+  menacing:    ["playful", "tender", "euphoric", "devotional"],
+  tender:      ["cold", "swaggering", "menacing", "defiant"],
+  triumphant:  ["wistful", "lonely", "nocturnal"],
+  swaggering:  ["wistful", "tender", "devotional"],
+  lonely:      ["triumphant", "euphoric", "playful", "glamorous"],
+  nocturnal:   ["triumphant", "euphoric", "playful"],
+  euphoric:    ["menacing", "lonely", "cold", "nocturnal"],
+  defiant:     ["tender", "wistful", "devotional"],
+  devotional:  ["cold", "menacing", "swaggering", "defiant"],
+  seductive:   ["menacing"],
+  restless:    ["tender", "devotional"],
+  glamorous:   ["lonely"],
+};
+
 function flagDescriptorConflicts(
   profile: Record<string, unknown>,
 ): { profile: Record<string, unknown>; removals: string[] } {
@@ -575,11 +595,27 @@ function flagDescriptorConflicts(
 
   const toRemove = new Set<string>();
 
-  // Apply contradiction rules
+  // ── Dominant posture gate (runs FIRST) ──────────────────────────────────────
+  const emotionalTones = profile.emotional_tone as string[] | undefined;
+  const dominantTone = (profile as any).dominant_emotional_tone as string | undefined
+    || (emotionalTones?.length ? emotionalTones[0] : undefined);
+
+  if (dominantTone && DOMINANT_POSTURE_GATES[dominantTone]) {
+    const blocked = DOMINANT_POSTURE_GATES[dominantTone];
+    for (const slug of blocked) {
+      if (allSlugs.has(slug) && slug !== dominantTone) {
+        console.warn(`[sonic-profile] Posture gate: "${dominantTone}" blocks "${slug}"`);
+        toRemove.add(slug);
+      }
+    }
+  }
+
+  // ── Pairwise contradiction rules ──────────────────────────────────────────
   for (const { target, blockers, reason, era } of CONTRADICTION_RULES) {
     if (!allSlugs.has(target)) continue;
+    if (toRemove.has(target)) continue;
     for (const blocker of blockers) {
-      if (allSlugs.has(blocker)) {
+      if (allSlugs.has(blocker) && !toRemove.has(blocker)) {
         if (era) {
           console.warn(`[sonic-profile] Era conflict: removing "${target}" because "${blocker}" present`);
         } else {
