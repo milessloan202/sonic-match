@@ -142,6 +142,38 @@ async function fetchVerifiedMetadata(
         }
       }
 
+      // Multi-split fallback: when no dash separator was found and initial
+      // search returned nothing, try splitting the displayName words from
+      // the right to guess artist vs title (e.g. "30 For 30 Sza" → title="30 For 30", artist="Sza")
+      if (!track && !dashMatch) {
+        const words = displayName.split(/\s+/);
+        // Try 1-word artist, then 2-word, up to half the words
+        const maxArtistWords = Math.min(3, Math.floor(words.length / 2));
+        for (let n = 1; n <= maxArtistWords; n++) {
+          const candidateTitle = words.slice(0, words.length - n).join(" ");
+          const candidateArtist = words.slice(words.length - n).join(" ");
+          const splitQuery = `track:"${candidateTitle}" artist:"${candidateArtist}"`;
+          console.log(`[Metadata] Multi-split attempt n=${n}: title="${candidateTitle}" artist="${candidateArtist}"`);
+          const splitRes = await fetch(
+            `https://api.spotify.com/v1/search?q=${encodeURIComponent(splitQuery)}&type=track&limit=1`,
+            { headers: { Authorization: `Bearer ${spotifyToken}` } }
+          );
+          if (splitRes.ok) {
+            const splitData = await splitRes.json();
+            const candidate = splitData?.tracks?.items?.[0];
+            if (candidate) {
+              track = candidate;
+              songTitle = candidateTitle;
+              artistName = candidateArtist;
+              metadata.song_title = songTitle;
+              metadata.artist_name = artistName;
+              console.log(`[Metadata] Multi-split HIT: "${candidateTitle}" by "${candidateArtist}" → track_id=${candidate.id}`);
+              break;
+            }
+          }
+        }
+      }
+
       if (track) {
         metadata.spotify_track_id = track.id;
         metadata.song_title = track.name;
