@@ -11,6 +11,7 @@ import ArtistPage from "./pages/ArtistPage";
 import ProducerPage from "./pages/ProducerPage";
 import VibePage from "./pages/VibePage";
 import DnaPage from "./pages/DnaPage";
+import DnaRedirect from "./components/DnaRedirect";
 import SearchPage from "./pages/SearchPage";
 import NotFound from "./pages/NotFound";
 
