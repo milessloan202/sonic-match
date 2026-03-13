@@ -130,3 +130,64 @@ export default function ExplorePage() {
     </div>
   );
 }
+
+/** Pill with Sonic DNA category color on hover */
+const HOVER_BG: Record<string, string> = {
+  emotional_tone:         "rgba(168,85,247,0.35)",
+  energy_posture:         "rgba(59,130,246,0.35)",
+  groove_character:       "rgba(99,102,241,0.35)",
+  texture:                "rgba(6,182,212,0.35)",
+  spatial_feel:           "rgba(14,165,233,0.35)",
+  era_movement:           "rgba(245,158,11,0.35)",
+  era_period:             "rgba(245,158,11,0.35)",
+  environment_imagery:    "rgba(16,185,129,0.35)",
+  listener_use_case:      "rgba(244,63,94,0.35)",
+  drum_character:         "rgba(249,115,22,0.35)",
+  bass_character:         "rgba(234,179,8,0.35)",
+  harmonic_color:         "rgba(20,184,166,0.35)",
+  melodic_character:      "rgba(236,72,153,0.35)",
+  vocal_character:        "rgba(139,92,246,0.35)",
+  arrangement_energy_arc: "rgba(132,204,22,0.35)",
+};
+const HOVER_BORDER: Record<string, string> = {
+  emotional_tone:         "rgba(168,85,247,0.65)",
+  energy_posture:         "rgba(59,130,246,0.65)",
+  groove_character:       "rgba(99,102,241,0.65)",
+  texture:                "rgba(6,182,212,0.65)",
+  spatial_feel:           "rgba(14,165,233,0.65)",
+  era_movement:           "rgba(245,158,11,0.65)",
+  era_period:             "rgba(245,158,11,0.65)",
+  environment_imagery:    "rgba(16,185,129,0.65)",
+  listener_use_case:      "rgba(244,63,94,0.65)",
+  drum_character:         "rgba(249,115,22,0.65)",
+  bass_character:         "rgba(234,179,8,0.65)",
+  harmonic_color:         "rgba(20,184,166,0.65)",
+  melodic_character:      "rgba(236,72,153,0.65)",
+  vocal_character:        "rgba(139,92,246,0.65)",
+  arrangement_energy_arc: "rgba(132,204,22,0.65)",
+};
+
+function ExplorePill({ slug, label, category }: { slug: string; label?: string; category?: string }) {
+  const [hovered, setHovered] = useState(false);
+  const display = label ?? slug.replace(/-/g, " ");
+
+  const style: React.CSSProperties = hovered && category
+    ? {
+        backgroundColor: HOVER_BG[category] ?? "hsl(0 0% 14% / 0.6)",
+        borderColor: HOVER_BORDER[category] ?? "hsl(0 0% 100% / 0.3)",
+      }
+    : {};
+
+  return (
+    <Link to={`/sounds/${slug}`} className="block">
+      <div
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        className="rounded-xl border border-border/60 bg-secondary/30 transition-all duration-200 px-4 py-3.5 text-center hover:scale-[1.03] active:scale-95"
+        style={style}
+      >
+        <span className="text-sm font-medium text-foreground capitalize">{display}</span>
+      </div>
+    </Link>
+  );
+}
