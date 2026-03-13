@@ -810,6 +810,7 @@ GENRE CLASSIFICATION (for filtering and browsing only — not used in similarity
 
 OUTPUT FORMAT (return exactly this structure, no extra fields):
 {
+  "dominant_emotional_tone": "slug",
   "energy_posture": ["slug1"],
   "groove_character": ["slug1", "slug2"],
   "drum_character": ["slug1", "slug2"],
@@ -831,6 +832,8 @@ OUTPUT FORMAT (return exactly this structure, no extra fields):
   "genre": "hip-hop",
   "subgenre": ["trap", "melodic-rap"]
 }
+
+"dominant_emotional_tone" must be a single slug from emotional_tone vocabulary. It must also be the FIRST entry in the emotional_tone array.
 
 confidence_score reflects how confident you are that this analysis is accurate (0.0–1.0).
 Use lower confidence for obscure, genre-defying, or instrumental works where you have less certainty.`;
