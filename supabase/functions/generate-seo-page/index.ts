@@ -1240,9 +1240,6 @@ EMOTIONAL POSTURE VS. EMOTIONAL VULNERABILITY (CRITICAL DISTINCTION):
 - Metallic, glossy, or industrial textures signal hardness, menace, or authority — not emotional exposure.
 - ONLY use words like "lonely," "vulnerable," "introspective," "tender," or "emotionally raw" if the Sonic DNA Profile explicitly contains descriptors such as "lonely," "tender," "wistful," or "yearning." If those descriptors are absent, do not infer them from production choices.`;
 
-    console.log("[PromptDebug] System prompt:\n" + systemPrompt);
-    console.log("[PromptDebug] Full prompt sent to Claude:\n" + prompt);
-
     const aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
