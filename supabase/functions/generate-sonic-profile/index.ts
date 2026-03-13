@@ -521,12 +521,13 @@ const EASE_POSTURE_SLUGS = new Set(["laid-back", "relaxed"]);
 
 function formatGlossaryForPrompt(): string {
   const categoryOrder = [
-    "energy_posture", "groove_character", "emotional_tone", "vocal_character",
+    "energy_posture", "groove_character", "melodic_character", "emotional_tone", "vocal_character",
     "texture", "spatial_feel", "arrangement_energy_arc", "drum_character", "era_movement",
   ];
   const categoryLabels: Record<string, string> = {
     energy_posture:         "ENERGY POSTURE",
     groove_character:       "GROOVE CHARACTER",
+    melodic_character:      "MELODIC CHARACTER",
     emotional_tone:         "EMOTIONAL TONE",
     vocal_character:        "VOCAL CHARACTER",
     texture:                "TEXTURE",
