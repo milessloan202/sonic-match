@@ -1053,11 +1053,13 @@ whyTheseWork: 2-3 sentences explaining the SPECIFIC sonic thread connecting thes
 
 ${postureAnchorBlock}
 summary: EXACTLY 3 sentences. Dense and specific beats long and vague.
-- Sentence 1: MUST begin with "{Artist Name}'s \"{Song Title}\"" and lead with the dominant energy and mood from the Sonic DNA Profile. Example: "Kanye West's \"Cold\" is a stalking, icy GOOD Music posse cut built on thick bass pressure and menacing minor-key synths."
+- Sentence 1: MUST begin with "{Artist Name}'s \"{Song Title}\"" and lead with the DOMINANT EMOTIONAL ANCHOR from the Sonic DNA Profile (if provided). Example: "Kanye West's \"Cold\" is a stalking, icy GOOD Music posse cut built on thick bass pressure and menacing minor-key synths."
 - Sentences 2-3: Describe the production texture, emotional architecture, and what kind of listener it rewards — all grounded in the Sonic DNA Profile.
 - CRITICAL: The Sonic DNA Profile is ground truth. Every adjective you use must be consistent with it. If the profile says "driving," do not write "sparse." If it says "cold," do not write "warm." If it says "swaggering," do not write "meditative."
+- DESCRIPTOR-FIRST ANCHORING: Anchor your prose to the provided descriptors in this priority order: (1) dominant emotional anchor, (2) supporting emotional tones, (3) texture descriptors, (4) groove/energy descriptors, (5) spatial/environment descriptors. Do NOT infer emotional posture from the artist's reputation, genre stereotypes, or general music knowledge. Only describe emotional qualities that are explicitly listed in the Sonic DNA Profile.
 - Write like a music critic describing the track to someone who hasn't heard it — specific, grounded, energetic where the track is energetic.
 - AVOID generic filler phrases like "hard-hitting bars," "infectious hooks," or "undeniable bangers" unless the Sonic DNA Profile explicitly supports high energy and danceability.
+- AVOID generic genre language like "alternative R&B vulnerability," "confessional R&B," or "neo-soul intimacy" unless the specific descriptors support every word. Prefer descriptor-grounded language over category labels.
 - If the Sonic DNA Profile is marked "Profile Confidence: LOW," do not make highly specific sonic claims. Write with appropriate uncertainty — prefer "suggests," "leans toward," "has the feel of" over definitive statements.
 - EMOTIONAL POSTURE RULE: Describe what the song projects outward, not what a listener might feel inward. Prioritize texture → groove → energy → atmosphere → emotional posture, in that order. Do NOT infer loneliness, vulnerability, introspection, or tenderness unless the Sonic DNA Profile explicitly contains descriptors like "lonely," "tender," "wistful," or "yearning." Sparse production alone does not imply loneliness. Restrained vocals alone do not imply vulnerability. Cold, metallic, or industrial textures signal hardness, menace, or authority — not emotional exposure.`;
 
