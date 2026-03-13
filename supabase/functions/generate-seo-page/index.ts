@@ -365,6 +365,7 @@ const SONIC_CATEGORY_ORDER = [
 interface SonicDescriptorResult {
   descriptors: CanonicalDescriptor[];
   confidenceScore: number | null;
+  dominantEmotionalTone: string | null;
 }
 
 async function fetchSonicDescriptors(
@@ -377,7 +378,7 @@ async function fetchSonicDescriptors(
     // Cache-first: check DB before calling the edge function
     const { data: cached } = await (supabase
       .from("song_sonic_profiles")
-      .select("profile_json, confidence_score")
+      .select("profile_json, confidence_score, dominant_emotional_tone")
       .eq("spotify_track_id", spotifyTrackId)
       .single() as any);
 
@@ -386,6 +387,7 @@ async function fetchSonicDescriptors(
       return {
         descriptors: cached.profile_json.canonical_descriptors.display_descriptors as CanonicalDescriptor[],
         confidenceScore: typeof cached.confidence_score === "number" ? cached.confidence_score : null,
+        dominantEmotionalTone: cached.dominant_emotional_tone ?? null,
       };
     }
 
@@ -410,6 +412,7 @@ async function fetchSonicDescriptors(
         return {
           descriptors: v1Descriptors,
           confidenceScore: typeof cached.confidence_score === "number" ? cached.confidence_score : null,
+          dominantEmotionalTone: cached.dominant_emotional_tone ?? null,
         };
       }
     }
@@ -444,6 +447,7 @@ async function fetchSonicDescriptors(
             artist_name: artistName,
             profile_json: data.profile,
             confidence_score: confidenceScore,
+            dominant_emotional_tone: data.profile?.dominant_emotional_tone ?? null,
           }, { onConflict: "spotify_track_id" });
         if (upsertError) {
           console.warn("[SonicDNA] Belt-and-suspenders upsert failed:", upsertError.message);
@@ -457,6 +461,7 @@ async function fetchSonicDescriptors(
       return {
         descriptors: descriptors as CanonicalDescriptor[],
         confidenceScore,
+        dominantEmotionalTone: data.profile?.dominant_emotional_tone ?? null,
       };
     }
 
@@ -468,7 +473,7 @@ async function fetchSonicDescriptors(
   }
 }
 
-function buildSonicDnaBlock(descriptors: CanonicalDescriptor[], confidenceScore: number | null = null): string {
+function buildSonicDnaBlock(descriptors: CanonicalDescriptor[], confidenceScore: number | null = null, dominantEmotionalTone: string | null = null): string {
   if (descriptors.length === 0) return "";
 
   // Group by category
@@ -483,8 +488,16 @@ function buildSonicDnaBlock(descriptors: CanonicalDescriptor[], confidenceScore:
     "=== SONIC DNA PROFILE (VERIFIED — ANCHOR YOUR SUMMARY TO THESE) ===",
     "These descriptors reflect the actual sonic character of this track.",
     "Your summary MUST stay within this lane. Do not describe qualities that contradict these.",
+    "Do NOT infer additional emotional qualities from the artist's reputation, genre stereotypes, or general music knowledge.",
+    "Only use emotional language that is directly supported by the descriptors listed below.",
     "",
   ];
+
+  if (dominantEmotionalTone) {
+    lines.push(`DOMINANT EMOTIONAL ANCHOR: ${dominantEmotionalTone.replace(/-/g, " ")}`);
+    lines.push("This is the primary emotional identity of the track. All prose must be anchored to this tone first.");
+    lines.push("");
+  }
 
   for (const cat of SONIC_CATEGORY_ORDER) {
     const labels = grouped[cat];
@@ -574,7 +587,29 @@ const POSTURE_SIGNALS: Array<{ slugs: string[]; posture: Posture; weight: number
   { slugs: ["restless"],                                       posture: "restless",    weight: 2 },
 ];
 
-function inferPosture(descriptors: CanonicalDescriptor[]): Posture {
+// Maps a dominant_emotional_tone slug to the closest Posture type.
+const EMOTIONAL_TONE_TO_POSTURE: Record<string, Posture> = {
+  cold: "detached", detached: "detached", "cool-toned": "detached",
+  swaggering: "dominant", commanding: "dominant", glamorous: "dominant",
+  menacing: "menacing", stalking: "menacing",
+  wistful: "melancholic", lonely: "melancholic", melancholic: "melancholic",
+  tender: "tender", devotional: "tender",
+  triumphant: "triumphant", euphoric: "euphoric",
+  nocturnal: "dreamlike",
+  nostalgic: "nostalgic",
+  playful: "playful",
+  seductive: "seductive",
+  restless: "restless",
+  defiant: "defiant",
+  yearning: "vulnerable",
+};
+
+function inferPosture(descriptors: CanonicalDescriptor[], dominantEmotionalTone?: string | null): Posture {
+  // Prefer the stored dominant_emotional_tone if it maps to a known posture
+  if (dominantEmotionalTone && EMOTIONAL_TONE_TO_POSTURE[dominantEmotionalTone]) {
+    return EMOTIONAL_TONE_TO_POSTURE[dominantEmotionalTone];
+  }
+
   const slugSet = new Set(descriptors.map((d) => d.slug));
   const scores = new Map<Posture, number>();
 
@@ -926,10 +961,10 @@ serve(async (req) => {
           { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
-      sonicDnaBlock = buildSonicDnaBlock(sonicResult.descriptors, sonicResult.confidenceScore);
-      const posture = inferPosture(sonicResult.descriptors);
+      sonicDnaBlock = buildSonicDnaBlock(sonicResult.descriptors, sonicResult.confidenceScore, sonicResult.dominantEmotionalTone);
+      const posture = inferPosture(sonicResult.descriptors, sonicResult.dominantEmotionalTone);
       postureAnchorBlock = buildPostureAnchorBlock(posture, sonicResult.confidenceScore);
-      console.log(`[SonicDNA] Profile ready (confidence=${sonicResult.confidenceScore ?? "unknown"}, posture=${posture}) — proceeding with grounded generation`);
+      console.log(`[SonicDNA] Profile ready (confidence=${sonicResult.confidenceScore ?? "unknown"}, dominant_tone=${sonicResult.dominantEmotionalTone ?? "none"}, posture=${posture}) — proceeding with grounded generation`);
       console.log(`[PostureAnchor] Block built (posture=${posture}, chars=${postureAnchorBlock.length}) — will be sent to Claude`);
     }
 
@@ -1018,11 +1053,13 @@ whyTheseWork: 2-3 sentences explaining the SPECIFIC sonic thread connecting thes
 
 ${postureAnchorBlock}
 summary: EXACTLY 3 sentences. Dense and specific beats long and vague.
-- Sentence 1: MUST begin with "{Artist Name}'s \"{Song Title}\"" and lead with the dominant energy and mood from the Sonic DNA Profile. Example: "Kanye West's \"Cold\" is a stalking, icy GOOD Music posse cut built on thick bass pressure and menacing minor-key synths."
+- Sentence 1: MUST begin with "{Artist Name}'s \"{Song Title}\"" and lead with the DOMINANT EMOTIONAL ANCHOR from the Sonic DNA Profile (if provided). Example: "Kanye West's \"Cold\" is a stalking, icy GOOD Music posse cut built on thick bass pressure and menacing minor-key synths."
 - Sentences 2-3: Describe the production texture, emotional architecture, and what kind of listener it rewards — all grounded in the Sonic DNA Profile.
 - CRITICAL: The Sonic DNA Profile is ground truth. Every adjective you use must be consistent with it. If the profile says "driving," do not write "sparse." If it says "cold," do not write "warm." If it says "swaggering," do not write "meditative."
+- DESCRIPTOR-FIRST ANCHORING: Anchor your prose to the provided descriptors in this priority order: (1) dominant emotional anchor, (2) supporting emotional tones, (3) texture descriptors, (4) groove/energy descriptors, (5) spatial/environment descriptors. Do NOT infer emotional posture from the artist's reputation, genre stereotypes, or general music knowledge. Only describe emotional qualities that are explicitly listed in the Sonic DNA Profile.
 - Write like a music critic describing the track to someone who hasn't heard it — specific, grounded, energetic where the track is energetic.
 - AVOID generic filler phrases like "hard-hitting bars," "infectious hooks," or "undeniable bangers" unless the Sonic DNA Profile explicitly supports high energy and danceability.
+- AVOID generic genre language like "alternative R&B vulnerability," "confessional R&B," or "neo-soul intimacy" unless the specific descriptors support every word. Prefer descriptor-grounded language over category labels.
 - If the Sonic DNA Profile is marked "Profile Confidence: LOW," do not make highly specific sonic claims. Write with appropriate uncertainty — prefer "suggests," "leans toward," "has the feel of" over definitive statements.
 - EMOTIONAL POSTURE RULE: Describe what the song projects outward, not what a listener might feel inward. Prioritize texture → groove → energy → atmosphere → emotional posture, in that order. Do NOT infer loneliness, vulnerability, introspection, or tenderness unless the Sonic DNA Profile explicitly contains descriptors like "lonely," "tender," "wistful," or "yearning." Sparse production alone does not imply loneliness. Restrained vocals alone do not imply vulnerability. Cold, metallic, or industrial textures signal hardness, menace, or authority — not emotional exposure.`;
 
@@ -1226,7 +1263,9 @@ SAMPLE INFORMATION RULE (CRITICAL):
 SONIC DNA PROFILE RULE (CRITICAL):
 - If a SONIC DNA PROFILE block is present in the user prompt, it is the objective ground truth for how this song sounds.
 - Every energy, mood, and texture claim in the summary MUST be consistent with those descriptors. Never use adjectives that contradict the profile.
+- If a DOMINANT EMOTIONAL ANCHOR is specified, lead the summary with that tone. It is the primary emotional identity.
 - Lead the summary with the dominant energy and mood reflected by the profile — do not lead with biographical or contextual information.
+- Do NOT infer emotional posture from the artist's reputation, genre stereotypes, or general music knowledge. Only describe emotional qualities that appear in the provided descriptor set.
 - If the profile indicates low energy, calm, melancholic, or tender descriptors, do NOT describe the track as energetic, hard-hitting, or aggressive.
 - If no Sonic DNA Profile is present, describe the track broadly without making specific energy or mood claims.
 
