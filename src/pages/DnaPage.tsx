@@ -208,7 +208,21 @@ export default function DnaPage() {
           </motion.div>
 
           {/* Results */}
-          {error ? (
+          {error === "not_found" ? (
+            <div className="text-center py-16 space-y-4">
+              <p className="text-4xl">🔇</p>
+              <p className="text-foreground font-medium">Page not found</p>
+              <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+                This descriptor page doesn't exist.
+              </p>
+              <button
+                onClick={() => navigate("/")}
+                className="mt-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:brightness-110 transition-all"
+              >
+                Go home
+              </button>
+            </div>
+          ) : error ? (
             <div className="text-center py-12 text-muted-foreground">
               <p>Something went wrong loading this page.</p>
               <p className="text-sm mt-1">{error}</p>
