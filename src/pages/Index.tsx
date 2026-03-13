@@ -8,6 +8,7 @@ import AlbumCarousel from "../components/AlbumCarousel";
 import SEOHead from "../components/SEOHead";
 import { supabase } from "@/integrations/supabase/client";
 import { clearDiscoveryPath } from "../hooks/useDiscoveryPath";
+import { CATEGORY_HOVER_COLORS } from "../components/DescriptorTag";
 
 
 const slugify = (text: string) =>
@@ -43,11 +44,13 @@ function pickRandom<T>(arr: readonly T[], n: number): T[] {
   return [...arr].sort(() => Math.random() - 0.5).slice(0, n);
 }
 
-function buildDescriptorChips(): string[] {
+type DescriptorChip = { slug: string; cssCategory: string };
+
+function buildDescriptorChips(): DescriptorChip[] {
   return [
-    ...pickRandom(HOMEPAGE_DESCRIPTOR_POOL.emotional, 2),
-    ...pickRandom(HOMEPAGE_DESCRIPTOR_POOL.texture, 2),
-    ...pickRandom(HOMEPAGE_DESCRIPTOR_POOL.groove, 2),
+    ...pickRandom(HOMEPAGE_DESCRIPTOR_POOL.emotional, 2).map(slug => ({ slug, cssCategory: "emotional_tone" })),
+    ...pickRandom(HOMEPAGE_DESCRIPTOR_POOL.texture, 2).map(slug => ({ slug, cssCategory: "texture" })),
+    ...pickRandom(HOMEPAGE_DESCRIPTOR_POOL.groove, 2).map(slug => ({ slug, cssCategory: "groove_character" })),
   ];
 }
 
@@ -62,7 +65,8 @@ const Index = () => {
   const [deepCut, setDeepCut] = useState(() => localStorage.getItem(DEEP_CUT_KEY) === "true");
 
   // Initialised once per mount — gives a fresh random set on each page load.
-  const [descriptorChips] = useState<string[]>(() => buildDescriptorChips());
+  const [descriptorChips] = useState<DescriptorChip[]>(() => buildDescriptorChips());
+  const [hoveredChip, setHoveredChip] = useState<string | null>(null);
 
   const toggleDeepCut = (checked: boolean) => {
     setDeepCut(checked);
@@ -246,15 +250,23 @@ const Index = () => {
               Explore a Sound
             </p>
             <div className="flex flex-wrap gap-2">
-              {descriptorChips.map(slug => (
-                <Link
-                  key={slug}
-                  to={`/search?descriptors=${slug}&mode=descriptor`}
-                  className="inline-flex items-center rounded-full border border-border/60 bg-secondary/40 px-3.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-primary/50 hover:bg-primary/10 transition-all active:scale-95"
-                >
-                  {slug.replace(/-/g, "\u00a0")}
-                </Link>
-              ))}
+              {descriptorChips.map(({ slug, cssCategory }) => {
+                const isHovered = hoveredChip === slug;
+                const colorClass = isHovered
+                  ? (CATEGORY_HOVER_COLORS[cssCategory] ?? "bg-white/20 text-white border-white/40")
+                  : "border-border/60 bg-secondary/40 text-muted-foreground";
+                return (
+                  <Link
+                    key={slug}
+                    to={`/search?descriptors=${slug}&mode=descriptor`}
+                    className={`inline-flex items-center rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-200 active:scale-95 ${colorClass}`}
+                    onMouseEnter={() => setHoveredChip(slug)}
+                    onMouseLeave={() => setHoveredChip(null)}
+                  >
+                    {slug.replace(/-/g, "\u00a0")}
+                  </Link>
+                );
+              })}
             </div>
           </motion.div>
 

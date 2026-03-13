@@ -31,6 +31,26 @@ const CATEGORY_COLORS: Record<string, string> = {
   arrangement_energy_arc:  "bg-lime-500/15 text-lime-300 border-lime-500/30",
 };
 
+// Stronger variant used for hover states (e.g. homepage descriptor chips).
+// Full literal strings ensure Tailwind includes these classes in the bundle.
+export const CATEGORY_HOVER_COLORS: Record<string, string> = {
+  emotional_tone:          "bg-purple-500/35 text-purple-100 border-purple-500/65",
+  energy_posture:          "bg-blue-500/35 text-blue-100 border-blue-500/65",
+  groove_character:        "bg-indigo-500/35 text-indigo-100 border-indigo-500/65",
+  texture:                 "bg-cyan-500/35 text-cyan-100 border-cyan-500/65",
+  spatial_feel:            "bg-sky-500/35 text-sky-100 border-sky-500/65",
+  era_movement:            "bg-amber-500/35 text-amber-100 border-amber-500/65",
+  era_period:              "bg-amber-500/35 text-amber-100 border-amber-500/65",
+  environment_imagery:     "bg-emerald-500/35 text-emerald-100 border-emerald-500/65",
+  listener_use_case:       "bg-rose-500/35 text-rose-100 border-rose-500/65",
+  drum_character:          "bg-orange-500/35 text-orange-100 border-orange-500/65",
+  bass_character:          "bg-yellow-500/35 text-yellow-100 border-yellow-500/65",
+  harmonic_color:          "bg-teal-500/35 text-teal-100 border-teal-500/65",
+  melodic_character:       "bg-pink-500/35 text-pink-100 border-pink-500/65",
+  vocal_character:         "bg-violet-500/35 text-violet-100 border-violet-500/65",
+  arrangement_energy_arc:  "bg-lime-500/35 text-lime-100 border-lime-500/65",
+};
+
 const DEFAULT_COLOR = "bg-white/10 text-white/70 border-white/20";
 
 interface DescriptorTagProps {
