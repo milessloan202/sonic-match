@@ -5,21 +5,27 @@ import type { SonicProfile, CanonicalDescriptorPayload } from "./useSonicProfile
 // =============================================================================
 // useSimilarByDNA
 //
-// Finds songs with similar sonic DNA using weighted category scoring.
+// Finds songs with similar sonic DNA using weighted category scoring
+// plus an emotional-anchor bonus layer.
 //
 // Pipeline:
 //   1. Backend (search-by-descriptors): fetches up to 200 candidates from DB
 //      that overlap at least one descriptor slug with the center song.
 //   2. Frontend (here): applies weighted category scoring over all 200,
+//      adds emotional-anchor bonuses, applies a secondary-score soft cap,
 //      then returns the top 8.
 //
 // Scoring formula:
-//   score = Σ(WEIGHT[category(slug)] for slug in matched_slugs)
-//           / Σ(WEIGHT[category(slug)] for slug in center.all_slugs)
+//   coreScore = Σ(WEIGHT[category(slug)] for slug in matched_slugs)
+//               / Σ(WEIGHT[category(slug)] for slug in center.all_slugs)
 //
-// Each matched slug contributes its category's weight rather than a flat 1.
-// Normalised to [0–1] against the center song's total weighted descriptor mass.
-// Tune CATEGORY_WEIGHTS to adjust which dimensions drive similarity.
+// Emotional anchor layer (additive, post-normalisation):
+//   - Exact dominant_emotional_tone match: +3.5
+//   - Partial match (one's dominant appears in other's emotional_tone): +1.0
+//
+// Secondary soft cap:
+//   Categories ranked Low (era_period, environment_imagery, listener_use_case)
+//   are summed separately and capped at 6.0 before adding to core score.
 //
 // Diversity filters (hard exclusions):
 //   - center song itself
