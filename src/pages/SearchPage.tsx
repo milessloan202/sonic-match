@@ -353,7 +353,7 @@ export default function SearchPage() {
                     onClick={() => navigate(`/sounds/${primarySlug}`)}
                     className="text-primary hover:underline"
                   >
-                    {getDescriptorLabel(primarySlug)} DNA page →
+                    About the {getDescriptorLabel(primarySlug)} sound →
                   </button>
                 </p>
               )}
