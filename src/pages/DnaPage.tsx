@@ -58,8 +58,17 @@ export default function DnaPage() {
           .in("slug", slugs)
           .eq("is_public", true) as any);
 
+        const publicDescs = (descData || []) as unknown as DescriptorRow[];
         if (cancelled) return;
-        setDescriptors((descData || []) as unknown as DescriptorRow[]);
+
+        // If any requested slug has no public registry row, treat as not found
+        if (publicDescs.length !== slugs.length) {
+          setError("not_found");
+          setLoading(false);
+          return;
+        }
+
+        setDescriptors(publicDescs);
 
         // Query songs that contain ALL specified slugs
         // Uses the GIN index on descriptor_slugs array
