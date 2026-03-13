@@ -223,31 +223,33 @@ const DESCRIPTOR_GLOSSARY: Array<{
   { slug: "galloping",   category: "groove_character", means: "Fast, forward-propelled triplet or dotted-note rhythmic feel. Urgency in the forward drive.", notMeans: ["laid-back", "relaxed", "shuffled", "static"] },
   // emotional_tone
   { slug: "cold",        category: "emotional_tone", means: "Icy detachment, sterile confidence, arrogance, or predatory distance. The OUTWARD emotional presentation is distancing and controlled — assertive and armored.", notMeans: ["calm", "mellow", "relaxed", "laid-back", "introspective — cold is an outward posture, not inner peace"] },
-  { slug: "lonely",      category: "emotional_tone", means: "Emotional isolation: the feeling of being unreachable, disconnected, or alone even within presence or performance. The INWARD emotional subtext beneath a confident or detached surface. Use when the song's emotional reality is one of disconnection, even if the outward register is cold, swaggering, or detached.", notMeans: ["sad or weeping — lonely is quiet and inward, not openly expressive grief", "nocturnal alone — loneliness is relational disconnection, not just atmosphere"] },
+  { slug: "lonely",      category: "emotional_tone", means: "Emotional isolation communicated through atmosphere, harmony, or vocal delivery. The feeling of being unreachable, disconnected, or alone — even within presence or performance. Reflects emotional distance or isolation, not simply slow tempo or minimal arrangement.", notMeans: ["sad or weeping — lonely is quiet and inward, not openly expressive grief", "nocturnal alone — loneliness is relational disconnection, not just atmosphere", "slow tempo alone", "minimal arrangement alone — sparseness is not isolation"] },
   { slug: "swaggering",  category: "emotional_tone", means: "Dominant, self-assured outward projection of power and confidence.", notMeans: ["laid-back ease", "gentle confidence", "mellow"] },
   { slug: "nocturnal",   category: "emotional_tone", means: "Atmospheric, late-night, withdrawn. Dark introspection — not peaceful or calm.", notMeans: ["calm", "peaceful", "euphoric", "triumphant"] },
   { slug: "restless",    category: "emotional_tone", means: "Anxious, unresolved tension. Urgency and discomfort in the emotional character.", notMeans: ["laid-back", "easygoing", "relaxed"] },
-  { slug: "wistful",     category: "emotional_tone", means: "Gentle longing and bittersweet reflection. Soft, inward, and emotionally tender. Can coexist with a cold or detached outward presentation — wistful is the underlying register when coldness is emotional armor over longing.", notMeans: ["swaggering", "aggressive", "confrontational — wistful is inward, not outward assertion"] },
+  { slug: "wistful",     category: "emotional_tone", means: "Nostalgic longing or reflective yearning conveyed through melody, harmony, or vocal delivery. Requires reflective melodic phrasing, nostalgic harmonic color, or gentle emotional ache. Can coexist with a cold or detached outward presentation — wistful is the underlying register when coldness is emotional armor over longing.", notMeans: ["swaggering", "aggressive", "confrontational — wistful is inward, not outward assertion", "merely slow or atmospheric — wistful requires active longing, not just mood", "introspective alone — introspection without nostalgic ache is not wistful"] },
   { slug: "playful",     category: "emotional_tone", means: "Light, spirited, and fun. Levity without heaviness or darkness.", notMeans: ["cold", "menacing", "aggressive", "tense", "stalking"] },
   { slug: "menacing",    category: "emotional_tone", means: "Threat without eruption. The song carries danger — controlled intimidation.", notMeans: ["playful", "tender", "warm", "relaxed", "euphoric"] },
   { slug: "defiant",     category: "emotional_tone", means: "Assertive resistance. Proud refusal — not rage, but unwillingness to yield.", notMeans: ["submissive", "tender", "wistful", "devotional"] },
+  { slug: "tender",      category: "emotional_tone", means: "Softness, care, or emotional warmth expressed through delicate vocal delivery and gentle musical framing. Requires fragile or nurturing vocal tone, soft dynamic presentation, or emotionally gentle atmosphere.", notMeans: ["neutral vocal delivery", "cool or detached vocal delivery", "assertive delivery", "merely emotional or personal lyrics — tender is sonic gentleness, not lyrical content"] },
   // vocal_character
   { slug: "cool-toned",  category: "vocal_character", means: "Controlled, precise, emotionally restrained vocal delivery. Detached — not relaxed.", notMeans: ["laid-back", "easygoing", "mellow — cool-toned can be predatory or forceful"] },
   { slug: "commanding",  category: "vocal_character", means: "Assertive, dominant, authoritative vocal presence that controls the room.", notMeans: ["laid-back", "gentle", "easygoing"] },
   // texture
   { slug: "sparse",      category: "texture", means: "Minimalist production with deliberate space between elements.", notMeans: ["relaxed", "laid-back", "easygoing — sparse can be cold, tense, or threatening"] },
-  { slug: "warm",        category: "texture", means: "Organic, rounded, inviting sonic surface. Comfort and analog richness.", notMeans: ["cold emotional character", "metallic", "harsh", "icy", "sterile"] },
+  { slug: "warm",        category: "texture", means: "Rounded timbre, harmonic richness, or analog-style glow. Requires soft-edged timbral character, saturated or analog-feeling sound, or tonal warmth. Comfort and analog richness.", notMeans: ["cold emotional character", "metallic", "harsh", "icy", "sterile", "merely mellow or non-aggressive — warm is a timbral quality, not an emotional one"] },
   { slug: "glossy",      category: "texture", means: "Polished, high-sheen, modern production surface. Clean, refined, and controlled.", notMeans: ["warm", "analog", "raw", "gritty"] },
   { slug: "metallic",    category: "texture", means: "Hard, machine-like, sharp-edged sonic surface. Cold precision.", notMeans: ["warm", "organic", "cozy", "laid-back"] },
   { slug: "glassy",      category: "texture", means: "Smooth, reflective, frictionless surface. Pristine and high-definition.", notMeans: ["grainy", "gritty", "analog", "warm"] },
   { slug: "velvety",     category: "texture", means: "Soft, dense, friction-free surface. Rich without being harsh.", notMeans: ["metallic", "grainy", "gritty", "sparse"] },
-  { slug: "organic",     category: "texture", means: "Natural, material-feeling production. Wood, skin, air — unprocessed human presence.", notMeans: ["electronic", "synthetic", "glossy", "neon"] },
+  { slug: "organic",     category: "texture", means: "Production clearly emphasizing natural or human-played textures. Requires acoustic instruments, tactile or earthy timbres, or live instrumental feel. Wood, skin, air — unprocessed human presence.", notMeans: ["electronic", "synthetic", "glossy", "neon", "primarily digital or synthetic production — organic requires audibly natural textures"] },
   { slug: "gritty",      category: "texture", means: "Rough-textured, abrasive surface with grain and friction.", notMeans: ["glossy", "polished", "glassy", "velvety"] },
+  { slug: "hazy",        category: "texture", means: "Blurred sonic edges, atmospheric diffusion, or dreamlike sonic softness. Requires smeared or softened textures, reverb-heavy atmospheric diffusion, or dreamlike sonic fog.", notMeans: ["merely slow or emotionally reflective — hazy is a production texture, not a mood", "clean or crisp production", "dry or precise mixing"] },
   // arrangement_energy_arc
   { slug: "sustained-drive",  category: "arrangement_energy_arc", means: "Unrelenting forward motion maintained throughout the track.", notMeans: ["laid-back", "floaty", "unhurried"] },
   { slug: "immediate-impact", category: "arrangement_energy_arc", means: "Full energy present from bar one. Hits hard immediately — no buildup.", notMeans: ["gradual", "laid-back", "easygoing"] },
   // spatial_feel
-  { slug: "intimate",         category: "spatial_feel", means: "Physically close, small-room or headphone-scale production. The music feels personal and near.", notMeans: ["arena-sized", "cavernous", "widescreen", "reverb-drenched"] },
+  { slug: "intimate",         category: "spatial_feel", means: "Close-mic vocal presence, small-room spatial feel, or minimal spatial distance between performer and listener. The mix places the listener physically close to the source.", notMeans: ["arena-sized", "cavernous", "widescreen", "reverb-drenched", "merely emotional or personal — intimate is physical proximity in the mix, not lyrical intimacy"] },
   { slug: "cavernous",        category: "spatial_feel", means: "Vast, reverberant sonic space. Everything echoes — wide and deep.", notMeans: ["dry", "boxed-in", "intimate", "airless"] },
   { slug: "boxed-in",         category: "spatial_feel", means: "Compressed, claustrophobic space. Walls feel close. Pressure without release.", notMeans: ["open", "widescreen", "cavernous"] },
   { slug: "widescreen",       category: "spatial_feel", means: "Panoramic stereo width and epic scope. Cinematic scale, engineered for large playback.", notMeans: ["intimate", "boxed-in", "dry", "airless"] },
@@ -731,6 +733,19 @@ function buildSystemPrompt(): string {
 
 Your job is to analyze songs and return a structured Sonic DNA profile.
 
+ANTI-INFERENCE RULE (CRITICAL — READ FIRST):
+Descriptor assignments must be based ONLY on audible sonic evidence in the recording itself.
+Do NOT infer descriptors from:
+- Artist identity or reputation
+- Genre label or cultural context
+- Common stereotypes about performers or genres
+- Lyrical themes or subject matter
+
+For example:
+- Do NOT assign "wistful", "tender", "warm", "intimate", or "hazy" simply because a track is by SZA or fits an alternative R&B context.
+- Do NOT assign "menacing" or "cold" simply because a track is by Pusha T or fits a rap context.
+- Every descriptor must be justified by clearly audible musical characteristics in the recording.
+
 STRICT RULES:
 1. Only use descriptor slugs from the vocabulary provided. Never invent new slugs.
 2. Each category must use 1–4 slugs from that category's list.
@@ -836,8 +851,21 @@ OUTPUT FORMAT (return exactly this structure, no extra fields):
 "dominant_emotional_tone" must be a single slug from emotional_tone vocabulary. It must also be the FIRST entry in the emotional_tone array.
 
 confidence_score reflects how confident you are that this analysis is accurate (0.0–1.0).
-Use lower confidence for obscure, genre-defying, or instrumental works where you have less certainty.`;
+Use lower confidence for obscure, genre-defying, or instrumental works where you have less certainty.
+
+CALIBRATION EXAMPLES (use these to anchor your ontology):
+
+• "30 For 30 (with Kendrick Lamar)" by SZA — Do NOT automatically assign wistful, tender, warm, or intimate because of genre context. Analyze the actual sonic evidence: vocal delivery, production texture, spatial characteristics. Assign only what the recording audibly supports.
+
+• "Numbers on the Boards" by Pusha T — Commanding solo rap delivery should NOT be labeled chant-like. Chant-like requires communal/call-and-response evidence.
+
+• "Knuck If You Buck" by Crime Mob — Call-and-response crowd energy DOES qualify as chant-like. This is the correct use case.
+
+• "Heartless" by Kanye West — Cold emotional posture with lonely undertones. The outward register is cold/detached; the emotional subtext is isolation. Both layers should be captured.
+
+These examples demonstrate that descriptors must follow audible evidence, not genre expectations.`;
 }
+
 
 function buildUserPrompt(title: string, artist: string): string {
   return `Analyze the sonic DNA of "${title}" by ${artist}.
@@ -864,6 +892,10 @@ function buildTraitSystemPrompt(): string {
 
 Your job is to identify the core musical traits of a song in structured form.
 This is internal scaffolding — it will drive precise descriptor assignment in a second pass.
+
+CRITICAL: Base all trait assignments on audible sonic evidence ONLY.
+Do NOT infer traits from artist identity, genre label, cultural reputation, or lyrical themes.
+A track by an R&B artist is not automatically "warm" or "intimate." A track by a rapper is not automatically "cold" or "menacing." Listen to the actual sound.
 
 Return ONLY valid JSON matching this exact structure, no preamble, no markdown:
 
