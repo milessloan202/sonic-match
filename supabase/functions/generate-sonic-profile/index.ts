@@ -913,6 +913,13 @@ function extractDescriptorSlugs(profile: Record<string, unknown>): string[] {
     const val = profile[field];
     if (Array.isArray(val)) slugs.push(...val);
   }
+  // Include scalar descriptor fields so they are searchable when displayed as
+  // clickable chips on the song page.
+  const scalarFields = ["intensity_level", "danceability_feel"];
+  for (const field of scalarFields) {
+    const val = profile[field];
+    if (typeof val === "string" && val) slugs.push(val);
+  }
   return [...new Set(slugs)];
 }
 
