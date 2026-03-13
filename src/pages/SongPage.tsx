@@ -598,7 +598,6 @@ const SongPage = () => {
             </div>
             <MusicMap
               centerLabel={displayName}
-              centerImageUrl={centerImageUrl || undefined}
               closestMatches={data.closest_matches}
               sameEnergy={data.same_energy}
               relatedArtists={data.related_artists}
