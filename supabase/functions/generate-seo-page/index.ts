@@ -1263,7 +1263,9 @@ SAMPLE INFORMATION RULE (CRITICAL):
 SONIC DNA PROFILE RULE (CRITICAL):
 - If a SONIC DNA PROFILE block is present in the user prompt, it is the objective ground truth for how this song sounds.
 - Every energy, mood, and texture claim in the summary MUST be consistent with those descriptors. Never use adjectives that contradict the profile.
+- If a DOMINANT EMOTIONAL ANCHOR is specified, lead the summary with that tone. It is the primary emotional identity.
 - Lead the summary with the dominant energy and mood reflected by the profile — do not lead with biographical or contextual information.
+- Do NOT infer emotional posture from the artist's reputation, genre stereotypes, or general music knowledge. Only describe emotional qualities that appear in the provided descriptor set.
 - If the profile indicates low energy, calm, melancholic, or tender descriptors, do NOT describe the track as energetic, hard-hitting, or aggressive.
 - If no Sonic DNA Profile is present, describe the track broadly without making specific energy or mood claims.
 
