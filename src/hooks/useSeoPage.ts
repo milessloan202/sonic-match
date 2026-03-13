@@ -71,6 +71,14 @@ export function useSeoPage(slug: string | undefined, pageType: string) {
 
         if (fnError) throw fnError;
 
+        if (fnData?.status === "retry") {
+          console.log("[useSeoPage] Generation retry requested:", fnData?.reason || "unknown");
+          setError("This page is still generating. Please refresh in a moment.");
+          setLoading(false);
+          setGenerating(false);
+          return;
+        }
+
         if (fnData?.error) {
           setError(fnData.error);
           setLoading(false);
@@ -101,6 +109,8 @@ export function useSeoPage(slug: string | undefined, pageType: string) {
             related_vibes: (newPage.related_vibes as any[]) || [],
             related_artist_links: (newPage.related_artist_links as any[]) || [],
           });
+        } else {
+          setError("This page is still generating. Please refresh in a moment.");
         }
       } catch (e) {
         console.error("Error generating page:", e);
