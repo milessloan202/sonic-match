@@ -953,10 +953,10 @@ serve(async (req) => {
           { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
-      sonicDnaBlock = buildSonicDnaBlock(sonicResult.descriptors, sonicResult.confidenceScore);
-      const posture = inferPosture(sonicResult.descriptors);
+      sonicDnaBlock = buildSonicDnaBlock(sonicResult.descriptors, sonicResult.confidenceScore, sonicResult.dominantEmotionalTone);
+      const posture = inferPosture(sonicResult.descriptors, sonicResult.dominantEmotionalTone);
       postureAnchorBlock = buildPostureAnchorBlock(posture, sonicResult.confidenceScore);
-      console.log(`[SonicDNA] Profile ready (confidence=${sonicResult.confidenceScore ?? "unknown"}, posture=${posture}) — proceeding with grounded generation`);
+      console.log(`[SonicDNA] Profile ready (confidence=${sonicResult.confidenceScore ?? "unknown"}, dominant_tone=${sonicResult.dominantEmotionalTone ?? "none"}, posture=${posture}) — proceeding with grounded generation`);
       console.log(`[PostureAnchor] Block built (posture=${posture}, chars=${postureAnchorBlock.length}) — will be sent to Claude`);
     }
 
