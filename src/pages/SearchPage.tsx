@@ -510,7 +510,7 @@ export default function SearchPage() {
           ) : results.length === 0 ? (
             <div className="text-center py-16 space-y-3">
               <p className="text-4xl">🎵</p>
-              <p className="text-foreground font-medium">No songs found with this DNA</p>
+              <p className="text-foreground font-medium">No songs found with this sound</p>
               <p className="text-muted-foreground text-sm max-w-sm mx-auto">
                 Songs are added as people discover them. Try removing a trait to broaden the mix.
               </p>

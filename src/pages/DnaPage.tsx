@@ -303,9 +303,9 @@ export default function DnaPage() {
             </motion.div>
           ) : (
             <div className="space-y-6">
-              <p className="text-sm text-muted-foreground">
-                {songs.length} song{songs.length !== 1 ? "s" : ""} with this sound
-              </p>
+              <h2 className="text-sm font-semibold text-foreground">
+                Songs ({songs.length})
+              </h2>
 
               <div className="grid gap-3">
                 {songs.map((song, i) => (
