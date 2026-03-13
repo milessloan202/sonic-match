@@ -278,6 +278,7 @@ export type Database = {
           confidence_score: number
           created_at: string
           descriptor_slugs: string[]
+          dominant_emotional_tone: string | null
           id: string
           profile_json: Json
           song_title: string
@@ -289,6 +290,7 @@ export type Database = {
           confidence_score?: number
           created_at?: string
           descriptor_slugs?: string[]
+          dominant_emotional_tone?: string | null
           id?: string
           profile_json?: Json
           song_title: string
@@ -300,6 +302,7 @@ export type Database = {
           confidence_score?: number
           created_at?: string
           descriptor_slugs?: string[]
+          dominant_emotional_tone?: string | null
           id?: string
           profile_json?: Json
           song_title?: string

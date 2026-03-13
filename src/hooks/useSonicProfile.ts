@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 // =============================================================================
 
 export interface SonicProfile {
+  dominant_emotional_tone?: string;
   energy_posture: string[];
   groove_character: string[];
   drum_character: string[];
@@ -35,7 +36,6 @@ export interface SonicProfile {
   danceability_feel: string;
   confidence_score?: number;
   canonical_descriptors?: CanonicalDescriptorPayload;
-  // Genre classification — for filtering/browsing/SEO only, not used in similarity scoring
   genre?: string;
   subgenre?: string[];
 }

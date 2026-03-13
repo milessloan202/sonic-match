@@ -558,6 +558,26 @@ function formatGlossaryForPrompt(): string {
 
 // ── Post-generation validation ────────────────────────────────────────────────
 
+// ── Dominant posture gate ──────────────────────────────────────────────────────
+// When a dominant emotional tone is set, these supporting tones are blocked.
+const DOMINANT_POSTURE_GATES: Record<string, string[]> = {
+  cold:        ["tender", "playful", "devotional"],
+  wistful:     ["swaggering", "defiant", "menacing", "triumphant"],
+  playful:     ["menacing", "cold", "lonely"],
+  menacing:    ["playful", "tender", "euphoric", "devotional"],
+  tender:      ["cold", "swaggering", "menacing", "defiant"],
+  triumphant:  ["wistful", "lonely", "nocturnal"],
+  swaggering:  ["wistful", "tender", "devotional"],
+  lonely:      ["triumphant", "euphoric", "playful", "glamorous"],
+  nocturnal:   ["triumphant", "euphoric", "playful"],
+  euphoric:    ["menacing", "lonely", "cold", "nocturnal"],
+  defiant:     ["tender", "wistful", "devotional"],
+  devotional:  ["cold", "menacing", "swaggering", "defiant"],
+  seductive:   ["menacing"],
+  restless:    ["tender", "devotional"],
+  glamorous:   ["lonely"],
+};
+
 function flagDescriptorConflicts(
   profile: Record<string, unknown>,
 ): { profile: Record<string, unknown>; removals: string[] } {
@@ -575,11 +595,27 @@ function flagDescriptorConflicts(
 
   const toRemove = new Set<string>();
 
-  // Apply contradiction rules
+  // ── Dominant posture gate (runs FIRST) ──────────────────────────────────────
+  const emotionalTones = profile.emotional_tone as string[] | undefined;
+  const dominantTone = (profile as any).dominant_emotional_tone as string | undefined
+    || (emotionalTones?.length ? emotionalTones[0] : undefined);
+
+  if (dominantTone && DOMINANT_POSTURE_GATES[dominantTone]) {
+    const blocked = DOMINANT_POSTURE_GATES[dominantTone];
+    for (const slug of blocked) {
+      if (allSlugs.has(slug) && slug !== dominantTone) {
+        console.warn(`[sonic-profile] Posture gate: "${dominantTone}" blocks "${slug}"`);
+        toRemove.add(slug);
+      }
+    }
+  }
+
+  // ── Pairwise contradiction rules ──────────────────────────────────────────
   for (const { target, blockers, reason, era } of CONTRADICTION_RULES) {
     if (!allSlugs.has(target)) continue;
+    if (toRemove.has(target)) continue;
     for (const blocker of blockers) {
-      if (allSlugs.has(blocker)) {
+      if (allSlugs.has(blocker) && !toRemove.has(blocker)) {
         if (era) {
           console.warn(`[sonic-profile] Era conflict: removing "${target}" because "${blocker}" present`);
         } else {
@@ -708,9 +744,11 @@ VOCABULARY:
 ${JSON.stringify(DESCRIPTOR_VOCABULARY, null, 2)}
 
 EVALUATION ORDER — assess in this sequence before assigning any descriptor:
-1. EMOTIONAL POSTURE  : What is the outward emotional register? (dominant / vulnerable / cold / warm / playful / menacing / tense)
+1. DOMINANT EMOTIONAL TONE: Select ONE dominant emotional tone that best describes the primary emotional posture of the song. This is the song's emotional anchor — the single register that defines its character. Place it FIRST in emotional_tone.
    ↳ Then ask: is there an underlying emotional subtext beneath the surface? (e.g. cold presentation masking loneliness, swagger over yearning, detachment over grief)
-   ↳ If yes, include both in emotional_tone. Dominant posture first, subtext second. Do NOT flatten to one register.
+   ↳ Allow up to 2 supporting tones that reinforce or deepen the dominant tone. Supporting tones must NOT contradict the dominant tone.
+   ↳ Maximum total emotional_tone entries: 3 (1 dominant + up to 2 supporting).
+   ↳ Set "dominant_emotional_tone" to the single primary tone slug.
 2. ENERGY POSTURE     : How does energy behave? (relaxed / coiled / charging / simmering / gliding / floating / explosive / buoyant)
    ↳ energy_posture is NOT BPM, NOT intensity_level. A fast song can be gliding; a slow song can be coiled.
    ↳ It describes how energy moves through the song — its behavior and disposition, not its speed or volume.
@@ -772,6 +810,7 @@ GENRE CLASSIFICATION (for filtering and browsing only — not used in similarity
 
 OUTPUT FORMAT (return exactly this structure, no extra fields):
 {
+  "dominant_emotional_tone": "slug",
   "energy_posture": ["slug1"],
   "groove_character": ["slug1", "slug2"],
   "drum_character": ["slug1", "slug2"],
@@ -793,6 +832,8 @@ OUTPUT FORMAT (return exactly this structure, no extra fields):
   "genre": "hip-hop",
   "subgenre": ["trap", "melodic-rap"]
 }
+
+"dominant_emotional_tone" must be a single slug from emotional_tone vocabulary. It must also be the FIRST entry in the emotional_tone array.
 
 confidence_score reflects how confident you are that this analysis is accurate (0.0–1.0).
 Use lower confidence for obscure, genre-defying, or instrumental works where you have less certainty.`;
@@ -871,7 +912,9 @@ ${JSON.stringify(traits, null, 2)}
 
 Now assign Sonic DNA descriptors for this song. Use the trait analysis above as your grounding — do not jump directly from song impression to label. Let each trait value constrain and drive your descriptor selection from the vocabulary.
 
-EMOTIONAL LAYERING: If the trait analysis identifies both an outward emotional posture and an underlying subtext, preserve both in emotional_tone. The dominant posture should appear first; the subtext can follow if it is genuinely present. Do not flatten layered profiles to a single register.
+DOMINANT EMOTIONAL TONE: First, select ONE dominant emotional tone — the single primary emotional posture of the song. Set "dominant_emotional_tone" to this slug. Then allow up to 2 supporting tones that reinforce or deepen the dominant. Supporting tones must NOT contradict the dominant. Maximum 3 emotional_tone entries total. The dominant must appear FIRST in the emotional_tone array.
+
+EMOTIONAL LAYERING: If the trait analysis identifies both an outward emotional posture and an underlying subtext, the dominant is the outward posture; the subtext can be a supporting tone if it doesn't contradict the dominant.
 
 Focus on:
 - The actual rhythmic feel and groove
@@ -1104,15 +1147,23 @@ serve(async (req) => {
     const enrichedProfile = { ...profile, canonical_descriptors: canonical };
 
     // ── Write to cache ────────────────────────────────────────────────────────
+    // Extract dominant emotional tone from generated profile
+    const dominantEmotionalTone = typeof profile.dominant_emotional_tone === "string"
+      ? profile.dominant_emotional_tone
+      : (Array.isArray(profile.emotional_tone) && (profile.emotional_tone as string[]).length > 0
+          ? (profile.emotional_tone as string[])[0]
+          : null);
+
     const { data: inserted, error: insertError } = await supabase
       .from("song_sonic_profiles")
       .upsert({
         spotify_track_id,
         song_title,
         artist_name,
-        profile_json:     enrichedProfile,
-        confidence_score: confidenceScore,
-        descriptor_slugs: descriptorSlugs,
+        profile_json:             enrichedProfile,
+        confidence_score:         confidenceScore,
+        descriptor_slugs:         descriptorSlugs,
+        dominant_emotional_tone:  dominantEmotionalTone,
       }, { onConflict: "spotify_track_id" })
       .select()
       .single();
