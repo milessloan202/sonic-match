@@ -101,10 +101,9 @@ const SongPage = () => {
     [...allSongs, ...centerSongItem],
     data?.related_artists || [],
   );
-  const centerImageUrl = data?.center_song_image_url
-    ?? (songTitleForSample && artistForSample
-      ? (songImages[songKey(songTitleForSample, artistForSample)] ?? null)
-      : null);
+  const centerImageUrl = (songTitleForSample && artistForSample)
+    ? (songImages[songKey(songTitleForSample, artistForSample)] ?? null)
+    : null;
 
   // ── Resolve center song Spotify identity ───────────────────────────────────
   const [resolvedTrack, setResolvedTrack] = useState<{
