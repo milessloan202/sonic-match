@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Search, Loader2, AlertCircle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
@@ -22,6 +22,37 @@ const routePrefixes: Record<SearchMode, string> = {
 
 const DEEP_CUT_KEY = "deep-cut-mode";
 
+// ── Homepage descriptor exploration ───────────────────────────────────────────
+// Descriptors are grouped by category so the random picker can guarantee
+// 2 emotional / 2 texture / 2 groove on every page load.
+
+const HOMEPAGE_DESCRIPTOR_POOL = {
+  emotional: ["nocturnal", "dreamy", "melancholic", "euphoric", "cold", "playful"],
+  texture:   ["metallic", "hazy", "lush", "widescreen", "airless", "glassy"],
+  groove:    ["stomping", "gliding", "punchy", "driving", "swaggering", "pulsing"],
+} as const;
+
+const STARTER_MIXES: { label: string; descriptors: string[] }[] = [
+  { label: "Night Drive",   descriptors: ["nocturnal", "glossy", "driving"] },
+  { label: "Cold Pressure", descriptors: ["metallic", "airless", "stomping"] },
+  { label: "Velvet Fog",    descriptors: ["hazy", "lush", "late-night-walk"] },
+  { label: "Victory Lap",   descriptors: ["swaggering", "punchy", "widescreen"] },
+];
+
+function pickRandom<T>(arr: readonly T[], n: number): T[] {
+  return [...arr].sort(() => Math.random() - 0.5).slice(0, n);
+}
+
+function buildDescriptorChips(): string[] {
+  return [
+    ...pickRandom(HOMEPAGE_DESCRIPTOR_POOL.emotional, 2),
+    ...pickRandom(HOMEPAGE_DESCRIPTOR_POOL.texture, 2),
+    ...pickRandom(HOMEPAGE_DESCRIPTOR_POOL.groove, 2),
+  ];
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+
 const Index = () => {
   const navigate = useNavigate();
   const [mode, setMode] = useState<SearchMode>("song");
@@ -29,6 +60,9 @@ const Index = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deepCut, setDeepCut] = useState(() => localStorage.getItem(DEEP_CUT_KEY) === "true");
+
+  // Initialised once per mount — gives a fresh random set on each page load.
+  const [descriptorChips] = useState<string[]>(() => buildDescriptorChips());
 
   const toggleDeepCut = (checked: boolean) => {
     setDeepCut(checked);
@@ -109,12 +143,12 @@ const Index = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         className="relative z-10 w-full max-w-xl text-center space-y-8">
-        
+
         <SEOHead
           title="SOUNDDNA – Discover Music With the Same Sonic DNA"
           description="Find songs, artists, and moods with the same sonic DNA. AI-powered music discovery engine."
           path="/" />
-        
+
 
         <div className="space-y-3">
           <h1 className="text-5xl sm:text-6xl font-bold tracking-tight">
@@ -146,13 +180,13 @@ const Index = () => {
               "Describe a vibe..."
               }
               className="w-full h-12 pl-12 pr-4 rounded-lg bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all disabled:opacity-50" />
-            
+
           </div>
           <button
             onClick={handleSearch}
             disabled={loading}
             className="h-12 px-6 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 glow-primary transition-all disabled:opacity-50 flex items-center gap-2">
-            
+
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
             {loading ? "Searching..." : "Search"}
           </button>
@@ -164,7 +198,7 @@ const Index = () => {
             id="deep-cut"
             checked={deepCut}
             onCheckedChange={toggleDeepCut} />
-          
+
           <label htmlFor="deep-cut" className="cursor-pointer text-left">
             <span className="text-sm font-medium text-foreground">Deep Cut Mode</span>
             <span className="block text-xs text-muted-foreground">Find hidden gems and lesser-known tracks</span>
@@ -177,7 +211,7 @@ const Index = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         className="relative z-10 w-full max-w-xl mt-10 text-center space-y-3">
-        
+
           <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
           <p className="text-muted-foreground">
             {deepCut ? "Digging for hidden gems..." : "Generating recommendations..."}
@@ -190,7 +224,7 @@ const Index = () => {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         className="relative z-10 w-full max-w-xl mt-10 p-4 rounded-lg bg-destructive/10 border border-destructive/20 flex items-start gap-3">
-        
+
           <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-medium text-destructive">Something went wrong</p>
@@ -199,17 +233,77 @@ const Index = () => {
         </motion.div>
       }
 
-      {/* Album Carousel at the bottom */}
-      {!loading && !error &&
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.4 }}
-        className="relative z-10 w-full mt-12">
-          <p className="text-sm text-muted-foreground mb-4 pl-1">📀 Pull one from the shelf.</p>
-          <AlbumCarousel />
-        </motion.div>
-      }
+      {!loading && !error && (
+        <>
+          {/* Section 1 — Explore a Sound */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="relative z-10 w-full max-w-xl mt-10 space-y-3 text-left"
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 pl-0.5">
+              Explore a Sound
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {descriptorChips.map(slug => (
+                <Link
+                  key={slug}
+                  to={`/search?descriptors=${slug}&mode=descriptor`}
+                  className="inline-flex items-center rounded-full border border-border/60 bg-secondary/40 px-3.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-primary/50 hover:bg-primary/10 transition-all active:scale-95"
+                >
+                  {slug.replace(/-/g, "\u00a0")}
+                </Link>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Section 2 — Starter Mixes */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.45 }}
+            className="relative z-10 w-full max-w-xl mt-8 space-y-3 text-left"
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 pl-0.5">
+              Starter Mixes
+            </p>
+            <div className="grid grid-cols-2 gap-2.5">
+              {STARTER_MIXES.map(mix => (
+                <Link
+                  key={mix.label}
+                  to={`/search?descriptors=${mix.descriptors.join(",")}&mode=descriptor`}
+                  className="rounded-xl border border-border/60 bg-card/40 p-3.5 hover:border-primary/40 hover:bg-card/70 transition-all space-y-2 group"
+                >
+                  <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                    {mix.label}
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {mix.descriptors.map(d => (
+                      <span
+                        key={d}
+                        className="text-[10px] text-muted-foreground/60 bg-secondary/50 rounded px-1.5 py-0.5 tracking-wide"
+                      >
+                        {d.replace(/-/g, "\u00a0")}
+                      </span>
+                    ))}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Album Carousel at the bottom */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="relative z-10 w-full mt-12">
+            <p className="text-sm text-muted-foreground mb-4 pl-1">📀 Pull one from the shelf.</p>
+            <AlbumCarousel />
+          </motion.div>
+        </>
+      )}
     </div>);
 
 };
