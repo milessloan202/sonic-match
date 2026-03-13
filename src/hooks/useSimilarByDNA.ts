@@ -88,6 +88,13 @@ const CATEGORY_WEIGHTS: Record<string, number> = {
 };
 const DEFAULT_CATEGORY_WEIGHT = 1.0; // fallback for any future/unknown categories
 
+// Categories treated as "secondary" for soft-cap purposes
+const SECONDARY_CATEGORIES = new Set(["era_period", "environment_imagery", "listener_use_case"]);
+
+// Emotional anchor bonuses
+const DOMINANT_TONE_EXACT_BONUS  = 3.5;
+const DOMINANT_TONE_PARTIAL_BONUS = 1.0;
+
 // Build slug → weight map from the center profile's known category assignments
 function buildSlugWeightMap(profile: SonicProfile): Map<string, number> {
   const map = new Map<string, number>();
