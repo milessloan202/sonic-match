@@ -412,6 +412,7 @@ async function fetchSonicDescriptors(
         return {
           descriptors: v1Descriptors,
           confidenceScore: typeof cached.confidence_score === "number" ? cached.confidence_score : null,
+          dominantEmotionalTone: cached.dominant_emotional_tone ?? null,
         };
       }
     }
