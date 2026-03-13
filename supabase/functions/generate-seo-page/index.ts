@@ -579,7 +579,29 @@ const POSTURE_SIGNALS: Array<{ slugs: string[]; posture: Posture; weight: number
   { slugs: ["restless"],                                       posture: "restless",    weight: 2 },
 ];
 
-function inferPosture(descriptors: CanonicalDescriptor[]): Posture {
+// Maps a dominant_emotional_tone slug to the closest Posture type.
+const EMOTIONAL_TONE_TO_POSTURE: Record<string, Posture> = {
+  cold: "detached", detached: "detached", "cool-toned": "detached",
+  swaggering: "dominant", commanding: "dominant", glamorous: "dominant",
+  menacing: "menacing", stalking: "menacing",
+  wistful: "melancholic", lonely: "melancholic", melancholic: "melancholic",
+  tender: "tender", devotional: "tender",
+  triumphant: "triumphant", euphoric: "euphoric",
+  nocturnal: "dreamlike",
+  nostalgic: "nostalgic",
+  playful: "playful",
+  seductive: "seductive",
+  restless: "restless",
+  defiant: "defiant",
+  yearning: "vulnerable",
+};
+
+function inferPosture(descriptors: CanonicalDescriptor[], dominantEmotionalTone?: string | null): Posture {
+  // Prefer the stored dominant_emotional_tone if it maps to a known posture
+  if (dominantEmotionalTone && EMOTIONAL_TONE_TO_POSTURE[dominantEmotionalTone]) {
+    return EMOTIONAL_TONE_TO_POSTURE[dominantEmotionalTone];
+  }
+
   const slugSet = new Set(descriptors.map((d) => d.slug));
   const scores = new Map<Posture, number>();
 
