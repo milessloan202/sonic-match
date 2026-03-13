@@ -744,9 +744,11 @@ VOCABULARY:
 ${JSON.stringify(DESCRIPTOR_VOCABULARY, null, 2)}
 
 EVALUATION ORDER — assess in this sequence before assigning any descriptor:
-1. EMOTIONAL POSTURE  : What is the outward emotional register? (dominant / vulnerable / cold / warm / playful / menacing / tense)
+1. DOMINANT EMOTIONAL TONE: Select ONE dominant emotional tone that best describes the primary emotional posture of the song. This is the song's emotional anchor — the single register that defines its character. Place it FIRST in emotional_tone.
    ↳ Then ask: is there an underlying emotional subtext beneath the surface? (e.g. cold presentation masking loneliness, swagger over yearning, detachment over grief)
-   ↳ If yes, include both in emotional_tone. Dominant posture first, subtext second. Do NOT flatten to one register.
+   ↳ Allow up to 2 supporting tones that reinforce or deepen the dominant tone. Supporting tones must NOT contradict the dominant tone.
+   ↳ Maximum total emotional_tone entries: 3 (1 dominant + up to 2 supporting).
+   ↳ Set "dominant_emotional_tone" to the single primary tone slug.
 2. ENERGY POSTURE     : How does energy behave? (relaxed / coiled / charging / simmering / gliding / floating / explosive / buoyant)
    ↳ energy_posture is NOT BPM, NOT intensity_level. A fast song can be gliding; a slow song can be coiled.
    ↳ It describes how energy moves through the song — its behavior and disposition, not its speed or volume.
