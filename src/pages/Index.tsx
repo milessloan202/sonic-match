@@ -315,13 +315,14 @@ const Index = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
             className="relative z-10 w-full mt-12">
-            <div className="mb-4 pl-1 flex items-center gap-3">
+            <div className="mb-4 pl-1 space-y-1">
               <button
                 onClick={handleRandomMix}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors text-left"
               >
-                📀 Pull one from the shelf.
+                📀 Pull a sound from the shelf.
               </button>
+              <p className="text-xs text-muted-foreground/50">Start with a random Sonic DNA mix.</p>
               {randomMixPreview && (
                 <span className="text-xs text-muted-foreground/60 italic transition-opacity">
                   {randomMixPreview.join(" • ")}
