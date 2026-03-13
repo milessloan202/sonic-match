@@ -237,13 +237,14 @@ const DESCRIPTOR_GLOSSARY: Array<{
   { slug: "commanding",  category: "vocal_character", means: "Assertive, dominant, authoritative vocal presence that controls the room.", notMeans: ["laid-back", "gentle", "easygoing"] },
   // texture
   { slug: "sparse",      category: "texture", means: "Minimalist production with deliberate space between elements.", notMeans: ["relaxed", "laid-back", "easygoing — sparse can be cold, tense, or threatening"] },
-  { slug: "warm",        category: "texture", means: "Organic, rounded, inviting sonic surface. Comfort and analog richness.", notMeans: ["cold emotional character", "metallic", "harsh", "icy", "sterile"] },
+  { slug: "warm",        category: "texture", means: "Rounded timbre, harmonic richness, or analog-style glow. Requires soft-edged timbral character, saturated or analog-feeling sound, or tonal warmth. Comfort and analog richness.", notMeans: ["cold emotional character", "metallic", "harsh", "icy", "sterile", "merely mellow or non-aggressive — warm is a timbral quality, not an emotional one"] },
   { slug: "glossy",      category: "texture", means: "Polished, high-sheen, modern production surface. Clean, refined, and controlled.", notMeans: ["warm", "analog", "raw", "gritty"] },
   { slug: "metallic",    category: "texture", means: "Hard, machine-like, sharp-edged sonic surface. Cold precision.", notMeans: ["warm", "organic", "cozy", "laid-back"] },
   { slug: "glassy",      category: "texture", means: "Smooth, reflective, frictionless surface. Pristine and high-definition.", notMeans: ["grainy", "gritty", "analog", "warm"] },
   { slug: "velvety",     category: "texture", means: "Soft, dense, friction-free surface. Rich without being harsh.", notMeans: ["metallic", "grainy", "gritty", "sparse"] },
-  { slug: "organic",     category: "texture", means: "Natural, material-feeling production. Wood, skin, air — unprocessed human presence.", notMeans: ["electronic", "synthetic", "glossy", "neon"] },
+  { slug: "organic",     category: "texture", means: "Production clearly emphasizing natural or human-played textures. Requires acoustic instruments, tactile or earthy timbres, or live instrumental feel. Wood, skin, air — unprocessed human presence.", notMeans: ["electronic", "synthetic", "glossy", "neon", "primarily digital or synthetic production — organic requires audibly natural textures"] },
   { slug: "gritty",      category: "texture", means: "Rough-textured, abrasive surface with grain and friction.", notMeans: ["glossy", "polished", "glassy", "velvety"] },
+  { slug: "hazy",        category: "texture", means: "Blurred sonic edges, atmospheric diffusion, or dreamlike sonic softness. Requires smeared or softened textures, reverb-heavy atmospheric diffusion, or dreamlike sonic fog.", notMeans: ["merely slow or emotionally reflective — hazy is a production texture, not a mood", "clean or crisp production", "dry or precise mixing"] },
   // arrangement_energy_arc
   { slug: "sustained-drive",  category: "arrangement_energy_arc", means: "Unrelenting forward motion maintained throughout the track.", notMeans: ["laid-back", "floaty", "unhurried"] },
   { slug: "immediate-impact", category: "arrangement_energy_arc", means: "Full energy present from bar one. Hits hard immediately — no buildup.", notMeans: ["gradual", "laid-back", "easygoing"] },
