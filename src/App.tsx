@@ -13,6 +13,7 @@ import VibePage from "./pages/VibePage";
 import DnaPage from "./pages/DnaPage";
 import DnaRedirect from "./components/DnaRedirect";
 import SearchPage from "./pages/SearchPage";
+import ExplorePage from "./pages/ExplorePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
