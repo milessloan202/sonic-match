@@ -1089,12 +1089,6 @@ serve(async (req) => {
     const enrichedProfile = { ...profile, canonical_descriptors: canonical };
 
     // ── Write to cache ────────────────────────────────────────────────────────
-    // genre/subgenre extracted as dedicated columns for efficient filtering.
-    // They are intentionally excluded from descriptor_slugs so they never
-    // influence Sonic DNA similarity scoring.
-    const genreValue    = typeof profile.genre === "string" ? profile.genre : null;
-    const subgenreValue = Array.isArray(profile.subgenre) ? profile.subgenre as string[] : null;
-
     const { data: inserted, error: insertError } = await supabase
       .from("song_sonic_profiles")
       .upsert({
@@ -1104,8 +1098,6 @@ serve(async (req) => {
         profile_json:     enrichedProfile,
         confidence_score: confidenceScore,
         descriptor_slugs: descriptorSlugs,
-        genre:            genreValue,
-        subgenre:         subgenreValue,
       }, { onConflict: "spotify_track_id" })
       .select()
       .single();
