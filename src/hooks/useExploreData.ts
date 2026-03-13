@@ -5,6 +5,7 @@ export interface RegistryDescriptor {
   slug: string;
   label: string;
   category: string;
+  description: string;
   is_public: boolean;
 }
 
