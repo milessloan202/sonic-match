@@ -1,10 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronDown, ChevronUp, Plus } from "lucide-react";
+import { X, ChevronDown, ChevronUp, Plus, Shuffle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { DescriptorTag } from "@/components/DescriptorTag";
+import { DescriptorTag, CATEGORY_HOVER_COLORS } from "@/components/DescriptorTag";
 import SEOHead from "@/components/SEOHead";
+import {
+  STARTER_MIXES,
+  DESCRIPTOR_CATEGORY_MAP,
+  CATEGORY_GLOW_RGB,
+  type DescriptorChip,
+  getRotatingHomepageDescriptors,
+} from "@/lib/exploreSounds";
 
 // =============================================================================
 // SearchPage  /search?descriptors=slug1,slug2[&mode=...][&song=Title]
@@ -108,6 +115,11 @@ export default function SearchPage() {
   const [registry, setRegistry]             = useState<RegistryDescriptor[]>([]);
   const [registryLoaded, setRegistryLoaded] = useState(false);
 
+  // ── Exploration idle state ─────────────────────────────────────────────────
+  const [exploreChips] = useState<DescriptorChip[]>(() => getRotatingHomepageDescriptors());
+  const [hoveredChip, setHoveredChip]   = useState<string | null>(null);
+  const [hoveredMix, setHoveredMix]     = useState<string | null>(null);
+
   // ── Fetch registry when picker opens ─────────────────────────────────────
   useEffect(() => {
     if (!pickerOpen || registryLoaded) return;
@@ -174,6 +186,12 @@ export default function SearchPage() {
       params.set("descriptors", next.join(","));
     }
     setSearchParams(params);
+  }
+
+  // ── Shuffle a Mix ─────────────────────────────────────────────────────────
+  function shuffleMix() {
+    const mix = STARTER_MIXES[Math.floor(Math.random() * STARTER_MIXES.length)];
+    navigate(`/search?descriptors=${mix.descriptors.join(",")}&mode=descriptor`);
   }
 
   // ── Label helpers ─────────────────────────────────────────────────────────
@@ -395,23 +413,92 @@ export default function SearchPage() {
 
           {/* ── Results / empty state ─────────────────────────────────────── */}
           {searchMode === "idle" ? (
-            <div className="space-y-5">
-              <p className="text-sm text-muted-foreground">
-                Pick a descriptor, or start with one of these:
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {POPULAR_DESCRIPTORS.map((d) => (
-                  <DescriptorTag
-                    key={d.slug}
-                    slug={d.slug}
-                    label={d.label}
-                    category={d.category}
-                    clickable
-                    size="md"
-                    onClick={() => addDescriptor(d.slug)}
-                  />
-                ))}
+            <div className="space-y-8 pt-2">
+
+              {/* Start with a Sound */}
+              <div className="space-y-3">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                  Start with a Sound
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {exploreChips.map(({ slug, cssCategory }) => {
+                    const isHovered = hoveredChip === slug;
+                    const colorClass = isHovered
+                      ? (CATEGORY_HOVER_COLORS[cssCategory] ?? "bg-white/20 text-white border-white/40")
+                      : "border-border/60 bg-secondary/40 text-muted-foreground";
+                    return (
+                      <button
+                        key={slug}
+                        onClick={() => addDescriptor(slug)}
+                        className={`inline-flex items-center rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-200 active:scale-95 ${colorClass}`}
+                        onMouseEnter={() => setHoveredChip(slug)}
+                        onMouseLeave={() => setHoveredChip(null)}
+                      >
+                        {slug.replace(/-/g, "\u00a0")}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
+
+              {/* Starter Mixes */}
+              <div className="space-y-3">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                  Starter Mixes
+                </p>
+                <div className="grid grid-cols-2 gap-2.5">
+                  {STARTER_MIXES.map(mix => {
+                    const isHovered = hoveredMix === mix.name;
+                    const firstCategory = DESCRIPTOR_CATEGORY_MAP[mix.descriptors[0]] ?? "groove_character";
+                    const glowRgb = CATEGORY_GLOW_RGB[firstCategory] ?? "99, 102, 241";
+                    return (
+                      <button
+                        key={mix.name}
+                        onClick={() => navigate(`/search?descriptors=${mix.descriptors.join(",")}&mode=descriptor`)}
+                        className="rounded-xl border p-3.5 transition-all duration-200 space-y-2 text-left"
+                        style={{
+                          borderColor: isHovered ? `rgba(${glowRgb}, 0.55)` : "rgba(255,255,255,0.1)",
+                          backgroundColor: isHovered ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.02)",
+                          transform: isHovered ? "translateY(-3px)" : "translateY(0)",
+                          boxShadow: isHovered ? `0 0 12px rgba(${glowRgb}, 0.35)` : "none",
+                        }}
+                        onMouseEnter={() => setHoveredMix(mix.name)}
+                        onMouseLeave={() => setHoveredMix(null)}
+                      >
+                        <p className="text-sm font-semibold text-foreground">{mix.name}</p>
+                        <div className="flex flex-wrap gap-1">
+                          {mix.descriptors.map(d => {
+                            const cat = DESCRIPTOR_CATEGORY_MAP[d];
+                            const chipClass = isHovered && cat
+                              ? (CATEGORY_HOVER_COLORS[cat] ?? "bg-white/20 text-white border-white/40")
+                              : "text-muted-foreground/60 bg-secondary/50 border-transparent";
+                            return (
+                              <span
+                                key={d}
+                                className={`text-[10px] rounded border px-1.5 py-0.5 tracking-wide transition-all duration-200 ${chipClass}`}
+                              >
+                                {d.replace(/-/g, "\u00a0")}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Shuffle a Mix */}
+              <div>
+                <button
+                  onClick={shuffleMix}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border/60 bg-secondary/30 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-primary/40 hover:bg-secondary/50 transition-all duration-200 active:scale-95"
+                >
+                  <Shuffle className="w-3.5 h-3.5" />
+                  Shuffle a mix
+                </button>
+              </div>
+
             </div>
           ) : loading ? (
             <div className="flex items-center gap-3 py-8 text-muted-foreground text-sm">
