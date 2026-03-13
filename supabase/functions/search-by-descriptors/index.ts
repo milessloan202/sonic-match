@@ -59,7 +59,7 @@ serve(async (req) => {
     // Fetch a generous pool so we can score+sort before trimming to limit
     let query = supabase
       .from("song_sonic_profiles")
-      .select("spotify_track_id, song_title, artist_name, descriptor_slugs, profile_json")
+      .select("spotify_track_id, song_title, artist_name, descriptor_slugs, profile_json, dominant_emotional_tone")
       .limit(200);
 
     if (descriptors.length === 1) {
@@ -77,6 +77,7 @@ serve(async (req) => {
       artist_name: string;
       descriptor_slugs: string[];
       profile_json: Record<string, unknown>;
+      dominant_emotional_tone: string | null;
     }
 
     const rows = (data || []) as ProfileRow[];
