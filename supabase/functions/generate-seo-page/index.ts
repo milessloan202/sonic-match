@@ -43,6 +43,7 @@ interface VerifiedMetadata {
   song_title: string | null;
   artist_name: string | null;
   spotify_track_id: string | null;
+  center_song_image_url: string | null;
   year: string | null;
   genres: string[];
   album_name: string | null;
@@ -63,6 +64,7 @@ async function fetchVerifiedMetadata(
     song_title: null,
     artist_name: null,
     spotify_track_id: null,
+    center_song_image_url: null,
     year: null,
     genres: [],
     album_name: null,
@@ -112,6 +114,7 @@ async function fetchVerifiedMetadata(
           metadata.artist_name = track.artists?.[0]?.name || artistName;
           metadata.year = track.album?.release_date?.slice(0, 4) || null;
           metadata.album_name = track.album?.name || null;
+          metadata.center_song_image_url = track.album?.images?.[1]?.url ?? track.album?.images?.[0]?.url ?? null;
           confidencePoints += 2;
 
           // Fetch artist genres if available
@@ -1282,19 +1285,20 @@ EMOTIONAL POSTURE VS. EMOTIONAL VULNERABILITY (CRITICAL DISTINCTION):
     // --- Resolve Spotify track IDs for song pages ---
     let seedSpotifyTrackId: string | null = verifiedMetadata.spotify_track_id;
 
-    async function resolveSpotifyId(title: string, artist: string, token: string): Promise<{ id: string | null; url: string | null }> {
+    async function resolveSpotifyId(title: string, artist: string, token: string): Promise<{ id: string | null; url: string | null; image_url: string | null }> {
       try {
         const q = encodeURIComponent(`track:"${title}" artist:"${artist}"`);
         const res = await fetch(`https://api.spotify.com/v1/search?q=${q}&type=track&limit=1`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!res.ok) return { id: null, url: null };
+        if (!res.ok) return { id: null, url: null, image_url: null };
         const data = await res.json();
         const track = data?.tracks?.items?.[0];
-        if (!track) return { id: null, url: null };
-        return { id: track.id, url: track.external_urls?.spotify || null };
+        if (!track) return { id: null, url: null, image_url: null };
+        const image_url = track.album?.images?.[1]?.url ?? track.album?.images?.[0]?.url ?? null;
+        return { id: track.id, url: track.external_urls?.spotify || null, image_url };
       } catch {
-        return { id: null, url: null };
+        return { id: null, url: null, image_url: null };
       }
     }
 
@@ -1326,6 +1330,7 @@ EMOTIONAL POSTURE VS. EMOTIONAL VULNERABILITY (CRITICAL DISTINCTION):
         title: m.title,
         subtitle: `${m.artist} (${m.year})`,
         spotify_id: spotifyInfo?.id || null,
+        image_url: spotifyInfo?.image_url || null,
       };
     });
 
@@ -1336,6 +1341,7 @@ EMOTIONAL POSTURE VS. EMOTIONAL VULNERABILITY (CRITICAL DISTINCTION):
         title: m.title,
         subtitle: `${m.artist} (${m.year})`,
         spotify_id: spotifyInfo?.id || null,
+        image_url: spotifyInfo?.image_url || null,
       };
     });
 
@@ -1375,6 +1381,9 @@ EMOTIONAL POSTURE VS. EMOTIONAL VULNERABILITY (CRITICAL DISTINCTION):
     if (page_type === "song" && verifiedMetadata.song_title) {
       upsertData.resolved_song_title = verifiedMetadata.song_title;
       upsertData.resolved_artist_name = verifiedMetadata.artist_name;
+      if (verifiedMetadata.center_song_image_url) {
+        upsertData.center_song_image_url = verifiedMetadata.center_song_image_url;
+      }
     }
 
     let insertError: any = null;
@@ -1384,14 +1393,14 @@ EMOTIONAL POSTURE VS. EMOTIONAL VULNERABILITY (CRITICAL DISTINCTION):
       insertError = e;
     }
 
-    // If the upsert failed because resolved_song_title/resolved_artist_name
-    // columns don't exist yet, retry without those fields.
+    // If the upsert failed because optional columns don't exist yet, retry without them.
     if (insertError) {
       const msg = String(insertError?.message || insertError);
-      if (msg.includes("resolved_song_title") || msg.includes("resolved_artist_name")) {
-        console.log("[Identity] Schema missing resolved identity columns — writing without them");
+      if (msg.includes("resolved_song_title") || msg.includes("resolved_artist_name") || msg.includes("center_song_image_url")) {
+        console.log("[Identity] Schema missing optional columns — writing without them");
         delete upsertData.resolved_song_title;
         delete upsertData.resolved_artist_name;
+        delete upsertData.center_song_image_url;
         const { error: retryError } = await supabase.from("seo_pages").upsert(upsertData);
         if (retryError) throw retryError;
       } else {
