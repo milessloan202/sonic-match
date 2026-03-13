@@ -893,6 +893,10 @@ function buildTraitSystemPrompt(): string {
 Your job is to identify the core musical traits of a song in structured form.
 This is internal scaffolding — it will drive precise descriptor assignment in a second pass.
 
+CRITICAL: Base all trait assignments on audible sonic evidence ONLY.
+Do NOT infer traits from artist identity, genre label, cultural reputation, or lyrical themes.
+A track by an R&B artist is not automatically "warm" or "intimate." A track by a rapper is not automatically "cold" or "menacing." Listen to the actual sound.
+
 Return ONLY valid JSON matching this exact structure, no preamble, no markdown:
 
 {
