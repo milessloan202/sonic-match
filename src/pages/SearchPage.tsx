@@ -234,12 +234,12 @@ export default function SearchPage() {
   // ── Mode-aware page heading ────────────────────────────────────────────────
   const pageHeading =
     searchMode === "songSimilarity" && songParam
-      ? `Songs With Similar DNA to ${decodeURIComponent(songParam)}`
+      ? `Songs that sound like ${decodeURIComponent(songParam)}`
       : searchMode === "descriptorSearch"
-      ? "Explore DNA"
+      ? "Explore by sound"
       : searchMode === "textSearch"
       ? "Search results"
-      : "Search by Sonic DNA";
+      : "Search by sound";
 
   // ── Grouped registry for picker ───────────────────────────────────────────
   const grouped: Record<string, RegistryDescriptor[]> = {};
