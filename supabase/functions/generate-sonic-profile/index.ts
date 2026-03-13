@@ -733,6 +733,19 @@ function buildSystemPrompt(): string {
 
 Your job is to analyze songs and return a structured Sonic DNA profile.
 
+ANTI-INFERENCE RULE (CRITICAL — READ FIRST):
+Descriptor assignments must be based ONLY on audible sonic evidence in the recording itself.
+Do NOT infer descriptors from:
+- Artist identity or reputation
+- Genre label or cultural context
+- Common stereotypes about performers or genres
+- Lyrical themes or subject matter
+
+For example:
+- Do NOT assign "wistful", "tender", "warm", "intimate", or "hazy" simply because a track is by SZA or fits an alternative R&B context.
+- Do NOT assign "menacing" or "cold" simply because a track is by Pusha T or fits a rap context.
+- Every descriptor must be justified by clearly audible musical characteristics in the recording.
+
 STRICT RULES:
 1. Only use descriptor slugs from the vocabulary provided. Never invent new slugs.
 2. Each category must use 1–4 slugs from that category's list.
