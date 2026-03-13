@@ -61,6 +61,18 @@ function pickRandom<T>(arr: readonly T[], n: number): T[] {
 }
 
 /**
+ * Returns a random 3-descriptor mix: 1 emotional, 1 texture, 1 groove.
+ * Picks one from each category pool — no duplicates by construction.
+ */
+export function getRandomMix(): string[] {
+  return [
+    pickRandom(HOMEPAGE_DESCRIPTOR_POOL.emotional, 1)[0],
+    pickRandom(HOMEPAGE_DESCRIPTOR_POOL.texture, 1)[0],
+    pickRandom(HOMEPAGE_DESCRIPTOR_POOL.groove, 1)[0],
+  ];
+}
+
+/**
  * Returns exactly 6 category-balanced descriptor chips for exploration UIs.
  * Picks 2 emotional, 2 texture, 2 groove — randomly on each call.
  * Initialise with useState(() => getRotatingHomepageDescriptors()) for

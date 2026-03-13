@@ -15,6 +15,7 @@ import {
   CATEGORY_GLOW_RGB,
   type DescriptorChip,
   getRotatingHomepageDescriptors,
+  getRandomMix,
 } from "../lib/exploreSounds";
 
 
@@ -42,6 +43,15 @@ const Index = () => {
   const [descriptorChips] = useState<DescriptorChip[]>(() => getRotatingHomepageDescriptors());
   const [hoveredChip, setHoveredChip] = useState<string | null>(null);
   const [hoveredMix, setHoveredMix] = useState<string | null>(null);
+  const [randomMixPreview, setRandomMixPreview] = useState<string[] | null>(null);
+
+  const handleRandomMix = () => {
+    const mix = getRandomMix();
+    setRandomMixPreview(mix);
+    setTimeout(() => {
+      navigate(`/search?descriptors=${mix.join(",")}&mode=descriptor`);
+    }, 600);
+  };
 
   const toggleDeepCut = (checked: boolean) => {
     setDeepCut(checked);
@@ -305,7 +315,19 @@ const Index = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
             className="relative z-10 w-full mt-12">
-            <p className="text-sm text-muted-foreground mb-4 pl-1">📀 Pull one from the shelf.</p>
+            <div className="mb-4 pl-1 flex items-center gap-3">
+              <button
+                onClick={handleRandomMix}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors text-left"
+              >
+                📀 Pull one from the shelf.
+              </button>
+              {randomMixPreview && (
+                <span className="text-xs text-muted-foreground/60 italic transition-opacity">
+                  {randomMixPreview.join(" • ")}
+                </span>
+              )}
+            </div>
             <AlbumCarousel />
           </motion.div>
         </>
