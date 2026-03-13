@@ -143,6 +143,10 @@ export default function DnaPage() {
 
           setRelatedSounds(ranked);
         }
+
+      } catch (e) {
+        if (!cancelled) {
+          setError(e instanceof Error ? e.message : "Failed to load songs");
         }
       } finally {
         if (!cancelled) setLoading(false);
