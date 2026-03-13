@@ -224,6 +224,21 @@ const Index = () => {
 
       {!loading && !error && (
         <>
+          {/* Explore sounds link */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="relative z-10 w-full max-w-xl mt-8"
+          >
+            <Link
+              to="/explore"
+              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Explore sounds →
+            </Link>
+          </motion.div>
+
           {/* Section 1 — Explore a Sound */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
