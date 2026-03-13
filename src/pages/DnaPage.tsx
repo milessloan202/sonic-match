@@ -188,7 +188,7 @@ export default function DnaPage() {
   return (
     <>
       <SEOHead
-        title={`Songs with ${pageTitle} sound | Sonic DNA`}
+        title={`${pageTitle}-sounding songs | Audiotwin`}
         description={metaDescription}
         path={`/sounds/${slugs.join("/")}`}
       />
