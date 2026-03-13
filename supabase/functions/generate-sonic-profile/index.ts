@@ -507,8 +507,10 @@ const CONTRADICTION_RULES: Array<{
       "commanding",         // vocal — solo authoritative delivery, not communal
       "cool-toned",         // vocal — controlled detachment, not rallying energy
       "restrained-vocal",   // vocal — held-back delivery, not group unison
+      "staccato",           // vocal — clipped percussive phrasing, not chant
+      "percussive-vocal",   // vocal — rhythmic hitting, not communal singing
     ],
-    reason: "chant-like requires communal, call-and-response, or rallying vocal energy; solo commanding, cool-toned, or restrained delivery indicates individual control, not collective chant",
+    reason: "chant-like requires explicit communal/call-and-response evidence; rhythmic repetition alone is insufficient. Solo commanding, cool-toned, restrained, staccato, or percussive vocal delivery indicates individual rhythmic control, not collective chant energy",
   },
 ];
 
