@@ -21,7 +21,7 @@ import LinkedSummary from "../components/LinkedSummary";
 import { MatchDNA } from "@/components/MatchDNA";
 import { ExploreDNA } from "@/components/ExploreDNA";
 import { DescriptorTag } from "@/components/DescriptorTag";
-import ResultCard from "../components/ResultCard";
+import ResultCard, { Thumbnail } from "../components/ResultCard";
 import type { CanonicalDescriptor } from "@/hooks/useSonicProfile";
 
 // All category groups for the unified top Sonic DNA display
@@ -81,7 +81,17 @@ const SongPage = () => {
 
   // ── Spotify images ─────────────────────────────────────────────────────────
   const allSongs = [...(data?.closest_matches || []), ...(data?.same_energy || [])];
-  const { songImages, songMeta, artistImages, metaLoaded } = useSpotifyImages(allSongs, data?.related_artists || []);
+  // Include the center song so its album art is fetched in the same batch.
+  const centerSongItem = songTitleForSample && artistForSample
+    ? [{ title: songTitleForSample, subtitle: artistForSample, spotify_id: data?.spotify_track_id ?? null }]
+    : [];
+  const { songImages, songMeta, artistImages, metaLoaded } = useSpotifyImages(
+    [...allSongs, ...centerSongItem],
+    data?.related_artists || [],
+  );
+  const centerImageUrl = songTitleForSample && artistForSample
+    ? (songImages[`${songTitleForSample}|||${artistForSample}`] ?? null)
+    : null;
 
   // ── Resolve center song Spotify identity ───────────────────────────────────
   const [resolvedTrack, setResolvedTrack] = useState<{
@@ -256,7 +266,10 @@ const SongPage = () => {
           </Link>
           <ViewToggle view={view} onChange={setView} />
         </div>
-        <h1 className="text-3xl sm:text-4xl font-bold text-foreground">{data.heading}</h1>
+        <div className="flex items-center gap-4">
+          <Thumbnail url={centerImageUrl} type="song" alt={displayName} size="w-20 h-20" />
+          <h1 className="text-3xl sm:text-4xl font-bold text-foreground">{data.heading}</h1>
+        </div>
         {data.summary && (
           <LinkedSummary
             text={data.summary}

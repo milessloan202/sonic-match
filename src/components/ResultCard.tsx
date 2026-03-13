@@ -50,17 +50,18 @@ const PlaceholderIcon = ({ isArtist, size, shape }: { isArtist: boolean; size: s
   </div>
 );
 
-const Thumbnail = ({
+export const Thumbnail = ({
   url,
   type,
   alt,
+  size = "w-12 h-12",
 }: {
   url?: string | null;
   type?: "song" | "artist";
   alt: string;
+  size?: string;
 }) => {
   const isArtist = type === "artist";
-  const size = "w-12 h-12";
   const shape = isArtist ? "rounded-full" : "rounded-md";
 
   const [loaded, setLoaded] = useState(false);
