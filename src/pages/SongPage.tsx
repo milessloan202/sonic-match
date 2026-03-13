@@ -151,11 +151,13 @@ const SongPage = () => {
       const addSlugs = (slugs: string[], category: string) => {
         for (const slug of slugs) {
           if (!seen.has(slug)) {
+            // No registry data available for fallback slugs — default to non-clickable.
+            // Canonical descriptors (above) already carry registry-driven is_clickable.
             result.push({
               slug,
               label: slug.replace(/-/g, " "),
               category,
-              is_clickable: true,
+              is_clickable: false,
               search_url: `/search?descriptors=${slug}`,
               dna_url: `/search?descriptors=${slug}&mode=lineage`,
             });
@@ -188,7 +190,7 @@ const SongPage = () => {
           slug: sonicProfile.intensity_level,
           label: sonicProfile.intensity_level.replace(/-/g, " "),
           category: "intensity",
-          is_clickable: true,
+          is_clickable: false,
           search_url: `/search?descriptors=${sonicProfile.intensity_level}`,
           dna_url: `/search?descriptors=${sonicProfile.intensity_level}&mode=lineage`,
         });
@@ -198,7 +200,7 @@ const SongPage = () => {
           slug: sonicProfile.danceability_feel,
           label: sonicProfile.danceability_feel.replace(/-/g, " "),
           category: "danceability",
-          is_clickable: true,
+          is_clickable: false,
           search_url: `/search?descriptors=${sonicProfile.danceability_feel}`,
           dna_url: `/search?descriptors=${sonicProfile.danceability_feel}&mode=lineage`,
         });
@@ -238,7 +240,6 @@ const SongPage = () => {
     : null;
 
   function scrollToMap() {
-    setView("map");
     setTimeout(() => document.getElementById("music-map-section")?.scrollIntoView({ behavior: "smooth" }), 50);
   }
 
@@ -356,10 +357,10 @@ const SongPage = () => {
                             slug={d.slug}
                             label={d.label}
                             category={d.category}
-                            clickable
+                            clickable={d.is_clickable}
                             active={activeSlugs.has(d.slug)}
                             size="sm"
-                            onClick={() => toggleDescriptor(d.slug)}
+                            onClick={d.is_clickable ? () => toggleDescriptor(d.slug) : undefined}
                           />
                         ))}
                       </div>
@@ -468,23 +469,21 @@ const SongPage = () => {
               </Link>
             )}
 
-            {/* 3. View in Music Map — desktop only */}
-            {!isMobile && activeView !== "map" && (
-              <button
-                onClick={scrollToMap}
-                className="group flex items-start gap-3 rounded-xl border border-border/60 bg-card/40 p-3.5 hover:border-primary/40 hover:bg-card/60 hover:-translate-y-1 transition-all duration-200 text-left"
-              >
-                <Map className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary transition-colors mt-0.5 shrink-0" />
-                <div>
-                  <p className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
-                    View in Music Map
-                  </p>
-                  <p className="text-[10px] text-muted-foreground/50 mt-0.5">
-                    Spatial view
-                  </p>
-                </div>
-              </button>
-            )}
+            {/* 3. View in Music Map */}
+            <button
+              onClick={scrollToMap}
+              className="group flex items-start gap-3 rounded-xl border border-border/60 bg-card/40 p-3.5 hover:border-primary/40 hover:bg-card/60 hover:-translate-y-1 transition-all duration-200 text-left"
+            >
+              <Map className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary transition-colors mt-0.5 shrink-0" />
+              <div>
+                <p className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
+                  View in Music Map
+                </p>
+                <p className="text-[10px] text-muted-foreground/50 mt-0.5">
+                  Spatial view
+                </p>
+              </div>
+            </button>
 
           </div>
         </motion.div>
@@ -496,6 +495,7 @@ const SongPage = () => {
         <div id="music-map-section">
           <MusicMap
             centerLabel={displayName}
+            centerImageUrl={centerImageUrl || undefined}
             closestMatches={data.closest_matches}
             sameEnergy={data.same_energy}
             relatedArtists={data.related_artists}
@@ -586,6 +586,27 @@ const SongPage = () => {
           {data.related_artists.length > 0 && (
             <ResultSection title="Related Artists" items={data.related_artists} linkPrefix="/artists-like" imageType="artist" images={artistImages} />
           )}
+
+          {/* 5. Explore the Sound Neighborhood — inline music map */}
+          <div id="music-map-section" className="space-y-3">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                Explore the Sound Neighborhood
+              </p>
+              <p className="text-xs text-muted-foreground/50 mt-1">
+                See how this song connects to nearby matches, adjacent energy, artists, and vibes.
+              </p>
+            </div>
+            <MusicMap
+              centerLabel={displayName}
+              centerImageUrl={centerImageUrl || undefined}
+              closestMatches={data.closest_matches}
+              sameEnergy={data.same_energy}
+              relatedArtists={data.related_artists}
+              relatedVibes={data.related_vibes}
+              pageType="song"
+            />
+          </div>
         </>
       )}
 
