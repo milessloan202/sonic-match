@@ -40,6 +40,39 @@ const STARTER_MIXES: { label: string; descriptors: string[] }[] = [
   { label: "Victory Lap",   descriptors: ["swaggering", "punchy", "widescreen"] },
 ];
 
+// Maps every slug that appears in the pools / mixes to its Sonic DNA CSS category.
+// Drives both glow color (card) and chip color (descriptor tags on hover).
+const DESCRIPTOR_CATEGORY_MAP: Record<string, string> = {
+  nocturnal: "emotional_tone",  dreamy: "emotional_tone",   melancholic: "emotional_tone",
+  euphoric:  "emotional_tone",  cold:   "emotional_tone",   playful:     "emotional_tone",
+  metallic:  "texture",         hazy:   "texture",          lush:        "texture",
+  widescreen:"texture",         airless:"texture",          glassy:      "texture",
+  glossy:    "texture",
+  stomping:  "groove_character",gliding:"groove_character", punchy:      "groove_character",
+  driving:   "groove_character",swaggering:"groove_character",pulsing:   "groove_character",
+  "late-night-walk": "environment_imagery",
+};
+
+// RGB triplets matching the Tailwind *-500 colors used in CATEGORY_COLORS /
+// CATEGORY_HOVER_COLORS — used to build box-shadow glow values dynamically.
+const CATEGORY_GLOW_RGB: Record<string, string> = {
+  emotional_tone:         "168, 85, 247",   // purple-500
+  energy_posture:         "59, 130, 246",   // blue-500
+  groove_character:       "99, 102, 241",   // indigo-500
+  texture:                "6, 182, 212",    // cyan-500
+  spatial_feel:           "14, 165, 233",   // sky-500
+  era_movement:           "245, 158, 11",   // amber-500
+  era_period:             "245, 158, 11",
+  environment_imagery:    "16, 185, 129",   // emerald-500
+  listener_use_case:      "244, 63, 94",    // rose-500
+  drum_character:         "249, 115, 22",   // orange-500
+  bass_character:         "234, 179, 8",    // yellow-500
+  harmonic_color:         "20, 184, 166",   // teal-500
+  melodic_character:      "236, 72, 153",   // pink-500
+  vocal_character:        "139, 92, 246",   // violet-500
+  arrangement_energy_arc: "132, 204, 22",   // lime-500
+};
+
 function pickRandom<T>(arr: readonly T[], n: number): T[] {
   return [...arr].sort(() => Math.random() - 0.5).slice(0, n);
 }
@@ -67,6 +100,7 @@ const Index = () => {
   // Initialised once per mount — gives a fresh random set on each page load.
   const [descriptorChips] = useState<DescriptorChip[]>(() => buildDescriptorChips());
   const [hoveredChip, setHoveredChip] = useState<string | null>(null);
+  const [hoveredMix, setHoveredMix] = useState<string | null>(null);
 
   const toggleDeepCut = (checked: boolean) => {
     setDeepCut(checked);
@@ -281,27 +315,46 @@ const Index = () => {
               Starter Mixes
             </p>
             <div className="grid grid-cols-2 gap-2.5">
-              {STARTER_MIXES.map(mix => (
-                <Link
-                  key={mix.label}
-                  to={`/search?descriptors=${mix.descriptors.join(",")}&mode=descriptor`}
-                  className="rounded-xl border border-border/60 bg-card/40 p-3.5 hover:border-primary/40 hover:bg-card/70 transition-all space-y-2 group"
-                >
-                  <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
-                    {mix.label}
-                  </p>
-                  <div className="flex flex-wrap gap-1">
-                    {mix.descriptors.map(d => (
-                      <span
-                        key={d}
-                        className="text-[10px] text-muted-foreground/60 bg-secondary/50 rounded px-1.5 py-0.5 tracking-wide"
-                      >
-                        {d.replace(/-/g, "\u00a0")}
-                      </span>
-                    ))}
-                  </div>
-                </Link>
-              ))}
+              {STARTER_MIXES.map(mix => {
+                const isHovered = hoveredMix === mix.label;
+                const firstCategory = DESCRIPTOR_CATEGORY_MAP[mix.descriptors[0]] ?? "groove_character";
+                const glowRgb = CATEGORY_GLOW_RGB[firstCategory] ?? "99, 102, 241";
+                return (
+                  <Link
+                    key={mix.label}
+                    to={`/search?descriptors=${mix.descriptors.join(",")}&mode=descriptor`}
+                    className="rounded-xl border p-3.5 transition-all duration-200 space-y-2"
+                    style={{
+                      borderColor: isHovered ? `rgba(${glowRgb}, 0.55)` : "rgba(255,255,255,0.1)",
+                      backgroundColor: isHovered ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.02)",
+                      transform: isHovered ? "translateY(-3px)" : "translateY(0)",
+                      boxShadow: isHovered ? `0 0 12px rgba(${glowRgb}, 0.35)` : "none",
+                    }}
+                    onMouseEnter={() => setHoveredMix(mix.label)}
+                    onMouseLeave={() => setHoveredMix(null)}
+                  >
+                    <p className="text-sm font-semibold text-foreground">
+                      {mix.label}
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {mix.descriptors.map(d => {
+                        const cat = DESCRIPTOR_CATEGORY_MAP[d];
+                        const chipClass = isHovered && cat
+                          ? (CATEGORY_HOVER_COLORS[cat] ?? "bg-white/20 text-white border-white/40")
+                          : "text-muted-foreground/60 bg-secondary/50 border-transparent";
+                        return (
+                          <span
+                            key={d}
+                            className={`text-[10px] rounded border px-1.5 py-0.5 tracking-wide transition-all duration-200 ${chipClass}`}
+                          >
+                            {d.replace(/-/g, "\u00a0")}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </motion.div>
 
