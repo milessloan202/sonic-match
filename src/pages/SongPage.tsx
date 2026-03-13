@@ -81,17 +81,19 @@ const SongPage = () => {
 
   // ── Spotify images ─────────────────────────────────────────────────────────
   const allSongs = [...(data?.closest_matches || []), ...(data?.same_energy || [])];
-  // Include the center song so its album art is fetched in the same batch.
-  const centerSongItem = songTitleForSample && artistForSample
+  // Only include the center song in the batch fetch when it doesn't already
+  // have a pre-fetched image stored on the seo_pages row.
+  const centerSongItem = (songTitleForSample && artistForSample && !data?.center_song_image_url)
     ? [{ title: songTitleForSample, subtitle: artistForSample, spotify_id: data?.spotify_track_id ?? null }]
     : [];
   const { songImages, songMeta, artistImages, metaLoaded } = useSpotifyImages(
     [...allSongs, ...centerSongItem],
     data?.related_artists || [],
   );
-  const centerImageUrl = songTitleForSample && artistForSample
-    ? (songImages[songKey(songTitleForSample, artistForSample)] ?? null)
-    : null;
+  const centerImageUrl = data?.center_song_image_url
+    ?? (songTitleForSample && artistForSample
+      ? (songImages[songKey(songTitleForSample, artistForSample)] ?? null)
+      : null);
 
   // ── Resolve center song Spotify identity ───────────────────────────────────
   const [resolvedTrack, setResolvedTrack] = useState<{
