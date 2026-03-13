@@ -190,7 +190,7 @@ const SongPage = () => {
           slug: sonicProfile.intensity_level,
           label: sonicProfile.intensity_level.replace(/-/g, " "),
           category: "intensity",
-          is_clickable: false,
+          is_clickable: true,
           search_url: `/search?descriptors=${sonicProfile.intensity_level}`,
           dna_url: `/search?descriptors=${sonicProfile.intensity_level}&mode=lineage`,
         });
@@ -200,7 +200,7 @@ const SongPage = () => {
           slug: sonicProfile.danceability_feel,
           label: sonicProfile.danceability_feel.replace(/-/g, " "),
           category: "danceability",
-          is_clickable: false,
+          is_clickable: true,
           search_url: `/search?descriptors=${sonicProfile.danceability_feel}`,
           dna_url: `/search?descriptors=${sonicProfile.danceability_feel}&mode=lineage`,
         });
