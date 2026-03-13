@@ -1135,19 +1135,40 @@ relatedArtists: 3 artists whose broader catalog overlaps most with the sonic wor
 whyTheseWork: 2-3 sentences explaining the SPECIFIC sonic thread connecting these recommendations. Each recommended track should share at least 2 descriptor traits with the center song — name which traits (e.g., "Both share the stalking energy and cold emotional tone"). Reference concrete musical details: drum pattern, harmonic movement, production technique. Never use "similar vibe," "same feel," "fans of X will enjoy," or "same energy."
 
 ${postureAnchorBlock}
-summary: EXACTLY 3 sentences. Dense and specific beats long and vague.
-- Sentence 1: MUST begin with "{Artist Name}'s \"{Song Title}\"" and lead with the DOMINANT EMOTIONAL ANCHOR from the Sonic DNA Profile (if provided). Example: "Kanye West's \"Cold\" is a stalking, icy GOOD Music posse cut built on thick bass pressure and menacing minor-key synths."
-- Sentences 2-3: Describe the production texture, emotional architecture, and what kind of listener it rewards — all grounded in the Sonic DNA Profile.
-- CRITICAL: The Sonic DNA Profile is ground truth. Every adjective you use must be consistent with it. If the profile says "driving," do not write "sparse." If it says "cold," do not write "warm." If it says "swaggering," do not write "meditative."
-- DESCRIPTOR-FIRST ANCHORING: Anchor your prose to the provided descriptors in this strict priority order: (1) dominant emotional anchor, (2) supporting emotional tones, (3) groove / movement descriptors, (4) texture descriptors, (5) spatial feel descriptors. Do NOT infer emotional posture from the artist's reputation, genre stereotypes, or general music knowledge. Only describe emotional qualities that are explicitly listed in the Sonic DNA Profile.
-- Write like a music critic describing the track to someone who hasn't heard it — specific, grounded, energetic where the track is energetic.
-- AVOID generic filler phrases like "hard-hitting bars," "infectious hooks," or "undeniable bangers" unless the Sonic DNA Profile explicitly supports high energy and danceability.
-- AVOID generic genre language like "alternative R&B vulnerability," "confessional R&B," or "neo-soul intimacy" unless the specific descriptors support every word. Prefer descriptor-grounded language over category labels.
-- If the Sonic DNA Profile is marked "Profile Confidence: LOW," do not make highly specific sonic claims. Write with appropriate uncertainty — prefer "suggests," "leans toward," "has the feel of" over definitive statements.
-- EMOTIONAL POSTURE RULE: Describe what the song projects outward, not what a listener might feel inward. Prioritize texture → groove → energy → atmosphere → emotional posture, in that order. Do NOT infer loneliness, vulnerability, introspection, or tenderness unless the Sonic DNA Profile explicitly contains descriptors like "lonely," "tender," "wistful," or "yearning." Sparse production alone does not imply loneliness. Restrained vocals alone do not imply vulnerability. Cold, metallic, or industrial textures signal hardness, menace, or authority — not emotional exposure.
-- NO INVENTED LISTENER SCENARIOS: Do not invent usage scenarios like "headphone listening," "late-night drive," "reflective commute," "solitary reflection," or similar use-case language unless those ideas are explicitly supported by Sonic DNA descriptors such as listener_use_case, environment_imagery, or strongly relevant spatial/emotional descriptors.
-- NO VAGUE AESTHETIC PHRASES: Do not use phrases like "dreamlike drift," "weightless ambience," "blur the edges between consciousness and drift," "alternative R&B soundscape," or similar poetic mood-writing unless the descriptor set clearly and specifically supports that exact framing. Prefer concrete, descriptor-grounded prose over atmospheric poetry.
-- CONCRETE OVER POETIC: When in doubt, name what the production actually does (groove type, bass character, vocal delivery style, harmonic color) rather than reaching for impressionistic metaphor.`;
+summary: EXACTLY 3 sentences following this strict order of description. Dense and specific beats long and vague.
+
+SENTENCE STRUCTURE:
+- Sentence 1: MUST begin with "{Artist Name}'s \"{Song Title}\"" and describe the dominant emotional posture AND the groove/rhythmic feel together. Example: "SZA's \"30 For 30 (with Kendrick Lamar)\" carries a wistful emotional posture anchored by a floating, slow-moving groove."
+- Sentence 2: Describe vocal delivery and harmonic color.
+- Sentence 3: Describe texture and spatial feel.
+
+DESCRIPTOR ORDER (follow this hierarchy in the prose):
+1. Dominant emotional posture (from dominant_emotional_tone)
+2. Groove / rhythmic feel (from groove_character, energy_posture, arrangement_energy_arc) — MUST APPEAR
+3. Vocal delivery (from vocal_character)
+4. Harmonic color (from harmonic_color)
+5. Texture (from texture)
+6. Spatial feel (from spatial_feel)
+
+RULE 1 — RHYTHM MUST APPEAR:
+The summary MUST explicitly describe the song's groove or movement feel using descriptors from groove_character, energy_posture, or arrangement_energy_arc. If these descriptors exist in the Sonic DNA Profile, they MUST appear in the prose. Use concrete rhythmic language: "floating groove," "marching bounce," "stomping rhythm," "pulsing movement," "locked-in drive," "slow-moving pulse," etc. Do NOT omit rhythm if descriptors are present.
+
+RULE 2 — DESCRIPTOR-FAITHFUL TRANSLATION:
+Every descriptive claim must map directly to one of the provided Sonic DNA descriptors. Do not invent emotional nuance or listener scenarios beyond the descriptor set. Do NOT infer emotional posture from the artist's reputation, genre stereotypes, or general music knowledge.
+
+RULE 3 — NO INVENTED LISTENER SCENARIOS:
+Do not write phrases like "headphone experience," "solitary reflection," "late-night drive," "reflective commute," "introspective listening," or "club-ready" unless explicitly supported by listener_use_case or environment_imagery descriptors.
+
+RULE 4 — NO UNSUPPORTED NEGATION:
+Do not write phrases like "rather than rhythmic propulsion," "instead of bombast," or "not built for clubs" unless the descriptor set explicitly supports that contrast.
+
+RULE 5 — LITERAL SPATIAL INTERPRETATION:
+Translate spatial_feel directly: intimate → close, near, close-mic; widescreen → expansive, cinematic; airless → tight, compressed. Do not reinterpret loosely.
+
+RULE 6 — SIMPLE DESCRIPTIVE LANGUAGE:
+Prefer concrete musical description over abstract critical language. Avoid phrases like "emotional architecture," "dreamlike meditation," "sonic landscape," "immersive experience," "alternative R&B soundscape" unless explicitly supported by descriptors. When in doubt, name what the production actually does (groove type, bass character, vocal delivery style, harmonic color) rather than reaching for impressionistic metaphor.
+
+If the Sonic DNA Profile is marked "Profile Confidence: LOW," do not make highly specific sonic claims. Write with appropriate uncertainty — prefer "suggests," "leans toward," "has the feel of" over definitive statements.`;
 
     const artistPrompt = `You are a world-class music curator — part crate-digger, part musicologist, part the best record store clerk alive. You think in terms of artistic DNA: how an artist's sonic identity, production choices, and creative evolution connect them to the broader musical landscape.
 
