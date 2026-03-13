@@ -97,9 +97,52 @@ export default function DnaPage() {
         if (songError) throw songError;
         setSongs((songData || []) as unknown as ProfileRow[]);
 
-      } catch (e) {
-        if (!cancelled) {
-          setError(e instanceof Error ? e.message : "Failed to load songs");
+        // ── Co-occurrence: find related descriptors ──────────────────────
+        // Fetch up to 200 profiles for co-occurrence (only need descriptor_slugs)
+        let coQuery = supabase
+          .from("song_sonic_profiles" as any)
+          .select("descriptor_slugs")
+          .limit(200) as any;
+        for (const s of slugs) {
+          coQuery = coQuery.contains("descriptor_slugs", [s]);
+        }
+        const { data: coData } = await coQuery;
+        if (cancelled) return;
+
+        // Count slug frequencies, excluding current slugs
+        const freq = new Map<string, number>();
+        for (const row of (coData || []) as { descriptor_slugs: string[] }[]) {
+          for (const ds of row.descriptor_slugs || []) {
+            if (!slugs.includes(ds)) {
+              freq.set(ds, (freq.get(ds) || 0) + 1);
+            }
+          }
+        }
+
+        // Fetch registry rows for co-occurring slugs (public only)
+        const coSlugs = [...freq.keys()];
+        if (coSlugs.length > 0) {
+          const { data: regData } = await (supabase
+            .from("descriptor_registry" as any)
+            .select("slug, label, category, is_public")
+            .in("slug", coSlugs)
+            .eq("is_public", true) as any);
+
+          if (cancelled) return;
+
+          const regMap = new Map<string, { label: string; category: string }>();
+          for (const r of (regData || []) as { slug: string; label: string; category: string }[]) {
+            regMap.set(r.slug, { label: r.label, category: r.category });
+          }
+
+          const ranked: RelatedDescriptor[] = [...freq.entries()]
+            .filter(([s]) => regMap.has(s))
+            .map(([s, count]) => ({ slug: s, label: regMap.get(s)!.label, category: regMap.get(s)!.category, count }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 6);
+
+          setRelatedSounds(ranked);
+        }
         }
       } finally {
         if (!cancelled) setLoading(false);
