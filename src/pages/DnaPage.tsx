@@ -290,7 +290,7 @@ export default function DnaPage() {
               className="text-center py-16 space-y-4"
             >
               <p className="text-4xl">🎵</p>
-              <p className="text-foreground font-medium">No songs yet with this DNA</p>
+              <p className="text-foreground font-medium">No songs yet with this sound</p>
               <p className="text-muted-foreground text-sm max-w-sm mx-auto">
                 Songs are added as people discover them. Search for a song and its sonic profile will be generated automatically.
               </p>
