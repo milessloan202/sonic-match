@@ -107,6 +107,38 @@ async function fetchVerifiedMetadata(
       console.log(`[Metadata] song_image_cache hit: track_id=${best.spotify_track_id} name="${best.name}"`);
       confidencePoints += 1;
     }
+
+    // Fallback: when no dash separator was found, the songTitle contains the
+    // artist name appended (e.g. "30 For 30 Sza").  The ILIKE above won't match
+    // cached names like "30 For 30 (with Kendrick Lamar)" because "Sza" isn't
+    // contiguous.  Try splitting from the right and searching name + artist columns.
+    if ((!cachedSongs || cachedSongs.length === 0) && !dashMatch) {
+      const words = songTitle.split(/\s+/);
+      const maxArtistWords = Math.min(3, Math.floor(words.length / 2));
+      for (let n = 1; n <= maxArtistWords; n++) {
+        const candidateTitle = words.slice(0, words.length - n).join(" ");
+        const candidateArtist = words.slice(words.length - n).join(" ");
+        const { data: splitCache } = await supabase
+          .from("song_image_cache")
+          .select("name, artist, spotify_track_id, image_url")
+          .not("spotify_track_id", "is", null)
+          .ilike("name", `%${candidateTitle.replace(/'/g, "''")}%`)
+          .ilike("artist", `%${candidateArtist.replace(/'/g, "''")}%`)
+          .limit(1);
+        if (splitCache && splitCache.length > 0) {
+          const best = splitCache[0];
+          metadata.spotify_track_id = best.spotify_track_id;
+          metadata.center_song_image_url = best.image_url ?? null;
+          songTitle = candidateTitle;
+          artistName = candidateArtist;
+          metadata.song_title = songTitle;
+          metadata.artist_name = artistName;
+          console.log(`[Metadata] song_image_cache split-hit n=${n}: track_id=${best.spotify_track_id} title="${candidateTitle}" artist="${candidateArtist}"`);
+          confidencePoints += 1;
+          break;
+        }
+      }
+    }
   } catch (e) {
     console.log("[Metadata] song_image_cache lookup failed:", e);
   }
