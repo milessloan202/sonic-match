@@ -1309,7 +1309,7 @@ EMOTIONAL POSTURE VS. EMOTIONAL VULNERABILITY (CRITICAL DISTINCTION):
     ];
 
     // Resolve Spotify IDs for all recommended songs in parallel
-    const spotifyIdMap = new Map<string, { id: string | null; url: string | null }>();
+    const spotifyIdMap = new Map<string, { id: string | null; url: string | null; image_url: string | null }>();
 
     if (spotifyToken) {
       const lookups = allRecommendedSongs.map(async (m: any) => {
