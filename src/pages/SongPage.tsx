@@ -290,7 +290,16 @@ const SongPage = () => {
       </div>
     );
   }
-  if (!data) return null;
+  if (!data) {
+    return (
+      <div className="min-h-screen px-4 py-12 max-w-3xl mx-auto space-y-4">
+        <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <ArrowLeft className="w-4 h-4" /> Back
+        </Link>
+        <p className="text-muted-foreground">This song page is still generating. Please refresh in a moment.</p>
+      </div>
+    );
+  }
 
   const activeView = isMobile ? "list" : view;
   const activeSlugList = [...activeSlugs];
