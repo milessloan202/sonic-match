@@ -1,11 +1,12 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import SEOHead from "@/components/SEOHead";
-import { DescriptorTag } from "@/components/DescriptorTag";
 import DescriptorCarousel from "@/components/DescriptorCarousel";
 import SoundDirectory from "@/components/SoundDirectory";
+import SoundOfTheMoment from "@/components/SoundOfTheMoment";
 import { useDescriptorRegistry } from "@/hooks/useExploreData";
+import { DESCRIPTOR_CATEGORY_MAP, CATEGORY_GLOW_RGB } from "@/lib/exploreSounds";
+import { CATEGORY_HOVER_COLORS } from "@/components/DescriptorTag";
 
 /** Curated top-level chips for Section A */
 const CURATED_CHIPS = [
@@ -25,7 +26,6 @@ const CAROUSEL_DESCRIPTORS = [
 export default function ExplorePage() {
   const { descriptors, grouped, loading } = useDescriptorRegistry();
 
-  // Build a label/category lookup from registry for the curated chips
   const labelMap = new Map(descriptors.map((d) => [d.slug, d]));
 
   return (
@@ -40,7 +40,7 @@ export default function ExplorePage() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-12 space-y-2"
+        className="mb-14 space-y-2"
       >
         <Link to="/" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
           ← Home
@@ -53,14 +53,24 @@ export default function ExplorePage() {
         </p>
       </motion.div>
 
-      <div className="flex flex-col lg:flex-row gap-12">
+      <div className="flex flex-col lg:flex-row gap-14">
         {/* Main content */}
-        <div className="flex-1 min-w-0 space-y-14">
+        <div className="flex-1 min-w-0 space-y-16">
+
+          {/* SECTION 0 — Sound of the moment */}
+          <motion.section
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <SoundOfTheMoment descriptors={descriptors} />
+          </motion.section>
+
           {/* SECTION A — Start with a sound */}
           <motion.section
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
+            transition={{ delay: 0.2 }}
             className="space-y-4"
           >
             <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
@@ -69,14 +79,24 @@ export default function ExplorePage() {
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
               {CURATED_CHIPS.map((slug) => {
                 const reg = labelMap.get(slug);
+                const cat = reg?.category ?? DESCRIPTOR_CATEGORY_MAP[slug];
+                const hoverClass = cat ? CATEGORY_HOVER_COLORS[cat] : "";
+
                 return (
                   <Link
                     key={slug}
                     to={`/sounds/${slug}`}
-                    className="block"
+                    className="block group"
                   >
-                    <div className="rounded-xl border border-border/60 bg-secondary/30 hover:bg-secondary/60 hover:border-primary/30 transition-all duration-200 px-4 py-3.5 text-center hover:scale-[1.03] active:scale-95">
-                      <span className="text-sm font-medium text-foreground capitalize">
+                    <div
+                      className={`rounded-xl border border-border/60 bg-secondary/30 transition-all duration-200 px-4 py-3.5 text-center hover:scale-[1.03] active:scale-95 ${hoverClass ? `group-hover:${hoverClass}` : "hover:bg-secondary/60 hover:border-primary/30"}`}
+                      style={
+                        cat && CATEGORY_GLOW_RGB[cat]
+                          ? { "--pill-glow": CATEGORY_GLOW_RGB[cat] } as React.CSSProperties
+                          : undefined
+                      }
+                    >
+                      <span className="text-sm font-medium text-foreground capitalize group-hover:text-foreground">
                         {reg?.label ?? slug.replace(/-/g, " ")}
                       </span>
                     </div>
@@ -90,8 +110,8 @@ export default function ExplorePage() {
           <motion.section
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="space-y-8"
+            transition={{ delay: 0.35 }}
+            className="space-y-10"
           >
             <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
               Explore by sound
