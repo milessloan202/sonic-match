@@ -378,7 +378,7 @@ async function fetchSonicDescriptors(
     // Cache-first: check DB before calling the edge function
     const { data: cached } = await (supabase
       .from("song_sonic_profiles")
-      .select("profile_json, confidence_score")
+      .select("profile_json, confidence_score, dominant_emotional_tone")
       .eq("spotify_track_id", spotifyTrackId)
       .single() as any);
 
@@ -387,6 +387,7 @@ async function fetchSonicDescriptors(
       return {
         descriptors: cached.profile_json.canonical_descriptors.display_descriptors as CanonicalDescriptor[],
         confidenceScore: typeof cached.confidence_score === "number" ? cached.confidence_score : null,
+        dominantEmotionalTone: cached.dominant_emotional_tone ?? null,
       };
     }
 
