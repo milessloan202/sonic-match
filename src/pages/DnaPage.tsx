@@ -6,11 +6,11 @@ import { DescriptorTag } from "@/components/DescriptorTag";
 import SEOHead from "@/components/SEOHead";
 
 // =============================================================================
-// DnaPage
+// SoundsPage (formerly DnaPage)
 //
 // Handles:
-//   /dna/:slug             — single descriptor discovery
-//   /dna/:slug1/:slug2     — multi-descriptor (AND) discovery
+//   /sounds/:slug           — single descriptor discovery
+//   /sounds/:slug/:slug2    — multi-descriptor (AND) discovery
 //
 // Shows all songs matching the descriptor(s) from song_sonic_profiles.
 // =============================================================================
