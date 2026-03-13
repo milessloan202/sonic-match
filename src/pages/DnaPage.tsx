@@ -188,7 +188,7 @@ export default function DnaPage() {
       <SEOHead
         title={`Songs with ${pageTitle} sound | Sonic DNA`}
         description={metaDescription}
-        path={`/dna/${slugs.join("/")}`}
+        path={`/sounds/${slugs.join("/")}`}
       />
 
       <div className="min-h-screen bg-background">
