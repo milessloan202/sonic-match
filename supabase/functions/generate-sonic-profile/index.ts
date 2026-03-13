@@ -851,8 +851,21 @@ OUTPUT FORMAT (return exactly this structure, no extra fields):
 "dominant_emotional_tone" must be a single slug from emotional_tone vocabulary. It must also be the FIRST entry in the emotional_tone array.
 
 confidence_score reflects how confident you are that this analysis is accurate (0.0–1.0).
-Use lower confidence for obscure, genre-defying, or instrumental works where you have less certainty.`;
+Use lower confidence for obscure, genre-defying, or instrumental works where you have less certainty.
+
+CALIBRATION EXAMPLES (use these to anchor your ontology):
+
+• "30 For 30 (with Kendrick Lamar)" by SZA — Do NOT automatically assign wistful, tender, warm, or intimate because of genre context. Analyze the actual sonic evidence: vocal delivery, production texture, spatial characteristics. Assign only what the recording audibly supports.
+
+• "Numbers on the Boards" by Pusha T — Commanding solo rap delivery should NOT be labeled chant-like. Chant-like requires communal/call-and-response evidence.
+
+• "Knuck If You Buck" by Crime Mob — Call-and-response crowd energy DOES qualify as chant-like. This is the correct use case.
+
+• "Heartless" by Kanye West — Cold emotional posture with lonely undertones. The outward register is cold/detached; the emotional subtext is isolation. Both layers should be captured.
+
+These examples demonstrate that descriptors must follow audible evidence, not genre expectations.`;
 }
+
 
 function buildUserPrompt(title: string, artist: string): string {
   return `Analyze the sonic DNA of "${title}" by ${artist}.
