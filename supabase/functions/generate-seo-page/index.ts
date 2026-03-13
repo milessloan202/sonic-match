@@ -447,6 +447,7 @@ async function fetchSonicDescriptors(
             artist_name: artistName,
             profile_json: data.profile,
             confidence_score: confidenceScore,
+            dominant_emotional_tone: data.profile?.dominant_emotional_tone ?? null,
           }, { onConflict: "spotify_track_id" });
         if (upsertError) {
           console.warn("[SonicDNA] Belt-and-suspenders upsert failed:", upsertError.message);
