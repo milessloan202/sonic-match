@@ -40,7 +40,7 @@ serve(async () => {
       .eq("is_seo_enabled", true);
 
     const dnaUrls = (descriptors || []).map((d) => {
-      const loc     = `${SITE_URL}/dna/${d.slug}`;
+      const loc     = `${SITE_URL}/sounds/${d.slug}`;
       const lastmod = d.created_at?.split("T")[0] || new Date().toISOString().split("T")[0];
       return `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod}</lastmod>\n  </url>`;
     });

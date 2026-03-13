@@ -651,7 +651,7 @@ function buildCanonicalDescriptors(
         category: meta.category,
         is_clickable: meta.is_clickable,
         search_url: `/search?descriptors=${slug}`,
-        dna_url: `/dna/${slug}`,
+        dna_url: `/sounds/${slug}`,
       };
     });
 

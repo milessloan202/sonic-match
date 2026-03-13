@@ -31,8 +31,10 @@ const App = () => (
               <Route path="/artists-like/:slug" element={<ArtistPage />} />
               <Route path="/producers-like/:slug" element={<ProducerPage />} />
               <Route path="/vibes/:slug" element={<VibePage />} />
-              <Route path="/dna/:slug" element={<DnaPage />} />
-              <Route path="/dna/:slug/:slug2" element={<DnaPage />} />
+              <Route path="/sounds/:slug" element={<DnaPage />} />
+              <Route path="/sounds/:slug/:slug2" element={<DnaPage />} />
+              <Route path="/dna/:slug" element={<DnaRedirect />} />
+              <Route path="/dna/:slug/:slug2" element={<DnaRedirect />} />
               <Route path="/search" element={<SearchPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
