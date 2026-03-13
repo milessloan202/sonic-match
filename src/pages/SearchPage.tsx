@@ -289,7 +289,7 @@ export default function SearchPage() {
             <div className="space-y-3">
               {/* Section label */}
               <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
-                DNA Mix
+                Sound Mix
               </p>
 
               {/* Active descriptor chips */}
