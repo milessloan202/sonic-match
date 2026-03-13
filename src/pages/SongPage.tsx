@@ -151,13 +151,13 @@ const SongPage = () => {
       const addSlugs = (slugs: string[], category: string) => {
         for (const slug of slugs) {
           if (!seen.has(slug)) {
-            // No registry data available for fallback slugs — default to non-clickable.
-            // Canonical descriptors (above) already carry registry-driven is_clickable.
+            // Fallback slugs without canonical data — default to clickable
+            // per the generous-exploration policy (all public descriptors are clickable).
             result.push({
               slug,
               label: slug.replace(/-/g, " "),
               category,
-              is_clickable: false,
+              is_clickable: true,
               search_url: `/search?descriptors=${slug}`,
               dna_url: `/search?descriptors=${slug}&mode=lineage`,
             });
