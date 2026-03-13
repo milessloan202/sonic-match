@@ -44,10 +44,11 @@ export default function DnaPage() {
 
   const slugs = [slug, slug2].filter(Boolean) as string[];
 
-  const [songs, setSongs]           = useState<ProfileRow[]>([]);
-  const [descriptors, setDescriptors] = useState<DescriptorRow[]>([]);
-  const [loading, setLoading]       = useState(true);
-  const [error, setError]           = useState<string | null>(null);
+  const [songs, setSongs]                     = useState<ProfileRow[]>([]);
+  const [descriptors, setDescriptors]           = useState<DescriptorRow[]>([]);
+  const [relatedSounds, setRelatedSounds]       = useState<RelatedDescriptor[]>([]);
+  const [loading, setLoading]                   = useState(true);
+  const [error, setError]                       = useState<string | null>(null);
 
   useEffect(() => {
     if (slugs.length === 0) return;
