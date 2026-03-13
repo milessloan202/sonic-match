@@ -31,6 +31,13 @@ interface DescriptorRow {
   is_seo_enabled: boolean;
 }
 
+interface RelatedDescriptor {
+  slug: string;
+  label: string;
+  category: string;
+  count: number;
+}
+
 export default function DnaPage() {
   const { slug, slug2 } = useParams<{ slug: string; slug2?: string }>();
   const navigate = useNavigate();
