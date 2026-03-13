@@ -37,6 +37,7 @@ const App = () => (
               <Route path="/dna/:slug" element={<DnaRedirect />} />
               <Route path="/dna/:slug/:slug2" element={<DnaRedirect />} />
               <Route path="/search" element={<SearchPage />} />
+              <Route path="/explore" element={<ExplorePage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AudioProvider>
