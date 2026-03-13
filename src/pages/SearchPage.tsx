@@ -328,7 +328,7 @@ export default function SearchPage() {
               {traitSuggestions.length > 0 && (
                 <div className="space-y-1.5">
                   <p className="text-[10px] text-muted-foreground/50 uppercase tracking-wider">
-                    Add another DNA trait
+                    Add a trait to narrow further
                   </p>
                   <div className="flex flex-wrap gap-1.5">
                     {traitSuggestions.map((d) => (

@@ -9,8 +9,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // POST { descriptors: string[], limit?: number }
 // GET  ?descriptors=slug1,slug2&limit=24
 //
-// Single descriptor  → .contains("descriptor_slugs", [slug])
-// Multiple           → .overlaps("descriptor_slugs", slugs)
+// Single descriptor  → .contains("descriptor_slugs", [slug])  (exact match)
+// Multiple           → .overlaps("descriptor_slugs", slugs) for broad candidate
+//                      pool, then filtered by a minimum match threshold so that
+//                      adding more descriptors narrows rather than expands results:
+//                        n=2          → require ≥1 match  (prefer 2/2)
+//                        n=3–4        → require ≥2 matches
+//                        n≥5          → require ≥50% (ceil) matches
 //
 // Scores by matched_count desc, total descriptors asc (tiebreak).
 // Returns { results, requested_descriptors, total }
@@ -86,20 +91,31 @@ serve(async (req) => {
       return { ...row, matched_count, matched_slugs, match_ratio };
     });
 
+    // Apply minimum match threshold so adding descriptors narrows results.
+    // n=1 is handled above via .contains(); threshold only applies to n≥2.
+    const minMatch =
+      descriptors.length <= 2 ? 1 :
+      descriptors.length <= 4 ? 2 :
+      Math.ceil(descriptors.length * 0.5);
+
+    const filtered = descriptors.length === 1
+      ? scored
+      : scored.filter((r) => r.matched_count >= minMatch);
+
     // Sort: matched_count desc, then fewest total descriptors as tiebreak
-    scored.sort((a, b) => {
+    filtered.sort((a, b) => {
       if (b.matched_count !== a.matched_count) return b.matched_count - a.matched_count;
       return (a.descriptor_slugs?.length || 0) - (b.descriptor_slugs?.length || 0);
     });
 
-    const results = scored.slice(0, limit);
+    const results = filtered.slice(0, limit);
 
     console.log(
-      `[search-by-descriptors] [${descriptors.join(",")}] → ${results.length}/${scored.length} results`,
+      `[search-by-descriptors] [${descriptors.join(",")}] minMatch=${minMatch} → ${results.length}/${filtered.length} results (${scored.length} raw candidates)`,
     );
 
     return new Response(
-      JSON.stringify({ results, requested_descriptors: descriptors, total: scored.length }),
+      JSON.stringify({ results, requested_descriptors: descriptors, total: filtered.length }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
