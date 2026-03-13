@@ -158,6 +158,8 @@ export function useSimilarByDNA({
           matched_count: number;
           matched_slugs: string[];
           match_ratio: number;
+          profile_json: Record<string, unknown>;
+          dominant_emotional_tone: string | null;
         };
 
         const rawResults = (data.results || []) as RawResult[];
@@ -168,6 +170,21 @@ export function useSimilarByDNA({
           (sum, s) => sum + (slugWeights.get(s) ?? DEFAULT_CATEGORY_WEIGHT), 0,
         );
         const centerEra = [...(profile!.era_movement || []), ...(profile!.era_period || [])];
+        const centerDominant = profile!.dominant_emotional_tone ?? null;
+
+        // Build slug → category map for secondary soft-cap
+        const slugToCategory = new Map<string, string>();
+        const categoryFields: Array<keyof SonicProfile> = [
+          "energy_posture", "groove_character", "drum_character", "bass_character",
+          "harmonic_color", "melodic_character", "vocal_character", "texture",
+          "arrangement_energy_arc", "spatial_feel", "emotional_tone",
+          "era_period", "era_movement", "environment_imagery", "listener_use_case",
+        ];
+        for (const field of categoryFields) {
+          const val = profile![field];
+          if (!Array.isArray(val)) continue;
+          for (const slug of val as string[]) slugToCategory.set(slug, field as string);
+        }
 
         const scored: SimilarSong[] = rawResults
           .filter(r => {
@@ -177,11 +194,43 @@ export function useSimilarByDNA({
             return true;
           })
           .map(r => {
-            // Weighted overlap: each matched slug contributes its category weight
-            const weightedMatched = r.matched_slugs.reduce(
-              (sum, s) => sum + (slugWeights.get(s) ?? DEFAULT_CATEGORY_WEIGHT), 0,
-            );
-            const score = totalWeight > 0 ? weightedMatched / totalWeight : 0;
+            // Split matched slugs into core vs secondary contributions
+            let coreWeighted = 0;
+            let secondaryWeighted = 0;
+            for (const s of r.matched_slugs) {
+              const w = slugWeights.get(s) ?? DEFAULT_CATEGORY_WEIGHT;
+              const cat = slugToCategory.get(s) ?? "";
+              if (SECONDARY_CATEGORIES.has(cat)) {
+                secondaryWeighted += w;
+              } else {
+                coreWeighted += w;
+              }
+            }
+            // Soft cap on secondary category contribution
+            const cappedSecondary = Math.min(secondaryWeighted, 6);
+            const baseScore = totalWeight > 0
+              ? (coreWeighted + cappedSecondary) / totalWeight
+              : 0;
+
+            // ── Emotional anchor bonus ──────────────────────────────────
+            let emotionBonus = 0;
+            const candidateDominant = r.dominant_emotional_tone ?? null;
+            if (centerDominant && candidateDominant) {
+              if (centerDominant === candidateDominant) {
+                // Exact dominant match — strong bonus
+                emotionBonus = DOMINANT_TONE_EXACT_BONUS;
+              } else {
+                // Partial: center's dominant appears in candidate's emotional_tone array
+                const candidateEmotions = Array.isArray(r.profile_json?.emotional_tone)
+                  ? (r.profile_json.emotional_tone as string[])
+                  : [];
+                if (candidateEmotions.includes(centerDominant)) {
+                  emotionBonus = DOMINANT_TONE_PARTIAL_BONUS;
+                }
+              }
+            }
+
+            const score = baseScore + emotionBonus;
 
             const primarySlugs   = canonical!.display_descriptors.slice(0, 3).map(d => d.slug);
             const coreMatchCount = primarySlugs.filter(s => r.matched_slugs.includes(s)).length;
