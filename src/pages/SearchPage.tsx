@@ -234,12 +234,12 @@ export default function SearchPage() {
   // ── Mode-aware page heading ────────────────────────────────────────────────
   const pageHeading =
     searchMode === "songSimilarity" && songParam
-      ? `Songs With Similar DNA to ${decodeURIComponent(songParam)}`
+      ? `Songs that sound like ${decodeURIComponent(songParam)}`
       : searchMode === "descriptorSearch"
-      ? "Explore DNA"
+      ? "Explore by sound"
       : searchMode === "textSearch"
       ? "Search results"
-      : "Search by Sonic DNA";
+      : "Search by sound";
 
   // ── Grouped registry for picker ───────────────────────────────────────────
   const grouped: Record<string, RegistryDescriptor[]> = {};
@@ -289,7 +289,7 @@ export default function SearchPage() {
             <div className="space-y-3">
               {/* Section label */}
               <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
-                DNA Mix
+                Sound Mix
               </p>
 
               {/* Active descriptor chips */}
@@ -353,7 +353,7 @@ export default function SearchPage() {
                     onClick={() => navigate(`/sounds/${primarySlug}`)}
                     className="text-primary hover:underline"
                   >
-                    {getDescriptorLabel(primarySlug)} DNA page →
+                    About the {getDescriptorLabel(primarySlug)} sound →
                   </button>
                 </p>
               )}
@@ -510,7 +510,7 @@ export default function SearchPage() {
           ) : results.length === 0 ? (
             <div className="text-center py-16 space-y-3">
               <p className="text-4xl">🎵</p>
-              <p className="text-foreground font-medium">No songs found with this DNA</p>
+              <p className="text-foreground font-medium">No songs found with this sound</p>
               <p className="text-muted-foreground text-sm max-w-sm mx-auto">
                 Songs are added as people discover them. Try removing a trait to broaden the mix.
               </p>

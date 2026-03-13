@@ -6,11 +6,11 @@ import { DescriptorTag } from "@/components/DescriptorTag";
 import SEOHead from "@/components/SEOHead";
 
 // =============================================================================
-// DnaPage
+// SoundsPage (formerly DnaPage)
 //
 // Handles:
-//   /dna/:slug             — single descriptor discovery
-//   /dna/:slug1/:slug2     — multi-descriptor (AND) discovery
+//   /sounds/:slug           — single descriptor discovery
+//   /sounds/:slug/:slug2    — multi-descriptor (AND) discovery
 //
 // Shows all songs matching the descriptor(s) from song_sonic_profiles.
 // =============================================================================
@@ -166,9 +166,11 @@ export default function DnaPage() {
     .map(s => descriptors.find(d => d.slug === s)?.label || s.replace(/-/g, " "))
     .join(" + ");
 
+  const descriptionText = primaryDescriptor?.description || "Songs that share this sonic trait.";
+
   const metaDescription = primaryDescriptor
-    ? `Discover songs with a ${primaryDescriptor.label.toLowerCase()} sound. ${primaryDescriptor.description}`
-    : `Music with a ${pageTitle} sound — explore songs by sonic DNA.`;
+    ? `${primaryDescriptor.description} Explore ${primaryDescriptor.label.toLowerCase()}-sounding songs on Audiotwin.`
+    : `Explore songs with a ${pageTitle} sound on Audiotwin.`;
 
   // ── Loading state ──────────────────────────────────────────────────────────
 
@@ -177,7 +179,7 @@ export default function DnaPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-3">
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-muted-foreground text-sm">Loading sonic DNA...</p>
+          <p className="text-muted-foreground text-sm">Loading sounds...</p>
         </div>
       </div>
     );
@@ -186,7 +188,7 @@ export default function DnaPage() {
   return (
     <>
       <SEOHead
-        title={`Songs with ${pageTitle} sound | Sonic DNA`}
+        title={`${pageTitle}-sounding songs | Audiotwin`}
         description={metaDescription}
         path={`/sounds/${slugs.join("/")}`}
       />
@@ -227,25 +229,24 @@ export default function DnaPage() {
 
             {/* Title */}
             <h1 className="text-2xl font-bold text-foreground">
-              {pageTitle}
+              {slugs.length === 1
+                ? `${primaryDescriptor?.label || pageTitle}-sounding songs`
+                : `${pageTitle} songs`}
             </h1>
 
             {/* Description */}
-            {primaryDescriptor && (
-              <p className="text-muted-foreground text-sm leading-relaxed max-w-xl">
-                {primaryDescriptor.description}
-                {secondaryDescriptor && (
-                  <span> Combined with <strong>{secondaryDescriptor.label.toLowerCase()}</strong>: {secondaryDescriptor.description.toLowerCase()}</span>
-                )}
-              </p>
-            )}
+            <p className="text-muted-foreground text-sm leading-relaxed max-w-xl">
+              {secondaryDescriptor
+                ? `${descriptionText} Combined with ${secondaryDescriptor.label.toLowerCase()}: ${secondaryDescriptor.description.toLowerCase()}`
+                : descriptionText}
+            </p>
 
             {/* Search CTA */}
             <button
               onClick={() => navigate(`/search?descriptors=${slugs.join(",")}&mode=descriptor`)}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary/10 border border-primary/30 text-primary text-xs font-semibold hover:bg-primary/20 transition-all"
             >
-              Find songs with this DNA →
+              Find more songs with this sound →
             </button>
 
             {/* Multi-descriptor navigation suggestion */}
@@ -289,7 +290,7 @@ export default function DnaPage() {
               className="text-center py-16 space-y-4"
             >
               <p className="text-4xl">🎵</p>
-              <p className="text-foreground font-medium">No songs yet with this DNA</p>
+              <p className="text-foreground font-medium">No songs yet with this sound</p>
               <p className="text-muted-foreground text-sm max-w-sm mx-auto">
                 Songs are added as people discover them. Search for a song and its sonic profile will be generated automatically.
               </p>
@@ -302,9 +303,9 @@ export default function DnaPage() {
             </motion.div>
           ) : (
             <div className="space-y-6">
-              <p className="text-sm text-muted-foreground">
-                {songs.length} song{songs.length !== 1 ? "s" : ""} with this sound
-              </p>
+              <h2 className="text-sm font-semibold text-foreground">
+                Songs ({songs.length})
+              </h2>
 
               <div className="grid gap-3">
                 {songs.map((song, i) => (
