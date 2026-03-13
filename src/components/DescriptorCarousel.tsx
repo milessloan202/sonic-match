@@ -16,13 +16,22 @@ const slugify = (text: string) =>
 interface Props {
   descriptorSlug: string;
   descriptorLabel: string;
+  descriptorDescription?: string;
+  category?: string;
   limit?: number;
 }
 
 /**
  * A horizontal scrollable row of album artwork for songs matching a descriptor.
+ * Header hierarchy: chip → title → subtitle → carousel → CTA
  */
-export default function DescriptorCarousel({ descriptorSlug, descriptorLabel, limit = 10 }: Props) {
+export default function DescriptorCarousel({
+  descriptorSlug,
+  descriptorLabel,
+  descriptorDescription,
+  category,
+  limit = 10,
+}: Props) {
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -30,7 +39,6 @@ export default function DescriptorCarousel({ descriptorSlug, descriptorLabel, li
     let cancelled = false;
 
     async function fetch() {
-      // 1. Get songs with this descriptor
       const { data: profiles } = await supabase
         .from("song_sonic_profiles")
         .select("song_title, artist_name, spotify_track_id")
@@ -42,7 +50,6 @@ export default function DescriptorCarousel({ descriptorSlug, descriptorLabel, li
         return;
       }
 
-      // 2. Batch-fetch images from song_image_cache
       const trackIds = profiles.map((p) => p.spotify_track_id);
       const { data: images } = await supabase
         .from("song_image_cache")
@@ -71,10 +78,16 @@ export default function DescriptorCarousel({ descriptorSlug, descriptorLabel, li
     return () => { cancelled = true; };
   }, [descriptorSlug, limit]);
 
+  /** Build a natural-sounding row title */
+  const rowTitle = `${descriptorLabel}-sounding songs`;
+
   if (loading) {
     return (
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-foreground capitalize">{descriptorLabel} sounds</h3>
+      <div className="space-y-4">
+        <div className="space-y-1.5">
+          <div className="h-4 w-16 bg-secondary rounded animate-pulse" />
+          <div className="h-5 w-48 bg-secondary rounded animate-pulse" />
+        </div>
         <div className="flex gap-3 overflow-hidden">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="w-[140px] h-[140px] rounded-md bg-secondary animate-pulse shrink-0" />
@@ -87,17 +100,22 @@ export default function DescriptorCarousel({ descriptorSlug, descriptorLabel, li
   if (songs.length === 0) return null;
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-foreground capitalize">{descriptorLabel} sounds</h3>
+    <div className="space-y-4">
+      {/* Row header: chip + title + description */}
+      <div className="space-y-1.5">
         <Link
           to={`/sounds/${descriptorSlug}`}
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 group"
+          className="inline-block text-[10px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full border border-border/60 bg-secondary/40 text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all"
         >
-          View all <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+          {descriptorLabel}
         </Link>
+        <h3 className="text-sm font-semibold text-foreground">{rowTitle}</h3>
+        {descriptorDescription && (
+          <p className="text-xs text-muted-foreground/70 max-w-md">{descriptorDescription}</p>
+        )}
       </div>
 
+      {/* Album carousel */}
       <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
         {songs.map((song) => {
           const songSlug = `${slugify(song.song_title)}-${slugify(song.artist_name)}`;
@@ -127,6 +145,14 @@ export default function DescriptorCarousel({ descriptorSlug, descriptorLabel, li
           );
         })}
       </div>
+
+      {/* CTA */}
+      <Link
+        to={`/sounds/${descriptorSlug}`}
+        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors group"
+      >
+        Explore {descriptorLabel.toLowerCase()} <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+      </Link>
     </div>
   );
 }
