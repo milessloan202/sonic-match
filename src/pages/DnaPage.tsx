@@ -229,18 +229,17 @@ export default function DnaPage() {
 
             {/* Title */}
             <h1 className="text-2xl font-bold text-foreground">
-              {pageTitle}
+              {slugs.length === 1
+                ? `${primaryDescriptor?.label || pageTitle}-sounding songs`
+                : `${pageTitle} songs`}
             </h1>
 
             {/* Description */}
-            {primaryDescriptor && (
-              <p className="text-muted-foreground text-sm leading-relaxed max-w-xl">
-                {primaryDescriptor.description}
-                {secondaryDescriptor && (
-                  <span> Combined with <strong>{secondaryDescriptor.label.toLowerCase()}</strong>: {secondaryDescriptor.description.toLowerCase()}</span>
-                )}
-              </p>
-            )}
+            <p className="text-muted-foreground text-sm leading-relaxed max-w-xl">
+              {secondaryDescriptor
+                ? `${descriptionText} Combined with ${secondaryDescriptor.label.toLowerCase()}: ${secondaryDescriptor.description.toLowerCase()}`
+                : descriptionText}
+            </p>
 
             {/* Search CTA */}
             <button
