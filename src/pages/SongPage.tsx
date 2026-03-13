@@ -143,21 +143,22 @@ const SongPage = () => {
       };
 
       // 2. Raw profile arrays — fills in any slugs not already in canonical set
-      addSlugs(sonicProfile.emotional_tone,         "emotional_tone");
-      addSlugs(sonicProfile.energy_posture,         "energy_posture");
-      addSlugs(sonicProfile.texture,                "texture");
-      addSlugs(sonicProfile.groove_character,       "groove_character");
-      addSlugs(sonicProfile.drum_character,         "drum_character");
-      addSlugs(sonicProfile.bass_character,         "bass_character");
-      addSlugs(sonicProfile.vocal_character,        "vocal_character");
-      addSlugs(sonicProfile.melodic_character,      "melodic_character");
-      addSlugs(sonicProfile.harmonic_color,         "harmonic_color");
-      addSlugs(sonicProfile.arrangement_energy_arc, "arrangement_energy_arc");
-      addSlugs(sonicProfile.spatial_feel,           "spatial_feel");
-      addSlugs(sonicProfile.era_movement,           "era_movement");
-      addSlugs(sonicProfile.era_period,             "era_period");
-      addSlugs(sonicProfile.environment_imagery,    "environment_imagery");
-      addSlugs(sonicProfile.listener_use_case,      "listener_use_case");
+      // Guard with || [] to handle v1 profiles that use different key names
+      addSlugs(sonicProfile.emotional_tone         || [], "emotional_tone");
+      addSlugs(sonicProfile.energy_posture         || [], "energy_posture");
+      addSlugs(sonicProfile.texture                || [], "texture");
+      addSlugs(sonicProfile.groove_character       || [], "groove_character");
+      addSlugs(sonicProfile.drum_character         || [], "drum_character");
+      addSlugs(sonicProfile.bass_character         || [], "bass_character");
+      addSlugs(sonicProfile.vocal_character        || [], "vocal_character");
+      addSlugs(sonicProfile.melodic_character      || [], "melodic_character");
+      addSlugs(sonicProfile.harmonic_color         || [], "harmonic_color");
+      addSlugs(sonicProfile.arrangement_energy_arc || [], "arrangement_energy_arc");
+      addSlugs(sonicProfile.spatial_feel           || [], "spatial_feel");
+      addSlugs(sonicProfile.era_movement           || [], "era_movement");
+      addSlugs(sonicProfile.era_period             || [], "era_period");
+      addSlugs(sonicProfile.environment_imagery    || [], "environment_imagery");
+      addSlugs(sonicProfile.listener_use_case      || [], "listener_use_case");
 
       // 3. Scalar fields as pseudo-categories
       if (sonicProfile.intensity_level && !seen.has(sonicProfile.intensity_level)) {
