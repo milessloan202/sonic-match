@@ -92,9 +92,9 @@ export default function DescriptorCarousel({ descriptorSlug, descriptorLabel, li
         <h3 className="text-sm font-semibold text-foreground capitalize">{descriptorLabel} sounds</h3>
         <Link
           to={`/sounds/${descriptorSlug}`}
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 group"
         >
-          View all <ArrowRight className="w-3 h-3" />
+          View all <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
         </Link>
       </div>
 
