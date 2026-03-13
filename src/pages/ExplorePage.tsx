@@ -98,14 +98,19 @@ export default function ExplorePage() {
             <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
               Explore by sound
             </p>
-            {CAROUSEL_DESCRIPTORS.map((d) => (
-              <DescriptorCarousel
-                key={d.slug}
-                descriptorSlug={d.slug}
-                descriptorLabel={d.label}
-                limit={10}
-              />
-            ))}
+            {CAROUSEL_DESCRIPTORS.map((d) => {
+              const reg = labelMap.get(d.slug);
+              return (
+                <DescriptorCarousel
+                  key={d.slug}
+                  descriptorSlug={d.slug}
+                  descriptorLabel={d.label}
+                  descriptorDescription={reg?.description}
+                  category={reg?.category}
+                  limit={10}
+                />
+              );
+            })}
           </motion.section>
         </div>
 
