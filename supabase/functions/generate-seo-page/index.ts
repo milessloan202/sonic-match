@@ -89,56 +89,107 @@ async function fetchVerifiedMetadata(
 
   let confidencePoints = 0;
 
-  // 1. Fetch from Spotify for enriched metadata
+  // 0. DB-first: check song_image_cache for a previously resolved spotify_track_id.
+  //    This avoids dependency on a live Spotify API call when the track was already resolved.
+  try {
+    const { data: cachedSongs } = await supabase
+      .from("song_image_cache")
+      .select("name, artist, spotify_track_id, image_url")
+      .not("spotify_track_id", "is", null)
+      .ilike("name", `%${songTitle.replace(/'/g, "''")}%`)
+      .limit(5);
+
+    if (cachedSongs && cachedSongs.length > 0) {
+      // Pick the first row that has a valid spotify_track_id
+      const best = cachedSongs[0];
+      metadata.spotify_track_id = best.spotify_track_id;
+      metadata.center_song_image_url = best.image_url ?? null;
+      console.log(`[Metadata] song_image_cache hit: track_id=${best.spotify_track_id} name="${best.name}"`);
+      confidencePoints += 1;
+    }
+  } catch (e) {
+    console.log("[Metadata] song_image_cache lookup failed:", e);
+  }
+
+  // 1. Fetch from Spotify for enriched metadata (or enrich the cached track_id)
   if (spotifyToken) {
     try {
-      // When artistName is known, use strict field-qualified search.
-      // When not (slug format has no dash separator), use a plain unquoted
-      // query so Spotify fuzzy-matches across title + artist — same approach
-      // used by resolve-song, which correctly maps "stronger kanye west" to
-      // "Stronger" by Kanye West. Strict track:"..." on an unsplit slug would
-      // match arbitrary titles (e.g. "Stronger - 1950s Kanye West").
-      const query = artistName
-        ? `track:"${songTitle}" artist:"${artistName}"`
-        : displayName;
-      const res = await fetch(
-        `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=1`,
-        { headers: { Authorization: `Bearer ${spotifyToken}` } }
-      );
-      if (res.ok) {
-        const data = await res.json();
-        const track = data?.tracks?.items?.[0];
-        if (track) {
-          metadata.spotify_track_id = track.id;
-          metadata.song_title = track.name;
-          metadata.artist_name = track.artists?.[0]?.name || artistName;
-          metadata.year = track.album?.release_date?.slice(0, 4) || null;
-          metadata.album_name = track.album?.name || null;
-          metadata.center_song_image_url = track.album?.images?.[1]?.url ?? track.album?.images?.[0]?.url ?? null;
-          confidencePoints += 2;
+      let track: any = null;
 
-          // Fetch artist genres if available
-          const artistId = track.artists?.[0]?.id;
-          if (artistId) {
-            try {
-              const artistRes = await fetch(
-                `https://api.spotify.com/v1/artists/${artistId}`,
-                { headers: { Authorization: `Bearer ${spotifyToken}` } }
-              );
-              if (artistRes.ok) {
-                const artistData = await artistRes.json();
-                metadata.genres = artistData.genres?.slice(0, 5) || [];
-                if (metadata.genres.length > 0) confidencePoints += 1;
-              }
-            } catch (e) {
-              console.log("[Metadata] Failed to fetch artist genres:", e);
+      // If we already have a track ID from cache, use direct lookup (more reliable than search)
+      if (metadata.spotify_track_id) {
+        const directRes = await fetch(
+          `https://api.spotify.com/v1/tracks/${metadata.spotify_track_id}`,
+          { headers: { Authorization: `Bearer ${spotifyToken}` } }
+        );
+        if (directRes.ok) {
+          track = await directRes.json();
+        }
+      }
+
+      // Fall back to search if no cached ID or direct lookup failed
+      if (!track) {
+        const query = artistName
+          ? `track:"${songTitle}" artist:"${artistName}"`
+          : displayName;
+        const res = await fetch(
+          `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=1`,
+          { headers: { Authorization: `Bearer ${spotifyToken}` } }
+        );
+        if (res.ok) {
+          const data = await res.json();
+          track = data?.tracks?.items?.[0];
+        }
+      }
+
+      if (track) {
+        metadata.spotify_track_id = track.id;
+        metadata.song_title = track.name;
+        metadata.artist_name = track.artists?.[0]?.name || artistName;
+        metadata.year = track.album?.release_date?.slice(0, 4) || null;
+        metadata.album_name = track.album?.name || null;
+        metadata.center_song_image_url = track.album?.images?.[1]?.url ?? track.album?.images?.[0]?.url ?? null;
+        confidencePoints += 2;
+
+        // Fetch artist genres if available
+        const artistId = track.artists?.[0]?.id;
+        if (artistId) {
+          try {
+            const artistRes = await fetch(
+              `https://api.spotify.com/v1/artists/${artistId}`,
+              { headers: { Authorization: `Bearer ${spotifyToken}` } }
+            );
+            if (artistRes.ok) {
+              const artistData = await artistRes.json();
+              metadata.genres = artistData.genres?.slice(0, 5) || [];
+              if (metadata.genres.length > 0) confidencePoints += 1;
             }
+          } catch (e) {
+            console.log("[Metadata] Failed to fetch artist genres:", e);
           }
-
         }
       }
     } catch (e) {
       console.log("[Metadata] Spotify lookup failed:", e);
+    }
+  }
+
+  // 1b. If Spotify API failed but we have a cached track_id, check song_sonic_profiles
+  //     for song_title and artist_name to fill in missing identity fields.
+  if (metadata.spotify_track_id && !metadata.artist_name) {
+    try {
+      const { data: profileRow } = await supabase
+        .from("song_sonic_profiles")
+        .select("song_title, artist_name")
+        .eq("spotify_track_id", metadata.spotify_track_id)
+        .maybeSingle();
+      if (profileRow) {
+        metadata.song_title = profileRow.song_title || metadata.song_title;
+        metadata.artist_name = profileRow.artist_name || metadata.artist_name;
+        console.log(`[Metadata] Enriched from song_sonic_profiles: title="${metadata.song_title}" artist="${metadata.artist_name}"`);
+      }
+    } catch (e) {
+      console.log("[Metadata] song_sonic_profiles fallback failed:", e);
     }
   }
 
