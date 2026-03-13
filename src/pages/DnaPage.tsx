@@ -166,9 +166,11 @@ export default function DnaPage() {
     .map(s => descriptors.find(d => d.slug === s)?.label || s.replace(/-/g, " "))
     .join(" + ");
 
+  const descriptionText = primaryDescriptor?.description || "Songs that share this sonic trait.";
+
   const metaDescription = primaryDescriptor
-    ? `Discover songs with a ${primaryDescriptor.label.toLowerCase()} sound. ${primaryDescriptor.description}`
-    : `Music with a ${pageTitle} sound — explore songs by sonic DNA.`;
+    ? `${primaryDescriptor.description} Explore ${primaryDescriptor.label.toLowerCase()}-sounding songs on Audiotwin.`
+    : `Explore songs with a ${pageTitle} sound on Audiotwin.`;
 
   // ── Loading state ──────────────────────────────────────────────────────────
 
