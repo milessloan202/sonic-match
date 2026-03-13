@@ -90,7 +90,7 @@ const SongPage = () => {
     data?.related_artists || [],
   );
   const centerImageUrl = songTitleForSample && artistForSample
-    ? (songImages[`${songTitleForSample}|||${artistForSample}`] ?? null)
+    ? (songImages[songKey(songTitleForSample, artistForSample)] ?? null)
     : null;
 
   // ── Resolve center song Spotify identity ───────────────────────────────────
