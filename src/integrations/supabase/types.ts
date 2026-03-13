@@ -118,7 +118,6 @@ export type Database = {
       }
       seo_pages: {
         Row: {
-          center_song_image_url: string | null
           closest_matches: Json | null
           created_at: string
           heading: string
@@ -141,7 +140,6 @@ export type Database = {
           why_these_work: Json | null
         }
         Insert: {
-          center_song_image_url?: string | null
           closest_matches?: Json | null
           created_at?: string
           heading: string
@@ -164,7 +162,6 @@ export type Database = {
           why_these_work?: Json | null
         }
         Update: {
-          center_song_image_url?: string | null
           closest_matches?: Json | null
           created_at?: string
           heading?: string
