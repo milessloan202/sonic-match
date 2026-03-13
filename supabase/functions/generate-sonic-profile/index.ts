@@ -912,7 +912,9 @@ ${JSON.stringify(traits, null, 2)}
 
 Now assign Sonic DNA descriptors for this song. Use the trait analysis above as your grounding — do not jump directly from song impression to label. Let each trait value constrain and drive your descriptor selection from the vocabulary.
 
-EMOTIONAL LAYERING: If the trait analysis identifies both an outward emotional posture and an underlying subtext, preserve both in emotional_tone. The dominant posture should appear first; the subtext can follow if it is genuinely present. Do not flatten layered profiles to a single register.
+DOMINANT EMOTIONAL TONE: First, select ONE dominant emotional tone — the single primary emotional posture of the song. Set "dominant_emotional_tone" to this slug. Then allow up to 2 supporting tones that reinforce or deepen the dominant. Supporting tones must NOT contradict the dominant. Maximum 3 emotional_tone entries total. The dominant must appear FIRST in the emotional_tone array.
+
+EMOTIONAL LAYERING: If the trait analysis identifies both an outward emotional posture and an underlying subtext, the dominant is the outward posture; the subtext can be a supporting tone if it doesn't contradict the dominant.
 
 Focus on:
 - The actual rhythmic feel and groove
