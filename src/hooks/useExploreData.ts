@@ -24,7 +24,7 @@ export function useDescriptorRegistry() {
   useEffect(() => {
     supabase
       .from("descriptor_registry")
-      .select("slug, label, category, is_public")
+      .select("slug, label, category, description, is_public")
       .eq("is_public", true)
       .order("label")
       .then(({ data }) => {
