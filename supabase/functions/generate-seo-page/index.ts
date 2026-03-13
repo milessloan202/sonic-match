@@ -80,7 +80,7 @@ async function fetchVerifiedMetadata(
   }
 
   // Parse song title and artist from displayName (format: "Song Title – Artist Name" or just "Song Title")
-  const dashMatch = displayName.match(/^(.+?)\s*[–—-]\s*(.+)$/);
+  const dashMatch = displayName.match(/^(.+?)\s*[–—]\s*(.+)$/);
   let songTitle = dashMatch ? dashMatch[1].trim() : displayName;
   let artistName = dashMatch ? dashMatch[2].trim() : null;
 
