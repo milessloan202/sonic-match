@@ -1147,15 +1147,23 @@ serve(async (req) => {
     const enrichedProfile = { ...profile, canonical_descriptors: canonical };
 
     // ── Write to cache ────────────────────────────────────────────────────────
+    // Extract dominant emotional tone from generated profile
+    const dominantEmotionalTone = typeof profile.dominant_emotional_tone === "string"
+      ? profile.dominant_emotional_tone
+      : (Array.isArray(profile.emotional_tone) && (profile.emotional_tone as string[]).length > 0
+          ? (profile.emotional_tone as string[])[0]
+          : null);
+
     const { data: inserted, error: insertError } = await supabase
       .from("song_sonic_profiles")
       .upsert({
         spotify_track_id,
         song_title,
         artist_name,
-        profile_json:     enrichedProfile,
-        confidence_score: confidenceScore,
-        descriptor_slugs: descriptorSlugs,
+        profile_json:             enrichedProfile,
+        confidence_score:         confidenceScore,
+        descriptor_slugs:         descriptorSlugs,
+        dominant_emotional_tone:  dominantEmotionalTone,
       }, { onConflict: "spotify_track_id" })
       .select()
       .single();
