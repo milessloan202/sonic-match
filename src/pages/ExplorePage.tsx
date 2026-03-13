@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import SEOHead from "@/components/SEOHead";
@@ -6,7 +7,6 @@ import SoundDirectory from "@/components/SoundDirectory";
 import SoundOfTheMoment from "@/components/SoundOfTheMoment";
 import { useDescriptorRegistry } from "@/hooks/useExploreData";
 import { DESCRIPTOR_CATEGORY_MAP, CATEGORY_GLOW_RGB } from "@/lib/exploreSounds";
-import { CATEGORY_HOVER_COLORS } from "@/components/DescriptorTag";
 
 /** Curated top-level chips for Section A */
 const CURATED_CHIPS = [
