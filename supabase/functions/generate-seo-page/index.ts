@@ -1194,7 +1194,7 @@ RULE 2 — DESCRIPTOR-FAITHFUL TRANSLATION:
 Every descriptive claim must map directly to one of the provided Sonic DNA descriptors. Do not invent emotional nuance or listener scenarios beyond the descriptor set. Do NOT infer emotional posture from the artist's reputation, genre stereotypes, or general music knowledge.
 
 RULE 3 — NO INVENTED LISTENER SCENARIOS:
-Do not write phrases like "headphone experience," "solitary reflection," "late-night drive," "reflective commute," "introspective listening," or "club-ready" unless explicitly supported by listener_use_case or environment_imagery descriptors.
+Do not write phrases like "headphone experience," "solitary reflection," "late-night drive," "reflective commute," "introspective listening," "club-ready," "solitary listening," "after-hours reflection," "headphones-alone immersion," "perfect for solitary after-hours listening," or any phrase describing when, where, or how a listener experiences the track — unless explicitly supported by listener_use_case or environment_imagery descriptors in the Sonic DNA Profile.
 
 RULE 4 — NO UNSUPPORTED NEGATION:
 Do not write phrases like "rather than rhythmic propulsion," "instead of bombast," or "not built for clubs" unless the descriptor set explicitly supports that contrast.
