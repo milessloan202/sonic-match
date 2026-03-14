@@ -1188,13 +1188,13 @@ RULE 1 — RHYTHM MUST APPEAR:
 The summary MUST explicitly describe the song's groove or movement feel using descriptors from groove_character, energy_posture, or arrangement_energy_arc. If these descriptors exist in the Sonic DNA Profile, they MUST appear in the prose. Use concrete rhythmic language: "floating groove," "marching bounce," "stomping rhythm," "pulsing movement," "locked-in drive," "slow-moving pulse," etc. Do NOT omit rhythm if descriptors are present.
 
 RULE 1b — DRUM CHARACTER TRANSLATION:
-If the Sonic DNA Profile includes descriptors from drum_character, the summary MUST describe the impact or articulation of the drums. Translate these descriptors directly into concrete language: punchy → sharp drum hits; explosive → sudden drum bursts or emphatic hits; snappy → tight, crisp drum accents; booming → heavy low-end drum impact; skittering → rapid, scattered drum patterns; minimal → sparse, restrained drum presence; programmed → machine-driven drum patterns. Drum description should appear near the groove or rhythm section (Sentence 1), integrated naturally with the rhythmic feel. Do NOT omit drum behavior if drum descriptors exist. Do NOT exaggerate drum presence — only describe drum energy if supported by descriptors. Avoid phrases like "thunderous drums," "massive percussion," or "explosive beat" unless those exact descriptors exist in the profile.
+If the Sonic DNA Profile includes descriptors from drum_character, the summary MUST describe the impact or articulation of the drums. Translate these descriptors directly into concrete language: punchy → sharp drum hits; explosive → sudden drum bursts or emphatic hits; snappy → tight, crisp drum accents; booming → heavy low-end drum impact; skittering → rapid, scattered drum patterns; minimal → sparse, restrained drum presence; programmed → machine-driven drum patterns. Drum description MUST be integrated into the groove/rhythm clause in Sentence 1 — do NOT place it in a separate sentence. Example: "anchored by a slow, floating groove punctuated by explosive drum accents." Do NOT omit drum behavior if drum descriptors exist. Do NOT exaggerate drum presence — only describe drum energy if supported by descriptors. Avoid phrases like "thunderous drums," "massive percussion," or "explosive beat" unless those exact descriptors exist in the profile.
 
 RULE 2 — DESCRIPTOR-FAITHFUL TRANSLATION:
 Every descriptive claim must map directly to one of the provided Sonic DNA descriptors. Do not invent emotional nuance or listener scenarios beyond the descriptor set. Do NOT infer emotional posture from the artist's reputation, genre stereotypes, or general music knowledge.
 
 RULE 3 — NO INVENTED LISTENER SCENARIOS:
-Do not write phrases like "headphone experience," "solitary reflection," "late-night drive," "reflective commute," "introspective listening," or "club-ready" unless explicitly supported by listener_use_case or environment_imagery descriptors.
+Do not write phrases like "headphone experience," "solitary reflection," "late-night drive," "reflective commute," "introspective listening," "club-ready," "solitary listening," "after-hours reflection," "headphones-alone immersion," "perfect for solitary after-hours listening," or any phrase describing when, where, or how a listener experiences the track — unless explicitly supported by listener_use_case or environment_imagery descriptors in the Sonic DNA Profile.
 
 RULE 4 — NO UNSUPPORTED NEGATION:
 Do not write phrases like "rather than rhythmic propulsion," "instead of bombast," or "not built for clubs" unless the descriptor set explicitly supports that contrast.
@@ -1204,6 +1204,9 @@ Translate spatial_feel directly: intimate → close, near, close-mic; widescreen
 
 RULE 6 — SIMPLE DESCRIPTIVE LANGUAGE:
 Prefer concrete musical description over abstract critical language. Avoid phrases like "emotional architecture," "dreamlike meditation," "sonic landscape," "immersive experience," "alternative R&B soundscape" unless explicitly supported by descriptors. When in doubt, name what the production actually does (groove type, bass character, vocal delivery style, harmonic color) rather than reaching for impressionistic metaphor.
+
+RULE 7 — NO METAPHORICAL IMAGERY:
+Do not use metaphor, simile, or poetic imagery when describing sound. All sound descriptions must translate directly from the Sonic DNA descriptors using literal musical language. Avoid phrases such as: "hangs in the air," "drifting through time," "sonic cocoon," "bathes in," "soundscape," "landscape," "like unresolved questions," "suspended time," "weave through," "intimate cocoon," or any figurative language that personifies or poeticizes the music. Write as if translating a technical profile into plain musical English.
 
 If the Sonic DNA Profile is marked "Profile Confidence: LOW," do not make highly specific sonic claims. Write with appropriate uncertainty — prefer "suggests," "leans toward," "has the feel of" over definitive statements.`;
 
