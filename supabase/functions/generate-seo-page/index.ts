@@ -1193,6 +1193,7 @@ Example: "The arrangement remains locked into this slow pulse, allowing the voca
 If no arrangement_energy_arc descriptors exist, omit this sentence entirely.
 
 HARD RULES FOR SUMMARY:
+- DESCRIPTOR LOCK: All descriptive adjectives MUST come from the Sonic DNA descriptor set above. Do not introduce new descriptive adjectives that are not present in the profile. Examples: "floating groove" is valid ONLY if "floating" exists in the profile; "laid-back groove" is INVALID unless "laid-back" exists; "hazy production" is valid ONLY if "hazy" exists; "dreamy production" is INVALID unless "dreamy" exists. If no descriptor exists for a category, describe the element neutrally without inventing adjectives (e.g., "the production" instead of "the shimmering production").
 - Use ONLY literal descriptor translation. Every adjective must map to a Sonic DNA descriptor.
 - Elaboration clauses must describe literal musical behavior, not metaphorical imagery.
 - No metaphor. No simile. No poetic imagery.
