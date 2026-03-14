@@ -316,7 +316,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      clear_song_cache: { Args: { song_slug: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
