@@ -1168,24 +1168,33 @@ relatedArtists: 3 artists whose broader catalog overlaps most with the sonic wor
 whyTheseWork: 2-3 sentences explaining the SPECIFIC sonic thread connecting these recommendations. Each recommended track should share at least 2 descriptor traits with the center song — name which traits (e.g., "Both share the stalking energy and cold emotional tone"). Reference concrete musical details: drum pattern, harmonic movement, production technique. Never use "similar vibe," "same feel," "fans of X will enjoy," or "same energy."
 
 ${postureAnchorBlock}
-summary: Generate EXACTLY 3 sentences. Each sentence translates Sonic DNA descriptors literally. No extra sentences. No combining sentences.
+summary: Generate 3–4 sentences. Each sentence translates Sonic DNA descriptors literally and may include ONE explanatory clause that clarifies musical behavior. No extra sentences beyond 4.
 
-SENTENCE 1 — Emotional posture + groove + drums:
+SENTENCE 1 — Rhythm Engine (emotional posture + groove + drums):
 Begin with "{Artist Name}'s \"{Song Title}\"" then state: dominant emotional posture (from dominant_emotional_tone), groove/movement feel (from groove_character or energy_posture), and drum articulation (from drum_character) IF drum_character descriptors exist.
-Template: [Artist]'s "[Song]" carries a [dominant_emotional_tone] emotional posture anchored by a [groove phrase] [drum clause if drum_character exists].
+Template: [Artist]'s "[Song]" carries a [dominant_emotional_tone] emotional posture anchored by a [groove phrase] punctuated by [drum articulation].
+Then allow ONE rhythmic elaboration clause explaining how the drums interact with the groove. Example: "punctuated by explosive drum accents that break through the otherwise drifting rhythm."
 Drum translation: explosive → explosive drum accents; punchy → sharp drum hits; snappy → tight drum snaps; booming → heavy drum impacts; skittering → rapid scattered drum patterns; minimal → sparse drum presence; programmed → machine-driven drum patterns.
 If drum_character descriptors exist, drums MUST appear in this sentence integrated into the groove clause. Do NOT place drums in a separate sentence.
 
-SENTENCE 2 — Vocal delivery + harmonic color:
+SENTENCE 2 — Vocals + Harmony:
 State vocal character (from vocal_character) and harmonic color (from harmonic_color).
 Template: [Vocal phrase] sits over [harmonic phrase].
+Then allow ONE harmonic elaboration clause describing how harmony supports the vocal tone. Example: "that maintain a constant tonal tension."
 
-SENTENCE 3 — Texture + spatial feel:
+SENTENCE 3 — Texture + Spatial Feel:
 State texture (from texture) and spatial feel (from spatial_feel).
 Template: The production stays [texture phrase] and [spatial phrase].
+Then allow ONE production elaboration clause describing sonic character. Example: "giving the arrangement a soft-edged atmospheric density."
+
+SENTENCE 4 (OPTIONAL) — Arrangement Energy:
+Include ONLY if descriptors exist in arrangement_energy_arc. Describe how the track sustains or releases energy.
+Example: "The arrangement remains locked into this slow pulse, allowing the vocal tone and harmonic color to carry the track's emotional weight."
+If no arrangement_energy_arc descriptors exist, omit this sentence entirely.
 
 HARD RULES FOR SUMMARY:
 - Use ONLY literal descriptor translation. Every adjective must map to a Sonic DNA descriptor.
+- Elaboration clauses must describe literal musical behavior, not metaphorical imagery.
 - No metaphor. No simile. No poetic imagery.
 - No evaluative words: beautifully, gorgeously, richly, stunningly, masterfully, brilliantly, exquisitely, evocative.
 - No listener scenarios: solitary listening, late-night drives, headphone experience, after-hours, reflective commute, club-ready — unless explicitly in listener_use_case or environment_imagery.
