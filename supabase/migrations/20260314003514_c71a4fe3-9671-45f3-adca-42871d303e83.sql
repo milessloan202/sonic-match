@@ -1,0 +1,1 @@
+SELECT clear_song_cache('30-for-30');
