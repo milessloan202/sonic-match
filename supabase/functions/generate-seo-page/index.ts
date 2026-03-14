@@ -1174,8 +1174,25 @@ SENTENCE 1 — Rhythm Engine (emotional posture + groove + drums):
 Begin with "{Artist Name}'s \"{Song Title}\"" then state: dominant emotional posture (from dominant_emotional_tone), groove/movement feel (from groove_character or energy_posture), and drum articulation (from drum_character) IF drum_character descriptors exist.
 Template: [Artist]'s "[Song]" carries a [dominant_emotional_tone] emotional posture anchored by a [groove phrase] punctuated by [drum articulation].
 Then allow ONE rhythmic elaboration clause explaining how the drums interact with the groove. Example: "punctuated by explosive drum accents that break through the otherwise drifting rhythm."
-Drum translation: explosive → explosive drum accents; punchy → sharp drum hits; snappy → tight drum snaps; booming → heavy drum impacts; skittering → rapid scattered drum patterns; minimal → sparse drum presence; programmed → machine-driven drum patterns.
-If drum_character descriptors exist, drums MUST appear in this sentence integrated into the groove clause. Do NOT place drums in a separate sentence.
+DRUM CHARACTER TRANSLATION (mandatory if drum_character descriptors exist):
+Translate drum descriptors literally into concrete articulation language:
+  electronic → electronic drum programming
+  skeletal → sparse or skeletal drum pattern
+  explosive → explosive drum accents
+  punchy → punchy drum hits
+  snappy → tight drum snaps
+  booming → heavy low-end drum hits
+  skittering → rapid scattered drum patterns
+  minimal → sparse drum presence
+  programmed → machine-driven drum patterns
+  crisp → crisp drum articulation
+  loose → loose, relaxed drum feel
+  heavy → heavy drum hits
+  tight → tight drum pattern
+  live → live drum performance
+Drum articulation MUST appear INSIDE the groove clause of Sentence 1, not in a separate clause or sentence.
+Example: "anchored by a floating groove driven by skeletal electronic drums"
+If drum_character descriptors exist, they MUST appear in Sentence 1. Do NOT omit them. Do NOT move them to another sentence.
 
 SENTENCE 2 — Vocals + Harmony:
 State vocal character (from vocal_character) and harmonic color (from harmonic_color).
