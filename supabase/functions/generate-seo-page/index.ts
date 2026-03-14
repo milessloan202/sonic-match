@@ -465,6 +465,7 @@ const SONIC_CATEGORY_LABELS: Record<string, string> = {
   era_movement:        "Era",
   era_period:          "Period",
   groove_character:    "Groove",
+  drum_character:      "Drums",
   harmonic_color:      "Harmony",
   vocal_character:     "Vocals",
   environment_imagery: "Environment",
@@ -473,8 +474,8 @@ const SONIC_CATEGORY_LABELS: Record<string, string> = {
 
 const SONIC_CATEGORY_ORDER = [
   "emotional_tone", "energy_posture", "texture", "spatial_feel",
-  "era_movement", "era_period", "groove_character", "harmonic_color",
-  "vocal_character", "environment_imagery", "listener_use_case",
+  "era_movement", "era_period", "groove_character", "drum_character",
+  "harmonic_color", "vocal_character", "environment_imagery", "listener_use_case",
 ];
 
 interface SonicDescriptorResult {
