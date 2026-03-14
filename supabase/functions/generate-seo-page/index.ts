@@ -1205,6 +1205,9 @@ Translate spatial_feel directly: intimate → close, near, close-mic; widescreen
 RULE 6 — SIMPLE DESCRIPTIVE LANGUAGE:
 Prefer concrete musical description over abstract critical language. Avoid phrases like "emotional architecture," "dreamlike meditation," "sonic landscape," "immersive experience," "alternative R&B soundscape" unless explicitly supported by descriptors. When in doubt, name what the production actually does (groove type, bass character, vocal delivery style, harmonic color) rather than reaching for impressionistic metaphor.
 
+RULE 7 — NO METAPHORICAL IMAGERY:
+Do not use metaphor, simile, or poetic imagery when describing sound. All sound descriptions must translate directly from the Sonic DNA descriptors using literal musical language. Avoid phrases such as: "hangs in the air," "drifting through time," "sonic cocoon," "bathes in," "soundscape," "landscape," "like unresolved questions," "suspended time," "weave through," "intimate cocoon," or any figurative language that personifies or poeticizes the music. Write as if translating a technical profile into plain musical English.
+
 If the Sonic DNA Profile is marked "Profile Confidence: LOW," do not make highly specific sonic claims. Write with appropriate uncertainty — prefer "suggests," "leans toward," "has the feel of" over definitive statements.`;
 
     const artistPrompt = `You are a world-class music curator — part crate-digger, part musicologist, part the best record store clerk alive. You think in terms of artistic DNA: how an artist's sonic identity, production choices, and creative evolution connect them to the broader musical landscape.
