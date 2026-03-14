@@ -1177,13 +1177,17 @@ SENTENCE STRUCTURE:
 DESCRIPTOR ORDER (follow this hierarchy in the prose):
 1. Dominant emotional posture (from dominant_emotional_tone)
 2. Groove / rhythmic feel (from groove_character, energy_posture, arrangement_energy_arc) — MUST APPEAR
-3. Vocal delivery (from vocal_character)
-4. Harmonic color (from harmonic_color)
-5. Texture (from texture)
-6. Spatial feel (from spatial_feel)
+3. Drum character (from drum_character) — MUST APPEAR IF PRESENT
+4. Vocal delivery (from vocal_character)
+5. Harmonic color (from harmonic_color)
+6. Texture (from texture)
+7. Spatial feel (from spatial_feel)
 
 RULE 1 — RHYTHM MUST APPEAR:
 The summary MUST explicitly describe the song's groove or movement feel using descriptors from groove_character, energy_posture, or arrangement_energy_arc. If these descriptors exist in the Sonic DNA Profile, they MUST appear in the prose. Use concrete rhythmic language: "floating groove," "marching bounce," "stomping rhythm," "pulsing movement," "locked-in drive," "slow-moving pulse," etc. Do NOT omit rhythm if descriptors are present.
+
+RULE 1b — DRUM CHARACTER TRANSLATION:
+If the Sonic DNA Profile includes descriptors from drum_character, the summary MUST describe the impact or articulation of the drums. Translate these descriptors directly into concrete language: punchy → sharp drum hits; explosive → sudden drum bursts or emphatic hits; snappy → tight, crisp drum accents; booming → heavy low-end drum impact; skittering → rapid, scattered drum patterns; minimal → sparse, restrained drum presence; programmed → machine-driven drum patterns. Drum description should appear near the groove or rhythm section (Sentence 1), integrated naturally with the rhythmic feel. Do NOT omit drum behavior if drum descriptors exist. Do NOT exaggerate drum presence — only describe drum energy if supported by descriptors. Avoid phrases like "thunderous drums," "massive percussion," or "explosive beat" unless those exact descriptors exist in the profile.
 
 RULE 2 — DESCRIPTOR-FAITHFUL TRANSLATION:
 Every descriptive claim must map directly to one of the provided Sonic DNA descriptors. Do not invent emotional nuance or listener scenarios beyond the descriptor set. Do NOT infer emotional posture from the artist's reputation, genre stereotypes, or general music knowledge.
