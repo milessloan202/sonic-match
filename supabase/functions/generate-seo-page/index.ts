@@ -1168,47 +1168,35 @@ relatedArtists: 3 artists whose broader catalog overlaps most with the sonic wor
 whyTheseWork: 2-3 sentences explaining the SPECIFIC sonic thread connecting these recommendations. Each recommended track should share at least 2 descriptor traits with the center song — name which traits (e.g., "Both share the stalking energy and cold emotional tone"). Reference concrete musical details: drum pattern, harmonic movement, production technique. Never use "similar vibe," "same feel," "fans of X will enjoy," or "same energy."
 
 ${postureAnchorBlock}
-summary: EXACTLY 3 sentences following this strict order of description. Dense and specific beats long and vague.
+summary: Generate EXACTLY 3 sentences. Each sentence translates Sonic DNA descriptors literally. No extra sentences. No combining sentences.
 
-SENTENCE STRUCTURE:
-- Sentence 1: MUST begin with "{Artist Name}'s \"{Song Title}\"" and describe the dominant emotional posture AND the groove/rhythmic feel together. Example: "SZA's \"30 For 30 (with Kendrick Lamar)\" carries a wistful emotional posture anchored by a floating, slow-moving groove."
-- Sentence 2: Describe vocal delivery and harmonic color.
-- Sentence 3: Describe texture and spatial feel.
+SENTENCE 1 — Emotional posture + groove + drums:
+Begin with "{Artist Name}'s \"{Song Title}\"" then state: dominant emotional posture (from dominant_emotional_tone), groove/movement feel (from groove_character or energy_posture), and drum articulation (from drum_character) IF drum_character descriptors exist.
+Template: [Artist]'s "[Song]" carries a [dominant_emotional_tone] emotional posture anchored by a [groove phrase] [drum clause if drum_character exists].
+Drum translation: explosive → explosive drum accents; punchy → sharp drum hits; snappy → tight drum snaps; booming → heavy drum impacts; skittering → rapid scattered drum patterns; minimal → sparse drum presence; programmed → machine-driven drum patterns.
+If drum_character descriptors exist, drums MUST appear in this sentence integrated into the groove clause. Do NOT place drums in a separate sentence.
 
-DESCRIPTOR ORDER (follow this hierarchy in the prose):
-1. Dominant emotional posture (from dominant_emotional_tone)
-2. Groove / rhythmic feel (from groove_character, energy_posture, arrangement_energy_arc) — MUST APPEAR
-3. Drum character (from drum_character) — MUST APPEAR IF PRESENT
-4. Vocal delivery (from vocal_character)
-5. Harmonic color (from harmonic_color)
-6. Texture (from texture)
-7. Spatial feel (from spatial_feel)
+SENTENCE 2 — Vocal delivery + harmonic color:
+State vocal character (from vocal_character) and harmonic color (from harmonic_color).
+Template: [Vocal phrase] sits over [harmonic phrase].
 
-RULE 1 — RHYTHM MUST APPEAR:
-The summary MUST explicitly describe the song's groove or movement feel using descriptors from groove_character, energy_posture, or arrangement_energy_arc. If these descriptors exist in the Sonic DNA Profile, they MUST appear in the prose. Use concrete rhythmic language: "floating groove," "marching bounce," "stomping rhythm," "pulsing movement," "locked-in drive," "slow-moving pulse," etc. Do NOT omit rhythm if descriptors are present.
+SENTENCE 3 — Texture + spatial feel:
+State texture (from texture) and spatial feel (from spatial_feel).
+Template: The production stays [texture phrase] and [spatial phrase].
 
-RULE 1b — DRUM CHARACTER TRANSLATION (MANDATORY):
-If the Sonic DNA Profile includes descriptors from drum_character, the FIRST SENTENCE must include drum articulation integrated into the groove clause. This is not optional — if drum_character descriptors exist, drums MUST appear in Sentence 1. Structure: emotional posture → groove + drum clause. Example: "anchored by a floating groove punctuated by explosive drum accents." Translate descriptors directly into concrete language: punchy → sharp drum hits; explosive → sudden drum bursts or emphatic hits; snappy → tight, crisp drum accents; booming → heavy low-end drum impact; skittering → rapid, scattered drum patterns; minimal → sparse, restrained drum presence; programmed → machine-driven drum patterns. Do NOT omit drum behavior if drum descriptors exist. Do NOT place drums in a separate sentence. Do NOT exaggerate drum presence — only describe drum energy if supported by descriptors.
-
-RULE 2 — DESCRIPTOR-FAITHFUL TRANSLATION:
-Every descriptive claim must map directly to one of the provided Sonic DNA descriptors. Do not invent emotional nuance or listener scenarios beyond the descriptor set. Do NOT infer emotional posture from the artist's reputation, genre stereotypes, or general music knowledge.
-
-RULE 3 — NO INVENTED LISTENER SCENARIOS:
-Do not write phrases like "headphone experience," "solitary reflection," "late-night drive," "reflective commute," "introspective listening," "club-ready," "solitary listening," "after-hours reflection," "headphones-alone immersion," "perfect for solitary after-hours listening," or any phrase describing when, where, or how a listener experiences the track — unless explicitly supported by listener_use_case or environment_imagery descriptors in the Sonic DNA Profile.
-
-RULE 4 — NO UNSUPPORTED NEGATION:
-Do not write phrases like "rather than rhythmic propulsion," "instead of bombast," or "not built for clubs" unless the descriptor set explicitly supports that contrast.
-
-RULE 5 — LITERAL SPATIAL INTERPRETATION:
-Translate spatial_feel directly: intimate → close, near, close-mic; widescreen → expansive, cinematic; airless → tight, compressed. Do not reinterpret loosely.
-
-RULE 6 — SIMPLE DESCRIPTIVE LANGUAGE:
-Prefer concrete musical description over abstract critical language. Avoid phrases like "emotional architecture," "dreamlike meditation," "sonic landscape," "immersive experience," "alternative R&B soundscape" unless explicitly supported by descriptors. When in doubt, name what the production actually does (groove type, bass character, vocal delivery style, harmonic color) rather than reaching for impressionistic metaphor.
-
-RULE 7 — NO METAPHORICAL IMAGERY:
-Do not use metaphor, simile, or poetic imagery when describing sound. Do not describe relationships between musical elements metaphorically. All sound descriptions must translate directly from the Sonic DNA descriptors using literal musical language. Avoid verbs such as: drift, float over, hang, wrap, bathe, dissolve, bloom, weave through, suspend, cocoon, wash over, bleed into. Avoid phrases such as: "hangs in the air," "drifting through time," "sonic cocoon," "bathes in," "soundscape," "landscape," "like unresolved questions," "suspended time," "weave through," "intimate cocoon," "float over the beat," or any figurative language that personifies or poeticizes the music. Instead describe sound using literal musical relationships: "breathy vocals over suspended harmonies," "explosive drum accents within the groove," "hazy production with intimate spatial scale." Write as if translating a technical profile into plain musical English.
-
-If the Sonic DNA Profile is marked "Profile Confidence: LOW," do not make highly specific sonic claims. Write with appropriate uncertainty — prefer "suggests," "leans toward," "has the feel of" over definitive statements.`;
+HARD RULES FOR SUMMARY:
+- Use ONLY literal descriptor translation. Every adjective must map to a Sonic DNA descriptor.
+- No metaphor. No simile. No poetic imagery.
+- No evaluative words: beautifully, gorgeously, richly, stunningly, masterfully, brilliantly, exquisitely, evocative.
+- No listener scenarios: solitary listening, late-night drives, headphone experience, after-hours, reflective commute, club-ready — unless explicitly in listener_use_case or environment_imagery.
+- No unsupported emotional expansion beyond descriptor set.
+- No negation claims (e.g., "rather than rhythmic propulsion") unless descriptors explicitly support the contrast.
+- No abstract critic language: emotional architecture, sonic landscape, soundscape, dreamlike meditation, immersive experience.
+- FORBIDDEN VERBS: drift, float over, hang, wrap, bathe, dissolve, bloom, weave through, suspend, cocoon, wash over, bleed into.
+- FORBIDDEN PHRASES: hangs in the air, drifting through time, sonic cocoon, bathes in, like unresolved questions, suspended time, intimate cocoon, wrapped in, beautifully unresolved.
+- Translate spatial_feel literally: intimate → close, near, close-mic; widescreen → expansive, cinematic; airless → tight, compressed.
+- If Profile Confidence is LOW, soften with "suggests," "leans toward," "has the feel of."
+- Write as if translating a technical profile into plain musical English. Not music criticism.`;
 
     const artistPrompt = `You are a world-class music curator — part crate-digger, part musicologist, part the best record store clerk alive. You think in terms of artistic DNA: how an artist's sonic identity, production choices, and creative evolution connect them to the broader musical landscape.
 
