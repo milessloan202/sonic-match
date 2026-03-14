@@ -1192,6 +1192,14 @@ Include ONLY if descriptors exist in arrangement_energy_arc. Describe how the tr
 Example: "The arrangement remains locked into this slow pulse, allowing the vocal tone and harmonic color to carry the track's emotional weight."
 If no arrangement_energy_arc descriptors exist, omit this sentence entirely.
 
+GROOVE PRIORITY (structural rule — overrides all other ordering):
+- Sentence 1 MUST translate descriptors from groove_character and energy_posture BEFORE any other category.
+- Harmony descriptors (harmonic_color) may ONLY appear in Sentence 2. They are FORBIDDEN in Sentence 1.
+- Sentence 1 structure is strictly: dominant emotional posture → groove translation → drum articulation (if drum_character exists).
+- Do NOT begin Sentence 1 with harmony descriptors.
+- INCORRECT: "anchored by suspended harmonies" (harmony belongs in Sentence 2)
+- CORRECT: "anchored by a floating groove punctuated by explosive drum accents" (groove + drums first)
+
 HARD RULES FOR SUMMARY:
 - DESCRIPTOR LOCK: All descriptive adjectives MUST come from the Sonic DNA descriptor set above. Do not introduce new descriptive adjectives that are not present in the profile. Examples: "floating groove" is valid ONLY if "floating" exists in the profile; "laid-back groove" is INVALID unless "laid-back" exists; "hazy production" is valid ONLY if "hazy" exists; "dreamy production" is INVALID unless "dreamy" exists. If no descriptor exists for a category, describe the element neutrally without inventing adjectives (e.g., "the production" instead of "the shimmering production").
 - Use ONLY literal descriptor translation. Every adjective must map to a Sonic DNA descriptor.
